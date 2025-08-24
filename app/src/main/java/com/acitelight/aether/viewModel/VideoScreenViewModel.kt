@@ -62,24 +62,7 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
 
     init {
         viewModelScope.launch {
-            val u = userNameFlow.first()
-            val p = privateKeyFlow.first()
-
-            if(u=="" || p=="") return@launch
-
-            try{
-                if (MediaManager.token == "null")
-                    MediaManager.token = AuthManager.fetchToken(
-                        ApiClient.base,
-                        u,
-                        p
-                    )!!
-
-                init()
-            }catch(e: Exception)
-            {
-                print(e.message)
-            }
+            init()
         }
     }
 }

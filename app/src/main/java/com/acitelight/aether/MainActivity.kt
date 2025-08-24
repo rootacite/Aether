@@ -116,7 +116,7 @@ fun AppNavigation() {
             modifier = if(shouldShowBottomBar)Modifier.padding(innerPadding) else Modifier.padding(0.dp)
         ) {
             composable(Screen.Home.route) {
-                HomeScreen()
+                HomeScreen(navController = navController)
             }
             composable(Screen.Video.route) {
                 VideoScreen(navController = navController)
@@ -159,8 +159,6 @@ fun BottomNavigationBar(navController: NavController) {
         Screen.Me
     ) else  listOf(
         Screen.Home,
-        Screen.Video,
-        Screen.Comic,
         Screen.Transmission,
         Screen.Me
     )

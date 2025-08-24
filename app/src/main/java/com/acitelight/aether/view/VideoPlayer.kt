@@ -1,91 +1,56 @@
 package com.acitelight.aether.view
 
-import android.R
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.text.Layout
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
-import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.viewModel.VideoPlayerViewModel
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Info
@@ -93,44 +58,42 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material3.Divider
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import com.acitelight.aether.BottomNavigationBar
 import com.acitelight.aether.Global
 import com.acitelight.aether.ToggleFullScreen
 import com.acitelight.aether.model.KeyImage
-import com.acitelight.aether.ui.theme.AetherTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
-import org.jetbrains.annotations.Async
-import java.nio.file.WatchEvent
+import com.acitelight.aether.model.Video
 
 fun formatTime(ms: Long): String {
     if (ms <= 0) return "00:00:00"
@@ -238,248 +201,302 @@ fun VideoPlayer(
     videoId: String,
     navController: NavHostController
 ) {
-    videoPlayerViewModel.Init(videoId);
-    videoPlayerViewModel.startListen()
+    videoPlayerViewModel.Init(videoId)
 
-    if (isLandscape()) {
-        VideoPlayerLandscape(videoPlayerViewModel)
-    }
-    else
+    if(videoPlayerViewModel.startPlaying)
     {
-        VideoPlayerPortal(videoPlayerViewModel, navController)
+        if (isLandscape()) {
+            VideoPlayerLandscape(videoPlayerViewModel)
+        }
+        else
+        {
+            VideoPlayerPortal(videoPlayerViewModel, navController)
+        }
     }
 }
 
 @Composable
-fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController: NavHostController?) {
+fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel, cover: Float)
+{
+    val exoPlayer: ExoPlayer = videoPlayerViewModel._player!!;
     val context = LocalContext.current
     val activity = context as? Activity
-    val exoPlayer: ExoPlayer = videoPlayerViewModel._player!!;
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp;
 
-    ToggleFullScreen(false)
-    Column()
+    Box(modifier)
     {
-        Box(modifier = Modifier.padding(top = 42.dp).heightIn(max = screenHeight * 0.65f))
-        {
-            AndroidView(
-                factory = {
-                    PlayerView(
-                        it
-                    ).apply {
-                        player = exoPlayer
-                        useController = false
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .pointerInput(Unit) {
-                        detectDragGestures(
-                            onDragStart = {
-                                videoPlayerViewModel.dragging = true
-                                videoPlayerViewModel.planeVisibility = true
-                                exoPlayer.pause()
-                            },
-                            onDragEnd = {
-                                videoPlayerViewModel.dragging = false
-                                if (videoPlayerViewModel.isPlaying)
-                                    exoPlayer.play()
-                            },
-                            onDrag = { change, dragAmount ->
-                                exoPlayer.seekTo((exoPlayer.currentPosition + dragAmount.x * 200.0f).toLong())
-                                videoPlayerViewModel.playProcess = exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()
-                            }
-                        )
-                    }
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onDoubleTap = {
-                                videoPlayerViewModel.isPlaying = !videoPlayerViewModel.isPlaying
-                                if (videoPlayerViewModel.isPlaying) exoPlayer.play() else exoPlayer.pause()
-                            },
-                            onTap = {
-                                videoPlayerViewModel.planeVisibility =
-                                    !videoPlayerViewModel.planeVisibility
-                            },
-                            onLongPress = {
-                                videoPlayerViewModel.isLongPressing = true
-                                exoPlayer.playbackParameters = exoPlayer.playbackParameters
-                                    .withSpeed(3.0f)
-                            },
-                            onPress = { offset ->
-                                val pressResult = tryAwaitRelease()
-                                if (pressResult && videoPlayerViewModel.isLongPressing) {
-                                    videoPlayerViewModel.isLongPressing = false
-                                    exoPlayer.playbackParameters = exoPlayer.playbackParameters
-                                        .withSpeed(1.0f)
-                                }
-                            },
-                        )
-                    }
-            )
-
-            androidx.compose.animation.AnimatedVisibility(
-                visible = videoPlayerViewModel.isLongPressing,
-                enter = slideInVertically(initialOffsetY = { fullHeight -> -fullHeight }),
-                exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-            )
-            {
-                Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 24.dp).background(Color(0x44000000), RoundedCornerShape(18)))
-                {
-                    Row{
-                        Icon(
-                            imageVector = Icons.Filled.FastForward,
-                            contentDescription = "Fast Forward",
-                            tint = Color.White,
-                            modifier = Modifier.size(36.dp).padding(4.dp).align(Alignment.CenterVertically)
-                        )
-
-                        Text(
-                            text = "3X Speed...",
-                            modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFFFFFF)
-                        )
-                    }
+        AndroidView(
+            factory = {
+                PlayerView(
+                    it
+                ).apply {
+                    player = exoPlayer
+                    useController = false
                 }
-            }
-
-            IconButton(
-                onClick = { navController?.popBackStack() },
-                modifier = Modifier
-                    .padding(8.dp)
-                    .align(Alignment.TopStart)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
-            }
-
-            androidx.compose.animation.AnimatedVisibility(
-                visible = videoPlayerViewModel.dragging,
-                enter = fadeIn(
-                    initialAlpha = 0f,
-                ),
-                exit = fadeOut(
-                    targetAlpha = 0f
-                ),
-                modifier = Modifier.align(Alignment.Center)
-            ) {
-                Text(
-                    text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
-                        formatTime(
-                            (exoPlayer.duration).toLong()
-                        )
-                    }",
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .padding(bottom = 12.dp),
-                    fontSize = 18.sp
-                )
-            }
-
-            androidx.compose.animation.AnimatedVisibility(
-                visible = !videoPlayerViewModel.planeVisibility,
-                enter = fadeIn(
-                    initialAlpha = 0f,
-                ),
-                exit = fadeOut(
-                    targetAlpha = 0f
-                ),
-                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
-            ) {
-                BiliMiniSlider(
-                    value = videoPlayerViewModel.playProcess,
-                    onValueChange = {},
-                    modifier = Modifier
-                        .height(4.dp)
-                        .align(Alignment.BottomCenter)
-                )
-            }
-
-            androidx.compose.animation.AnimatedVisibility(
-                visible = videoPlayerViewModel.planeVisibility,
-                enter = fadeIn(
-                    initialAlpha = 0f,
-                ),
-                exit = fadeOut(
-                    targetAlpha = 0f
-                ),
-                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
-            )
-            {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 2.dp)
-                        .align(Alignment.BottomCenter),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    IconButton(
-                        onClick = {
+            },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = {
+                            videoPlayerViewModel.dragging = true
+                            videoPlayerViewModel.planeVisibility = true
+                            exoPlayer.pause()
+                        },
+                        onDragEnd = {
+                            videoPlayerViewModel.dragging = false
+                            if (videoPlayerViewModel.isPlaying)
+                                exoPlayer.play()
+                        },
+                        onDrag = { change, dragAmount ->
+                            exoPlayer.seekTo((exoPlayer.currentPosition + dragAmount.x * 200.0f).toLong())
+                            videoPlayerViewModel.playProcess = exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()
+                        }
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
                             videoPlayerViewModel.isPlaying = !videoPlayerViewModel.isPlaying
                             if (videoPlayerViewModel.isPlaying) exoPlayer.play() else exoPlayer.pause()
                         },
-                        Modifier
-                            .size(36.dp)
-                            .align(Alignment.CenterVertically)
-                    ) {
-                        Icon(
-                            imageVector = if (videoPlayerViewModel.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = "Play/Pause",
-                            tint = Color.White,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-
-                    BiliStyleSlider(
-                        value = videoPlayerViewModel.playProcess,
-                        onValueChange = { value ->
-                            exoPlayer.seekTo((exoPlayer.duration * value).toLong())
+                        onTap = {
+                            videoPlayerViewModel.planeVisibility =
+                                !videoPlayerViewModel.planeVisibility
                         },
-                        modifier = Modifier
-                            .height(8.dp)
-                            .align(Alignment.CenterVertically)
-                            .weight(1f)
+                        onLongPress = {
+                            videoPlayerViewModel.isLongPressing = true
+                            exoPlayer.playbackParameters = exoPlayer.playbackParameters
+                                .withSpeed(3.0f)
+                        },
+                        onPress = { offset ->
+                            val pressResult = tryAwaitRelease()
+                            if (pressResult && videoPlayerViewModel.isLongPressing) {
+                                videoPlayerViewModel.isLongPressing = false
+                                exoPlayer.playbackParameters = exoPlayer.playbackParameters
+                                    .withSpeed(1.0f)
+                            }
+                        },
+                    )
+                }
+        )
+
+        androidx.compose.animation.AnimatedVisibility(
+            visible = videoPlayerViewModel.isLongPressing,
+            enter = slideInVertically(initialOffsetY = { fullHeight -> -fullHeight }),
+            exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+        )
+        {
+            Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 24.dp).background(Color(0x44000000), RoundedCornerShape(18)))
+            {
+                Row{
+                    Icon(
+                        imageVector = Icons.Filled.FastForward,
+                        contentDescription = "Fast Forward",
+                        tint = Color.White,
+                        modifier = Modifier.size(36.dp).padding(4.dp).align(Alignment.CenterVertically)
                     )
 
                     Text(
-                        text = formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong()),
-                        maxLines = 1,
-                        fontSize = 12.sp,
-                        color = Color(0xFFFFFFFF),
+                        text = "3X Speed...",
+                        modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically),
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .width(80.dp)
-                            .align(Alignment.CenterVertically)
-                            .padding(start = 12.dp)
+                        color = Color(0xFFFFFFFF)
                     )
-
-                    IconButton(
-                        onClick = {
-                            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                        },
-                        Modifier
-                            .size(36.dp)
-                            .align(Alignment.CenterVertically)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Fullscreen,
-                            contentDescription = "Fullscreen",
-                            tint = Color.White,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
                 }
             }
         }
+
+        androidx.compose.animation.AnimatedVisibility(
+            visible = videoPlayerViewModel.dragging,
+            enter = fadeIn(
+                initialAlpha = 0f,
+            ),
+            exit = fadeOut(
+                targetAlpha = 0f
+            ),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            Text(
+                text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
+                    formatTime(
+                        (exoPlayer.duration).toLong()
+                    )
+                }",
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(bottom = 12.dp),
+                fontSize = 18.sp
+            )
+        }
+
+        if(cover > 0.0f)
+            Spacer(Modifier.background(Color(0x00FF6699 - 0x00222222 + ((0x000000FF * cover).toLong() shl 24) )).fillMaxSize())
+
+        androidx.compose.animation.AnimatedVisibility(
+            visible = !videoPlayerViewModel.planeVisibility,
+            enter = fadeIn(
+                initialAlpha = 0f,
+            ),
+            exit = fadeOut(
+                targetAlpha = 0f
+            ),
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+        ) {
+            BiliMiniSlider(
+                value = videoPlayerViewModel.playProcess,
+                onValueChange = {},
+                modifier = Modifier
+                    .height(4.dp)
+                    .align(Alignment.BottomCenter)
+            )
+        }
+
+        androidx.compose.animation.AnimatedVisibility(
+            visible = videoPlayerViewModel.planeVisibility,
+            enter = fadeIn(
+                initialAlpha = 0f,
+            ),
+            exit = fadeOut(
+                targetAlpha = 0f
+            ),
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).height(42.dp)
+        )
+        {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 2.dp)
+                    .align(Alignment.BottomCenter),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                IconButton(
+                    onClick = {
+                        videoPlayerViewModel.isPlaying = !videoPlayerViewModel.isPlaying
+                        if (videoPlayerViewModel.isPlaying) exoPlayer.play() else exoPlayer.pause()
+                    },
+                    Modifier
+                        .size(36.dp)
+                        .align(Alignment.CenterVertically)
+                ) {
+                    Icon(
+                        imageVector = if (videoPlayerViewModel.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play/Pause",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                BiliStyleSlider(
+                    value = videoPlayerViewModel.playProcess,
+                    onValueChange = { value ->
+                        exoPlayer.seekTo((exoPlayer.duration * value).toLong())
+                    },
+                    modifier = Modifier
+                        .height(8.dp)
+                        .align(Alignment.CenterVertically)
+                        .weight(1f)
+                )
+
+                Text(
+                    text = formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong()),
+                    maxLines = 1,
+                    fontSize = 12.sp,
+                    color = Color(0xFFFFFFFF),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .width(80.dp)
+                        .align(Alignment.CenterVertically)
+                        .padding(start = 12.dp)
+                )
+
+                IconButton(
+                    onClick = {
+                        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    },
+                    Modifier
+                        .size(36.dp)
+                        .align(Alignment.CenterVertically)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Fullscreen,
+                        contentDescription = "Fullscreen",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController: NavHostController)
+{
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp;
+
+    val minHeight = 42.dp
+    var coverAlpha by remember{ mutableFloatStateOf(0.0f) }
+    var maxHeight = remember { screenHeight * 0.65f }
+    var posed = remember { false }
+    val dens = LocalDensity.current
+    val listState = rememberLazyListState()
+
+    var playerHeight by remember { mutableStateOf(screenHeight * 0.65f) }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val deltaY = available.y // px
+                val deltaDp = with(dens) { deltaY.toDp() }
+
+                val r = if (deltaY < 0 && playerHeight > minHeight) {
+                    val newHeight = (playerHeight + deltaDp).coerceIn(minHeight, maxHeight)
+                    val consumedDp = newHeight - playerHeight
+                    playerHeight = newHeight
+                    val consumedPx = with(dens) { consumedDp.toPx() }
+                    Offset(0f, consumedPx)
+                } else if(deltaY > 0 && playerHeight < maxHeight && listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0) {
+                    val newHeight = (playerHeight + deltaDp).coerceIn(minHeight, maxHeight)
+                    val consumedDp = newHeight - playerHeight
+                    playerHeight = newHeight
+                    val consumedPx = with(dens) { consumedDp.toPx() }
+                    Offset(0f, consumedPx)
+                } else {
+                    Offset.Zero
+                }
+
+                val dh = playerHeight - minHeight;
+                coverAlpha = (if(dh > 10.dp)
+                    0f
+                else
+                    (10.dp.value - dh.value) / 10.0f)
+
+                return r
+            }
+        }
+    }
+
+    ToggleFullScreen(false)
+    Column(Modifier.nestedScroll(nestedScrollConnection).fillMaxHeight())
+    {
+        PortalCorePlayer(
+            Modifier
+                .padding(top = 42.dp)
+                .heightIn(max = playerHeight)
+                .onGloballyPositioned { layoutCoordinates ->
+                    if(!posed && videoPlayerViewModel.renderedFirst)
+                    {
+                        maxHeight = with(dens) {layoutCoordinates.size.height.toDp()}
+                        playerHeight = maxHeight
+                        posed = true
+                    }
+                },
+            videoPlayerViewModel = videoPlayerViewModel, coverAlpha)
 
         Row()
         {
@@ -503,13 +520,13 @@ fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController:
             }
         }
 
-        LazyColumn( modifier = Modifier.fillMaxWidth()) {
+        LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
             item{
                 HorizontalDivider(Modifier, 2.dp, DividerDefaults.color)
 
                 Text(
                     modifier = Modifier.align(Alignment.Start).padding(horizontal = 12.dp).padding(top = 12.dp),
-                    text = Global.videoName,
+                    text = videoPlayerViewModel.video?.video?.name ?: "",
                     fontSize = 16.sp,
                     maxLines = 2,
                     fontWeight = FontWeight.Bold,
@@ -518,7 +535,7 @@ fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController:
                 Row(Modifier.align(Alignment.Start).padding(horizontal = 4.dp).alpha(0.5f)) {
                     Text(
                         modifier = Modifier.padding(horizontal = 8.dp),
-                        text = Global.videoClass,
+                        text = videoPlayerViewModel.video?.klass ?: "",
                         fontSize = 14.sp,
                         maxLines = 1,
                         fontWeight = FontWeight.Bold,
@@ -526,7 +543,7 @@ fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController:
 
                     Text(
                         modifier = Modifier.padding(horizontal = 8.dp),
-                        text = formatTime(Global.video?.video?.duration ?: 0),
+                        text = formatTime(videoPlayerViewModel.video?.video?.duration ?: 0),
                         fontSize = 14.sp,
                         maxLines = 1,
                         fontWeight = FontWeight.Bold,
@@ -535,114 +552,137 @@ fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController:
 
                 HorizontalDivider(Modifier.padding(vertical = 8.dp), 1.dp, DividerDefaults.color)
 
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-                {
-                    Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-                        IconButton(
-                            onClick = {  },
-                            modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
-                        ) {
-                            Icon(
-                                modifier = Modifier.size(28.dp),
-                                imageVector = Icons.Filled.ThumbUp,
-                                contentDescription = "ThumbUp",
-                                tint = Color.Gray
-                            )
-                        }
+                SocialPanel(Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(), videoPlayerViewModel = videoPlayerViewModel)
 
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = videoPlayerViewModel.thumbUp.toString(),
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            fontWeight = FontWeight.Bold)
-                    }
-
-                    Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-                        IconButton(
-                            onClick = {  },
-                            modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
-                        ) {
-                            Icon(
-                                modifier = Modifier.size(28.dp),
-                                imageVector = Icons.Filled.ThumbDown,
-                                contentDescription = "ThumbDown",
-                                tint = Color.Gray
-                            )
-                        }
-
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = videoPlayerViewModel.thumbDown.toString(),
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            fontWeight = FontWeight.Bold)
-                    }
-
-                    Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-                        IconButton(
-                            onClick = { videoPlayerViewModel.star = !videoPlayerViewModel.star  },
-                            modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
-                        ) {
-                            Icon(
-                                modifier = Modifier.size(28.dp),
-                                imageVector = Icons.Filled.Star,
-                                contentDescription = "Star",
-                                tint = if(videoPlayerViewModel.star) Color(0xFFFF6699) else Color.Gray
-                            )
-                        }
-                    }
-
-                    Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-                        IconButton(
-                            onClick = { },
-                            modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
-                        ) {
-                            Icon(
-                                modifier = Modifier.size(28.dp),
-                                imageVector = Icons.Filled.Share,
-                                contentDescription = "Forward",
-                                tint = Color.Gray
-                            )
-                        }
-                    }
-
-                    Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-                        IconButton(
-                            onClick = { },
-                            modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
-                        ) {
-                            Icon(
-                                modifier = Modifier.size(28.dp),
-                                imageVector = Icons.Filled.Info,
-                                contentDescription = "Detail",
-                                tint = Color.Gray
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                HorizontalGallery()
                 HorizontalDivider(Modifier.padding(vertical = 8.dp), 1.dp, DividerDefaults.color)
+
+                HorizontalGallery(videoPlayerViewModel)
+                HorizontalDivider(Modifier.padding(vertical = 8.dp), 1.dp, DividerDefaults.color)
+
+                for(i in Global.sameClassVideos ?: listOf())
+                {
+                    if(i.id == videoPlayerViewModel.video?.id) continue
+
+                    MiniVideoCard(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp),
+                        i,
+                        {
+                            videoPlayerViewModel.isPlaying = false
+                            videoPlayerViewModel._player?.pause()
+                            val route = "video_player_route/${ "${i.klass}/${i.id}".toHex() }"
+                            navController.navigate(route)
+                        })
+                    HorizontalDivider(Modifier.padding(vertical = 8.dp).alpha(0.25f), 1.dp, DividerDefaults.color)
+                }
             }
         }
     }
 }
 
 @Composable
-fun HorizontalGallery()
+fun SocialPanel(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel)
+{
+    Row(
+        modifier,
+        horizontalArrangement = Arrangement.Center
+    )
+    {
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+            IconButton(
+                onClick = {  },
+                modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
+            ) {
+                Icon(
+                    modifier = Modifier.size(28.dp),
+                    imageVector = Icons.Filled.ThumbUp,
+                    contentDescription = "ThumbUp",
+                    tint = Color.Gray
+                )
+            }
+
+            Text(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                text = videoPlayerViewModel.thumbUp.toString(),
+                fontSize = 12.sp,
+                maxLines = 1,
+                fontWeight = FontWeight.Bold)
+        }
+
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+            IconButton(
+                onClick = {  },
+                modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
+            ) {
+                Icon(
+                    modifier = Modifier.size(28.dp),
+                    imageVector = Icons.Filled.ThumbDown,
+                    contentDescription = "ThumbDown",
+                    tint = Color.Gray
+                )
+            }
+
+            Text(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                text = videoPlayerViewModel.thumbDown.toString(),
+                fontSize = 12.sp,
+                maxLines = 1,
+                fontWeight = FontWeight.Bold)
+        }
+
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+            IconButton(
+                onClick = { videoPlayerViewModel.star = !videoPlayerViewModel.star  },
+                modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
+            ) {
+                Icon(
+                    modifier = Modifier.size(28.dp),
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = "Star",
+                    tint = if(videoPlayerViewModel.star) Color(0xFFFF6699) else Color.Gray
+                )
+            }
+        }
+
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+            IconButton(
+                onClick = { },
+                modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
+            ) {
+                Icon(
+                    modifier = Modifier.size(28.dp),
+                    imageVector = Icons.Filled.Share,
+                    contentDescription = "Forward",
+                    tint = Color.Gray
+                )
+            }
+        }
+
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+            IconButton(
+                onClick = { },
+                modifier = Modifier.padding(horizontal = 4.dp).align(Alignment.CenterHorizontally).size(36.dp),
+            ) {
+                Icon(
+                    modifier = Modifier.size(28.dp),
+                    imageVector = Icons.Filled.Info,
+                    contentDescription = "Detail",
+                    tint = Color.Gray
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun HorizontalGallery(videoPlayerViewModel: VideoPlayerViewModel)
 {
     LazyRow(
-        modifier = Modifier.fillMaxWidth().height(100.dp),
+        modifier = Modifier.fillMaxWidth().height(120.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(horizontal = 24.dp)
     ) {
-        items(Global.video?.getGallery() ?: listOf()) { it ->
+        items(videoPlayerViewModel.video?.getGallery() ?: listOf()) { it ->
             SingleImageItem(img = it)
         }
     }
@@ -659,7 +699,7 @@ fun SingleImageItem(img: KeyImage) {
         contentDescription = null,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp)),
+            .clip(RoundedCornerShape(12.dp)),
         contentScale = ContentScale.Crop
     )
 }
@@ -863,6 +903,70 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit)
+{
+    Card(
+        modifier = modifier.height(80.dp).fillMaxWidth(),
+        colors = CardColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContentColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent
+        ),
+        onClick = onClick
+    )
+    {
+        Row()
+        {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(video.getCover())
+                    .memoryCacheKey("${video.klass}/${video.id}/cover")
+                    .diskCacheKey("${video.klass}/${video.id}/cover")
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier
+                    .width(128.dp).fillMaxHeight()
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            Column (
+                modifier = Modifier.padding(horizontal = 8.dp).fillMaxHeight().fillMaxWidth().align(Alignment.CenterVertically),
+                verticalArrangement = Arrangement.Center
+            )
+            {
+                Text(
+                    modifier = Modifier,
+                    text = video.video.name,
+                    fontSize = 14.sp,
+                    maxLines = 2,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                Spacer(modifier.weight(1f))
+
+                Text(
+                    modifier = Modifier.height(16.dp),
+                    text = video.klass,
+                    fontSize = 8.sp,
+                    maxLines = 1,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                Text(
+                    modifier = Modifier.height(16.dp),
+                    text = formatTime(video.video.duration),
+                    fontSize = 8.sp,
+                    maxLines = 1,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }

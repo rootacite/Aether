@@ -6,8 +6,6 @@ import androidx.compose.runtime.setValue
 import com.acitelight.aether.model.Video
 
 object Global {
-    var videoName: String = ""
-    var videoClass: String = ""
     var loggedIn by mutableStateOf(false)
-    var video: Video? = null
+    var sameClassVideos: List<Video>? = null
 }

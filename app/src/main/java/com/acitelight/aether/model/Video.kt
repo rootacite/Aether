@@ -25,4 +25,5 @@ class Video constructor(
             KeyImage(url = "${ApiClient.base}api/video/$klass/$id/gallery/$it?token=$token", key = "$klass/$id/gallery/$it")
         }
     }
+
 }

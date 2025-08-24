@@ -3,6 +3,7 @@ package com.acitelight.aether.view
 import android.R.id.tabs
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -43,11 +44,14 @@ import com.acitelight.aether.viewModel.VideoScreenViewModel
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavHostController
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global
+import kotlinx.coroutines.flow.first
 import java.nio.charset.Charset
 
 fun String.toHex(): String {
@@ -83,7 +87,7 @@ fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navCon
         )
         {
             items(videoList) { video ->
-                VideoCard(video, navController)
+                VideoCard(video, navController, videoScreenViewModel)
             }
         }
     }
@@ -110,17 +114,17 @@ fun TopRow(videoScreenViewModel: VideoScreenViewModel)
 }
 
 @Composable
-fun VideoCard(video: Video, navController: NavHostController) {
+fun VideoCard(video: Video, navController: NavHostController, videoScreenViewModel: VideoScreenViewModel) {
+    val videoList by videoScreenViewModel.videos.collectAsState()
+
     Card(
         shape = RoundedCornerShape(6.dp),
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(),
         onClick = {
-            Global.videoName = video.video.name
-            Global.videoClass = video.klass
-            Global.video = video
-            val route = "video_player_route/${ video.getVideo().toHex() }"
+            Global.sameClassVideos = videoList
+            val route = "video_player_route/${ "${video.klass}/${video.id}".toHex() }"
             navController.navigate(route)
         }
     ) {
@@ -128,17 +132,35 @@ fun VideoCard(video: Video, navController: NavHostController) {
             modifier = Modifier
                 .fillMaxWidth()
         )  {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(video.getCover())
-                    .memoryCacheKey("${video.klass}/${video.id}/cover")
-                    .diskCacheKey("${video.klass}/${video.id}/cover")
-                    .build(),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
+            Box(modifier = Modifier.fillMaxSize()){
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(video.getCover())
+                        .memoryCacheKey("${video.klass}/${video.id}/cover")
+                        .diskCacheKey("${video.klass}/${video.id}/cover")
+                        .build(),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                Text(
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(2.dp),
+                    text = formatTime(video.video.duration), fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(24.dp)
+                        .background( brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.45f)
+                            )
+                        ))
+                        .align(Alignment.BottomCenter))
+            }
             Text(
                 text = video.video.name,
                 fontSize = 14.sp,
@@ -151,7 +173,8 @@ fun VideoCard(video: Video, navController: NavHostController) {
                 modifier = Modifier.padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("class: ${video.klass}", fontSize = 12.sp)
+                Text("Class", fontSize = 12.sp)
+                Text("${video.klass}", fontSize = 12.sp)
             }
         }
     }
