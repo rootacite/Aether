@@ -1,0 +1,158 @@
+package com.acitelight.aether.view
+
+import android.R.id.tabs
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
+import com.acitelight.aether.model.Video
+import com.acitelight.aether.service.MediaManager
+import com.acitelight.aether.viewModel.VideoScreenViewModel
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.navigation.NavHostController
+import coil3.request.ImageRequest
+import com.acitelight.aether.Global
+import java.nio.charset.Charset
+
+fun String.toHex(): String {
+    return this.toByteArray().joinToString("") { "%02x".format(it) }
+}
+
+fun String.hexToString(charset: Charset = Charsets.UTF_8): String {
+    require(length % 2 == 0) { "Hex string must have even length" }
+
+    val bytes = ByteArray(length / 2)
+    for (i in bytes.indices) {
+        val hexByte = substring(i * 2, i * 2 + 2)
+        bytes[i] = hexByte.toInt(16).toByte()
+    }
+    return String(bytes, charset)
+}
+
+@Composable
+fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navController: NavHostController)
+{
+    val videoList by videoScreenViewModel.videos.collectAsState()
+
+    Column(
+        modifier = Modifier.fillMaxSize() // 或至少 fillMaxWidth()
+    ){
+        TopRow(videoScreenViewModel);
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        )
+        {
+            items(videoList) { video ->
+                VideoCard(video, navController)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopRow(videoScreenViewModel: VideoScreenViewModel)
+{
+    val tabIndex by videoScreenViewModel.tabIndex;
+    val klasses by videoScreenViewModel.klasses.collectAsState();
+
+    if(klasses.isEmpty()) return
+
+    ScrollableTabRow (selectedTabIndex = tabIndex) {
+        klasses.forEachIndexed { index, title ->
+            Tab(
+                selected = tabIndex == index,
+                onClick = { videoScreenViewModel.setTabIndex(index)  },
+                text = { Text(text = title, maxLines = 1) },
+            )
+        }
+    }
+}
+
+@Composable
+fun VideoCard(video: Video, navController: NavHostController) {
+    Card(
+        shape = RoundedCornerShape(6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+        onClick = {
+            Global.videoName = video.video.name
+            Global.videoClass = video.klass
+            Global.video = video
+            val route = "video_player_route/${ video.getVideo().toHex() }"
+            navController.navigate(route)
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+        )  {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(video.getCover())
+                    .memoryCacheKey("${video.klass}/${video.id}/cover")
+                    .diskCacheKey("${video.klass}/${video.id}/cover")
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Text(
+                text = video.video.name,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                modifier = Modifier.padding(8.dp).background(Color.Transparent).heightIn(48.dp)
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text("class: ${video.klass}", fontSize = 12.sp)
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
-_<div align="center">
+<div align="center">
 
 # Aether (Client for Abyss)
 
