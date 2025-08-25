@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.acitelight.aether.Global
+import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
 import com.acitelight.aether.viewModel.HomeScreenViewModel
 
@@ -55,6 +56,7 @@ fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = viewModel(), navContro
                             .padding(horizontal = 12.dp),
                         i,
                         {
+                            Global.sameClassVideos = recent
                             val route = "video_player_route/${ "${i.klass}/${i.id}".toHex() }"
                             navController.navigate(route)
                         })
