@@ -50,9 +50,11 @@ object RecentManager
         try{
             val r = Json.decodeFromString<List<VideoQueryIndex>>(content)
 
-            _recent.value = r.map{
+            val vn = r.map{
                 MediaManager.queryVideo(it.klass, it.id)
-            }
+            }.filter { it != null }
+
+            _recent.value = vn.map { it!! }
             return r
         }catch (e: Exception)
         {
@@ -82,9 +84,12 @@ object RecentManager
 
             if(o.size >= 21)
                 o.removeAt(o.size - 1)
-            _recent.value = o.map{
+
+            val vn = o.map{
                 MediaManager.queryVideo(it.klass, it.id)
-            }
+            }.filter { it != null }
+            _recent.value = vn.map { it!! }
+
             writeFile(context, "recent.json", Json.encodeToString(o))
         }
     }

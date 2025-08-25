@@ -55,7 +55,7 @@ class VideoPlayerViewModel() : ViewModel()
 
         remember {
             viewModelScope.launch {
-                video = MediaManager.queryVideo(v.split("/")[0], v.split("/")[1])
+                video = MediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
                 RecentManager.Push(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
                 _player = ExoPlayer.Builder(context).build().apply {
                     val url = video?.getVideo() ?: ""
