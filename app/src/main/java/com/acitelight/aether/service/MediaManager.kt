@@ -13,22 +13,38 @@ object MediaManager
 
     suspend fun listVideoKlasses(): List<String>
     {
-        val j = ApiClient.api.getVideoClasses(token)
-        return j.toList()
+        try
+        {
+            val j = ApiClient.api.getVideoClasses(token)
+            return j.toList()
+        }catch(e: Exception)
+        {
+            return listOf()
+        }
     }
 
     suspend fun listVideos(klass: String): List<Video>
     {
-        val j = ApiClient.api.queryVideoClasses(klass, token)
-        return j.map{
-            queryVideo(klass, it)
-        }.toList()
+        try {
+            val j = ApiClient.api.queryVideoClasses(klass, token)
+            return j.map{
+                queryVideo(klass, it)!!
+            }.toList()
+        }catch (e: Exception)
+        {
+            return listOf()
+        }
     }
 
-    suspend fun queryVideo(klass: String, id: String): Video
+    suspend fun queryVideo(klass: String, id: String): Video?
     {
-        val j = ApiClient.api.queryVideo(klass, id, token)
-        return Video(klass = klass, id = id, token=token, j)
+        try {
+            val j = ApiClient.api.queryVideo(klass, id, token)
+            return Video(klass = klass, id = id, token=token, j)
+        }catch (e: Exception)
+        {
+            return null
+        }
     }
 
     suspend fun listComics() : List<String>

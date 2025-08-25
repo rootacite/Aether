@@ -914,6 +914,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
 @Composable
 fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit)
 {
+    var isImageLoaded by remember { mutableStateOf(false) }
     Card(
         modifier = modifier.height(80.dp).fillMaxWidth(),
         colors = CardColors(
@@ -932,6 +933,11 @@ fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit)
                     .data(video.getCover())
                     .memoryCacheKey("${video.klass}/${video.id}/cover")
                     .diskCacheKey("${video.klass}/${video.id}/cover")
+                    .listener(
+                        onStart = { },
+                        onSuccess = { _, _ -> isImageLoaded = true },
+                        onError = { _, _ ->  }
+                    )
                     .build(),
                 contentDescription = null,
                 modifier = Modifier
