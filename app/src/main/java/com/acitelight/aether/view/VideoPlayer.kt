@@ -716,153 +716,78 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
     }
 
     ToggleFullScreen(true)
-    Box(
-        modifier = Modifier
-            .background(Color.Black)
-    )
+    Box(Modifier.fillMaxSize())
     {
-        AndroidView(
-            factory = {
-                PlayerView(
-                    it
-                ).apply {
-                    player = exoPlayer
-                    useController = false
-                }
-            },
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = {
-                            videoPlayerViewModel.planeVisibility = true
-                            videoPlayerViewModel.dragging = true;
-                            exoPlayer.pause()
-                        },
-                        onDragEnd = {
-                            videoPlayerViewModel.dragging = false;
-                            if (videoPlayerViewModel.isPlaying)
-                                exoPlayer.play()
-                        },
-                        onDrag = { change, dragAmount ->
-                            exoPlayer.seekTo((exoPlayer.currentPosition + dragAmount.x * 200.0f).toLong())
-                            videoPlayerViewModel.playProcess = exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()
-                        }
-                    )
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = {
-                            videoPlayerViewModel.isPlaying = !videoPlayerViewModel.isPlaying
-                            if (videoPlayerViewModel.isPlaying) exoPlayer.play() else exoPlayer.pause()
-                        },
-                        onTap = {
-                            videoPlayerViewModel.planeVisibility =
-                                !videoPlayerViewModel.planeVisibility
-                        },
-                        onLongPress = {
-                            videoPlayerViewModel.isLongPressing = true
-                            exoPlayer.playbackParameters = exoPlayer.playbackParameters
-                                .withSpeed(3.0f)
-                        },
-                        onPress = { offset ->
-                            val pressResult = tryAwaitRelease()
-                            if (pressResult && videoPlayerViewModel.isLongPressing) {
-                                videoPlayerViewModel.isLongPressing = false
-                                exoPlayer.playbackParameters = exoPlayer.playbackParameters
-                                    .withSpeed(1.0f)
-                            }
-                        },
-                    )
-                }
-        )
-
-        androidx.compose.animation.AnimatedVisibility(
-            visible = videoPlayerViewModel.dragging,
-            enter = fadeIn(
-                initialAlpha = 0f,
-            ),
-            exit = fadeOut(
-                targetAlpha = 0f
-            ),
-            modifier = Modifier.align(Alignment.Center)
-        ) {
-            Text(
-                text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
-                    formatTime(
-                        (exoPlayer.duration).toLong()
-                    )
-                }",
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 12.dp),
-                fontSize = 18.sp
-            )
-        }
-
-        AnimatedVisibility(
-            visible = videoPlayerViewModel.isLongPressing,
-            enter = slideInVertically(initialOffsetY = { fullHeight -> -fullHeight }),
-            exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
+                .background(Color.Black).align(Alignment.Center)
         )
         {
-            Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 24.dp).background(Color(0x44000000), RoundedCornerShape(18)))
-            {
-                Row{
-                    Icon(
-                        imageVector = Icons.Filled.FastForward,
-                        contentDescription = "Fast Forward",
-                        tint = Color.White,
-                        modifier = Modifier.size(36.dp).padding(4.dp).align(Alignment.CenterVertically)
-                    )
-
-                    Text(
-                        text = "3X Speed...",
-                        modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFFFFFF)
-                    )
-                }
-            }
-        }
-
-        IconButton(
-            onClick = {
-                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                      },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.White
-            )
-        }
-
-        AnimatedVisibility(
-            visible = videoPlayerViewModel.planeVisibility,
-            enter = slideInVertically(initialOffsetY = { fullHeight -> fullHeight }),
-            exit = slideOutVertically(targetOffsetY = { fullHeight -> fullHeight }),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-        )
-        {
-            Column(
+            AndroidView(
+                factory = {
+                    PlayerView(
+                        it
+                    ).apply {
+                        player = exoPlayer
+                        useController = false
+                    }
+                },
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .background( brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.4f)
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDragStart = {
+                                videoPlayerViewModel.planeVisibility = true
+                                videoPlayerViewModel.dragging = true;
+                                exoPlayer.pause()
+                            },
+                            onDragEnd = {
+                                videoPlayerViewModel.dragging = false;
+                                if (videoPlayerViewModel.isPlaying)
+                                    exoPlayer.play()
+                            },
+                            onDrag = { change, dragAmount ->
+                                exoPlayer.seekTo((exoPlayer.currentPosition + dragAmount.x * 200.0f).toLong())
+                                videoPlayerViewModel.playProcess = exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()
+                            }
                         )
-                    ))
-                    .padding(horizontal = 36.dp)
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onDoubleTap = {
+                                videoPlayerViewModel.isPlaying = !videoPlayerViewModel.isPlaying
+                                if (videoPlayerViewModel.isPlaying) exoPlayer.play() else exoPlayer.pause()
+                            },
+                            onTap = {
+                                videoPlayerViewModel.planeVisibility =
+                                    !videoPlayerViewModel.planeVisibility
+                            },
+                            onLongPress = {
+                                videoPlayerViewModel.isLongPressing = true
+                                exoPlayer.playbackParameters = exoPlayer.playbackParameters
+                                    .withSpeed(3.0f)
+                            },
+                            onPress = { offset ->
+                                val pressResult = tryAwaitRelease()
+                                if (pressResult && videoPlayerViewModel.isLongPressing) {
+                                    videoPlayerViewModel.isLongPressing = false
+                                    exoPlayer.playbackParameters = exoPlayer.playbackParameters
+                                        .withSpeed(1.0f)
+                                }
+                            },
+                        )
+                    }
+            )
+
+            androidx.compose.animation.AnimatedVisibility(
+                visible = videoPlayerViewModel.dragging,
+                enter = fadeIn(
+                    initialAlpha = 0f,
+                ),
+                exit = fadeOut(
+                    targetAlpha = 0f
+                ),
+                modifier = Modifier.align(Alignment.Center)
             ) {
                 Text(
                     text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
@@ -872,35 +797,113 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
                     }",
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 12.dp),
-                    fontSize = 12.sp
+                    fontSize = 18.sp
                 )
-                BiliStyleSlider(
-                    value = videoPlayerViewModel.playProcess,
-                    onValueChange = { value ->
-                        exoPlayer.seekTo((exoPlayer.duration * value).toLong())
-                    },
-                    modifier = Modifier.height(16.dp).fillMaxWidth().padding(bottom = 8.dp)
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                        .align(Alignment.Start),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    IconButton(
-                        onClick = {
-                            videoPlayerViewModel.isPlaying = !videoPlayerViewModel.isPlaying
-                            if (videoPlayerViewModel.isPlaying) exoPlayer.play() else exoPlayer.pause()
-                        },
-                        Modifier.size(42.dp)
-                    ) {
+            }
+
+            AnimatedVisibility(
+                visible = videoPlayerViewModel.isLongPressing,
+                enter = slideInVertically(initialOffsetY = { fullHeight -> -fullHeight }),
+                exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+            )
+            {
+                Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 24.dp).background(Color(0x44000000), RoundedCornerShape(18)))
+                {
+                    Row{
                         Icon(
-                            imageVector = if (videoPlayerViewModel.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = "Play/Pause",
+                            imageVector = Icons.Filled.FastForward,
+                            contentDescription = "Fast Forward",
                             tint = Color.White,
-                            modifier = Modifier.size(42.dp)
+                            modifier = Modifier.size(36.dp).padding(4.dp).align(Alignment.CenterVertically)
                         )
+
+                        Text(
+                            text = "3X Speed...",
+                            modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFFFFFF)
+                        )
+                    }
+                }
+            }
+
+            IconButton(
+                onClick = {
+                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+
+            AnimatedVisibility(
+                visible = videoPlayerViewModel.planeVisibility,
+                enter = slideInVertically(initialOffsetY = { fullHeight -> fullHeight }),
+                exit = slideOutVertically(targetOffsetY = { fullHeight -> fullHeight }),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+            )
+            {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .background( brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.4f)
+                            )
+                        ))
+                        .padding(horizontal = 36.dp)
+                ) {
+                    Text(
+                        text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
+                            formatTime(
+                                (exoPlayer.duration).toLong()
+                            )
+                        }",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        fontSize = 12.sp
+                    )
+                    BiliStyleSlider(
+                        value = videoPlayerViewModel.playProcess,
+                        onValueChange = { value ->
+                            exoPlayer.seekTo((exoPlayer.duration * value).toLong())
+                        },
+                        modifier = Modifier.height(16.dp).fillMaxWidth().padding(bottom = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .align(Alignment.Start),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        IconButton(
+                            onClick = {
+                                videoPlayerViewModel.isPlaying = !videoPlayerViewModel.isPlaying
+                                if (videoPlayerViewModel.isPlaying) exoPlayer.play() else exoPlayer.pause()
+                            },
+                            Modifier.size(42.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (videoPlayerViewModel.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = "Play/Pause",
+                                tint = Color.White,
+                                modifier = Modifier.size(42.dp)
+                            )
+                        }
                     }
                 }
             }
