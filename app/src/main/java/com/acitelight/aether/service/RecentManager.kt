@@ -1,6 +1,7 @@
 package com.acitelight.aether.service
 
 import android.content.Context
+import androidx.compose.runtime.mutableStateListOf
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoQueryIndex
 import kotlinx.coroutines.Dispatchers
@@ -50,11 +51,15 @@ object RecentManager
         try{
             val r = Json.decodeFromString<List<VideoQueryIndex>>(content)
 
-            val vn = r.map{
-                MediaManager.queryVideo(it.klass, it.id)
-            }.filter { it != null }
+            recent.clear()
 
-            _recent.value = vn.map { it!! }
+            for(it in r)
+            {
+                val v = MediaManager.queryVideo(it.klass, it.id)
+                if(v != null)
+                    recent.add(recent.size, v)
+            }
+
             return r
         }catch (e: Exception)
         {
@@ -74,6 +79,7 @@ object RecentManager
             {
                 val temp = o[0]
                 val index = o.indexOf(video)
+                recent.removeAt(index)
                 o[0] = o[index]
                 o[index] = temp
             }
@@ -85,15 +91,10 @@ object RecentManager
             if(o.size >= 21)
                 o.removeAt(o.size - 1)
 
-            val vn = o.map{
-                MediaManager.queryVideo(it.klass, it.id)
-            }.filter { it != null }
-            _recent.value = vn.map { it!! }
-
+            recent.add(0, MediaManager.queryVideo(video.klass, video.id)!!)
             writeFile(context, "recent.json", Json.encodeToString(o))
         }
     }
 
-    private val _recent = MutableStateFlow<List<Video>>(emptyList())
-    val recent: StateFlow<List<Video>> = _recent
+    val recent = mutableStateListOf<Video>()
 }
