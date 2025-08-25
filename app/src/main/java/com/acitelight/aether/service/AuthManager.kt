@@ -9,9 +9,10 @@ import java.security.PrivateKey
 import java.security.Signature
 
 object AuthManager {
-    suspend fun fetchToken(baseUrl: String, username: String, privateKey: String): String? = runBlocking {
+    suspend fun fetchToken(baseUrl: String, username: String, privateKey: String): String? {
         val api = ApiClient.api
         var challengeBase64 = ""
+
         try{
             challengeBase64 = api.getChallenge(username).string()
         }catch (e: Exception)
@@ -21,7 +22,7 @@ object AuthManager {
 
         val signedBase64 = signChallenge(db64(privateKey), db64(challengeBase64))
 
-        return@runBlocking try {
+        return try {
             api.verifyChallenge(username, ChallengeResponse(response = signedBase64)).string()
         } catch (e: Exception) {
             e.printStackTrace()
