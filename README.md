@@ -23,7 +23,7 @@ _🚀This is the client of the multimedia server Abyss, which can also be extend
 
 ### High Priority
 - [x] Fix tablet full-screen mode bug
-- [ ] Hide private key after user input
+- [x] Hide private key after user input
 - [ ] Replace Android robot icon with custom design
 - [ ] Configure server baseURL in client settings
 - [ ] Implement proper access control for directory queries

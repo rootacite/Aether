@@ -94,8 +94,7 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = viewModel())
                 // Save Button
                 Button(
                     onClick = {
-                        meScreenViewModel.updateAccount(username, privateKey);
-                        Toast.makeText(context, "Account updated", Toast.LENGTH_SHORT).show()
+                        meScreenViewModel.updateAccount(username, privateKey, context)
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
