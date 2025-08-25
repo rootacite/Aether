@@ -32,6 +32,8 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
     private val dataStore = application.dataStore
     private val USER_NAME_KEY = stringPreferencesKey("user_name")
     private val PRIVATE_KEY   = stringPreferencesKey("private_key")
+    private val URL_KEY = stringPreferencesKey("url")
+    private val CERT_KEY   = stringPreferencesKey("cert")
 
     val userNameFlow: Flow<String> = dataStore.data.map { preferences ->
         preferences[USER_NAME_KEY] ?: ""
@@ -39,6 +41,14 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
 
     val privateKeyFlow: Flow<String> = dataStore.data.map {  preferences ->
         preferences[PRIVATE_KEY] ?: ""
+    }
+
+    val urlFlow: Flow<String> = dataStore.data.map { preferences ->
+        preferences[URL_KEY] ?: ""
+    }
+
+    val certFlow: Flow<String> = dataStore.data.map {  preferences ->
+        preferences[CERT_KEY] ?: ""
     }
 
     var _init = false
@@ -60,13 +70,16 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             val u = userNameFlow.first()
             val p = privateKeyFlow.first()
+            val ur = urlFlow.first()
+            val c = certFlow.first()
 
-            if(u=="" || p=="") return@launch
+            if(u=="" || p=="" || ur=="" || c=="") return@launch
 
             try{
+                ApiClient.apply(ur, c)
+
                 if (MediaManager.token == "null")
                     MediaManager.token = AuthManager.fetchToken(
-                        ApiClient.base,
                         u,
                         p
                     )!!
@@ -74,6 +87,7 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
                 Global.loggedIn = true
             }catch(e: Exception)
             {
+                Global.loggedIn = false
                 print(e.message)
             }
         }

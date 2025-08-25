@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -25,19 +28,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.acitelight.aether.viewModel.MeScreenViewModel
 
 @Composable
-fun MeScreen(meScreenViewModel: MeScreenViewModel = viewModel())
-{
+fun MeScreen(meScreenViewModel: MeScreenViewModel = viewModel()) {
     val context = LocalContext.current
     var username by meScreenViewModel.username;
     var privateKey by meScreenViewModel.privateKey;
+    var url by meScreenViewModel.url
+    var cert by meScreenViewModel.cert
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp),
@@ -45,62 +51,130 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = viewModel())
         verticalArrangement = Arrangement.Top
     ) {
         // Card component for a clean, contained UI block
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-        ) {
-            Column(
+        item{
+            Card(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Account Setting",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(bottom = 16.dp).align(Alignment.Start)
-                )
-
-                // Username input field
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Username") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Person, contentDescription = "Username")
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Private key input field
-                OutlinedTextField(
-                    value = privateKey,
-                    onValueChange = { privateKey = it },
-                    label = { Text("Key") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Key, contentDescription = "Key")
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Save Button
-                Button(
-                    onClick = {
-                        meScreenViewModel.updateAccount(username, privateKey, context)
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            )
+            {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Save")
+                    Text(
+                        text = "Account Setting",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .align(Alignment.Start)
+                    )
+
+                    // Username input field
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text("Username") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Person, contentDescription = "Username")
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Private key input field
+                    OutlinedTextField(
+                        value = privateKey,
+                        onValueChange = { privateKey = it },
+                        label = { Text("Key") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Key, contentDescription = "Key")
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Save Button
+                    Button(
+                        onClick = {
+                            meScreenViewModel.updateAccount(username, privateKey, context)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Save")
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            )
+            {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Server Setting",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .align(Alignment.Start)
+                    )
+
+                    // Username input field
+                    OutlinedTextField(
+                        value = url,
+                        onValueChange = { url = it },
+                        label = { Text("Url") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Link, contentDescription = "Url")
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Private key input field
+                    OutlinedTextField(
+                        value = cert,
+                        onValueChange = { cert = it },
+                        label = { Text("Cert") },
+                        singleLine = false,
+                        maxLines = 40,
+                        minLines = 20,
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(
+                            fontSize = 8.sp
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Save Button
+                    Button(
+                        onClick = {
+                            meScreenViewModel.updateServer(url, cert, context)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Save")
+                    }
                 }
             }
         }
     }
 }
+

@@ -24,23 +24,70 @@ import kotlinx.coroutines.launch
 class MeScreenViewModel(application: Application) : AndroidViewModel(application) {
     private val dataStore = application.dataStore
     private val USER_NAME_KEY = stringPreferencesKey("user_name")
-    private val PRIVATE_KEY = stringPreferencesKey("private_key")
+    private val PRIVATE_KEY   = stringPreferencesKey("private_key")
+    private val URL_KEY = stringPreferencesKey("url")
+    private val CERT_KEY   = stringPreferencesKey("cert")
 
     val userNameFlow: Flow<String> = dataStore.data.map { preferences ->
         preferences[USER_NAME_KEY] ?: ""
     }
 
-    val privateKeyFlow: Flow<String> = dataStore.data.map { preferences ->
+    val privateKeyFlow: Flow<String> = dataStore.data.map {  preferences ->
         preferences[PRIVATE_KEY] ?: ""
+    }
+
+    val urlFlow: Flow<String> = dataStore.data.map { preferences ->
+        preferences[URL_KEY] ?: ""
+    }
+
+    val certFlow: Flow<String> = dataStore.data.map {  preferences ->
+        preferences[CERT_KEY] ?: ""
     }
 
     val username = mutableStateOf("");
     val privateKey = mutableStateOf("")
+    val url = mutableStateOf("");
+    val cert = mutableStateOf("")
 
     init {
         viewModelScope.launch {
             username.value = userNameFlow.first()
             privateKey.value = if (privateKeyFlow.first() == "") "" else "******"
+            url.value = urlFlow.first()
+            cert.value = certFlow.first()
+        }
+    }
+
+    fun updateServer(u: String, c: String, context: Context)
+    {
+        viewModelScope.launch {
+            dataStore.edit { preferences ->
+                preferences[URL_KEY] = u
+                preferences[CERT_KEY] = c
+            }
+
+            Global.loggedIn = false
+
+            val us = userNameFlow.first()
+            val u = urlFlow.first()
+            val c = certFlow.first()
+            val p = privateKeyFlow.first()
+
+            if (u == "" || c == "" || p == "") return@launch
+
+            try {
+                ApiClient.apply(u, c)
+                MediaManager.token = AuthManager.fetchToken(
+                    us,
+                    p
+                )!!
+
+                Global.loggedIn = true
+                Toast.makeText(context, "Server Updated", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                print(e.message)
+                Toast.makeText(context, "Invalid Account or Server Information", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -62,7 +109,6 @@ class MeScreenViewModel(application: Application) : AndroidViewModel(application
 
             try {
                 MediaManager.token = AuthManager.fetchToken(
-                    ApiClient.base,
                     u,
                     p
                 )!!

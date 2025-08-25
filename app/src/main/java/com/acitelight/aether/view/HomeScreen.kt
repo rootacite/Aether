@@ -34,7 +34,6 @@ fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = viewModel(), navContro
 {
     if(Global.loggedIn)
         homeScreenViewModel.Init()
-    val recent by RecentManager.recent.collectAsState()
 
     LazyColumn(modifier = Modifier.fillMaxWidth())
     {
@@ -49,14 +48,14 @@ fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = viewModel(), navContro
 
                 HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
 
-                for(i in recent)
+                for(i in RecentManager.recent)
                 {
                     MiniVideoCard(
                         modifier = Modifier
                             .padding(horizontal = 12.dp),
                         i,
                         {
-                            Global.sameClassVideos = recent
+                            Global.sameClassVideos = RecentManager.recent
                             val route = "video_player_route/${ "${i.klass}/${i.id}".toHex() }"
                             navController.navigate(route)
                         })
