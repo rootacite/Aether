@@ -15,7 +15,7 @@ object MediaManager
     {
         try
         {
-            val j = ApiClient.api.getVideoClasses(token)
+            val j = ApiClient.api!!.getVideoClasses(token)
             return j.toList()
         }catch(e: Exception)
         {
@@ -26,7 +26,7 @@ object MediaManager
     suspend fun listVideos(klass: String): List<Video>
     {
         try {
-            val j = ApiClient.api.queryVideoClasses(klass, token)
+            val j = ApiClient.api!!.queryVideoClasses(klass, token)
             return j.map{
                 queryVideo(klass, it)!!
             }.toList()
@@ -39,7 +39,7 @@ object MediaManager
     suspend fun queryVideo(klass: String, id: String): Video?
     {
         try {
-            val j = ApiClient.api.queryVideo(klass, id, token)
+            val j = ApiClient.api!!.queryVideo(klass, id, token)
             return Video(klass = klass, id = id, token=token, j)
         }catch (e: Exception)
         {
@@ -49,11 +49,13 @@ object MediaManager
 
     suspend fun listComics() : List<String>
     {
-        return ApiClient.api.getComicCollections()
+        // TODO: try
+        return ApiClient.api!!.getComicCollections()
     }
 
     suspend fun queryComicInfo(c: String) : Comic
     {
-        return ApiClient.api.queryComicInfo(c)
+        // TODO: try
+        return ApiClient.api!!.queryComicInfo(c)
     }
 }
