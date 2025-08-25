@@ -70,11 +70,11 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
                         u,
                         p
                     )!!
+
+                Global.loggedIn = true
             }catch(e: Exception)
             {
                 print(e.message)
-            }finally {
-                Global.loggedIn = true
             }
         }
     }
