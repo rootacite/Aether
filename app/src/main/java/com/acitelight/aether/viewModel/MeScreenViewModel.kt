@@ -73,7 +73,7 @@ class MeScreenViewModel(application: Application) : AndroidViewModel(application
             val c = certFlow.first()
             val p = privateKeyFlow.first()
 
-            if (u == "" || c == "" || p == "") return@launch
+            if (u == "" || c == "" || p == "" || us == "") return@launch
 
             try {
                 ApiClient.apply(u, c)
@@ -105,7 +105,10 @@ class MeScreenViewModel(application: Application) : AndroidViewModel(application
             val u = userNameFlow.first()
             val p = privateKeyFlow.first()
 
-            if (u == "" || p == "") return@launch
+            val ur = urlFlow.first()
+            val c = certFlow.first()
+
+            if (u == "" || p == "" || ur == "" || c == "") return@launch
 
             try {
                 MediaManager.token = AuthManager.fetchToken(

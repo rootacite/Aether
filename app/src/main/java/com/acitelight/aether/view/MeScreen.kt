@@ -106,7 +106,8 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = viewModel()) {
                         onClick = {
                             meScreenViewModel.updateAccount(username, privateKey, context)
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = privateKey != "******"
                     ) {
                         Text("Save")
                     }

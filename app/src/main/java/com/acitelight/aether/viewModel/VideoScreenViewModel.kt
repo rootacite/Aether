@@ -63,8 +63,9 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
 
     suspend fun init() {
         _klasses.value = MediaManager.listVideoKlasses()
+
         MediaManager.listVideos(_klasses.value.first()){
-            v -> videos.add(videos.size, v)
+            v -> if(0 == tabIndex.value && !videos.contains(v)) videos.add(videos.size, v)
         }
     }
 
@@ -73,10 +74,11 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch()
         {
             _tabIndex.intValue = index;
+
             videos.clear()
             MediaManager.listVideos(_klasses.value[index])
             {
-                v -> videos.add(videos.size, v)
+                v -> if(index == tabIndex.value) videos.add(videos.size, v)
             }
         }
     }
