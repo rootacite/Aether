@@ -488,7 +488,13 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 2.dp)
-                    .align(Alignment.BottomCenter),
+                    .align(Alignment.BottomCenter).background(
+                        brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.4f),
+                        )
+                    )),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 IconButton(
@@ -1058,20 +1064,49 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
                 }
             }
 
-            IconButton(
-                onClick = {
-                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                },
+            AnimatedVisibility(
+                visible = videoPlayerViewModel.planeVisibility,
+                enter = slideInVertically(initialOffsetY = { fullHeight -> -fullHeight }),
+                exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
                 modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+            )
+            {
+                Row(Modifier
                     .align(Alignment.TopStart)
-                    .padding(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
+                    .padding(horizontal = 32.dp).background(
+                        brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.4f),
+                            Color.Transparent,
+                        )
+                    )))
+                {
+                    IconButton(
+                        onClick = {
+                            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                        },
+                        modifier = Modifier.size(36.dp).align(Alignment.CenterVertically)
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(36.dp),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+
+                    Text(
+                        text = "${videoPlayerViewModel.video?.video?.name}",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 12.dp).align(Alignment.CenterVertically),
+                        fontSize = 18.sp
+                    )
+                }
             }
+
+
 
             AnimatedVisibility(
                 visible = videoPlayerViewModel.planeVisibility,
