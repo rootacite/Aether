@@ -88,6 +88,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global
@@ -572,7 +573,7 @@ fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController:
                             videoPlayerViewModel._player?.pause()
                             val route = "video_player_route/${ "${i.klass}/${i.id}".toHex() }"
                             navController.navigate(route)
-                        })
+                        }, videoPlayerViewModel.imageLoader!!)
                     HorizontalDivider(Modifier.padding(vertical = 8.dp).alpha(0.25f), 1.dp, DividerDefaults.color)
                 }
             }
@@ -683,13 +684,13 @@ fun HorizontalGallery(videoPlayerViewModel: VideoPlayerViewModel)
         contentPadding = PaddingValues(horizontal = 24.dp)
     ) {
         items(videoPlayerViewModel.video?.getGallery() ?: listOf()) { it ->
-            SingleImageItem(img = it)
+            SingleImageItem(img = it, videoPlayerViewModel.imageLoader!!)
         }
     }
 }
 
 @Composable
-fun SingleImageItem(img: KeyImage) {
+fun SingleImageItem(img: KeyImage, imageLoader: ImageLoader) {
     AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
             .data(img.url)
@@ -700,7 +701,8 @@ fun SingleImageItem(img: KeyImage) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp)),
-        contentScale = ContentScale.Crop
+        contentScale = ContentScale.Crop,
+        imageLoader = imageLoader
     )
 }
 
@@ -912,7 +914,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
 }
 
 @Composable
-fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit)
+fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit, imageLoader: ImageLoader)
 {
     var isImageLoaded by remember { mutableStateOf(false) }
     Card(
@@ -943,7 +945,8 @@ fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit)
                 modifier = Modifier
                     .width(128.dp).fillMaxHeight()
                     .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                imageLoader = imageLoader
             )
 
             Column (

@@ -1,18 +1,24 @@
 package com.acitelight.aether.viewModel
 
 import android.app.Application
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil3.ImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.Global
 import com.acitelight.aether.dataStore
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient
+import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.AuthManager
 import com.acitelight.aether.service.MediaManager
 import kotlinx.coroutines.flow.Flow
@@ -39,15 +45,27 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
     private val _tabIndex = mutableIntStateOf(0)
     val tabIndex: State<Int> = _tabIndex
 
-    private val _videos = MutableStateFlow<List<Video>>(emptyList())
-    val videos: StateFlow<List<Video>> = _videos
+    val videos = mutableStateListOf<Video>()
     private val _klasses = MutableStateFlow<List<String>>(emptyList())
     val klasses: StateFlow<List<String>> = _klasses;
+    var imageLoader: ImageLoader? = null;
+
+    @Composable
+    fun SetupClient()
+    {
+        val context = LocalContext.current
+        imageLoader =  ImageLoader.Builder(context)
+            .components {
+                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+            }
+            .build()
+    }
 
     suspend fun init() {
         _klasses.value = MediaManager.listVideoKlasses()
-        val p = MediaManager.listVideos(_klasses.value.first())
-        _videos.value = p
+        MediaManager.listVideos(_klasses.value.first()){
+            v -> videos.add(videos.size, v)
+        }
     }
 
     fun setTabIndex(index: Int)
@@ -55,8 +73,11 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch()
         {
             _tabIndex.intValue = index;
-            val p = MediaManager.listVideos(_klasses.value[index])
-            _videos.value = p
+            videos.clear()
+            MediaManager.listVideos(_klasses.value[index])
+            {
+                v -> videos.add(videos.size, v)
+            }
         }
     }
 

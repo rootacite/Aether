@@ -69,6 +69,11 @@ object ApiClient {
         }
     }
 
+    fun createOkHttp(): OkHttpClient
+    {
+        return createOkHttpClientWithDynamicCert(loadCertificateFromString(cert))
+    }
+
     private fun createRetrofit(): Retrofit {
         val okHttpClient = createOkHttpClientWithDynamicCert(loadCertificateFromString(cert))
 

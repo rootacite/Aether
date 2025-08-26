@@ -58,7 +58,7 @@ fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = viewModel(), navContro
                             Global.sameClassVideos = RecentManager.recent
                             val route = "video_player_route/${ "${i.klass}/${i.id}".toHex() }"
                             navController.navigate(route)
-                        })
+                        }, homeScreenViewModel.imageLoader!!)
                     HorizontalDivider(Modifier.padding(vertical = 8.dp).alpha(0.25f), 1.dp, DividerDefaults.color)
                 }
             }

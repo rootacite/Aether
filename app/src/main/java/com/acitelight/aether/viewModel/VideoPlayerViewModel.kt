@@ -16,10 +16,15 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Player.STATE_READY
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import coil3.ImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.Global
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoQueryIndex
+import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
 import com.acitelight.aether.view.hexToString
@@ -46,6 +51,10 @@ class VideoPlayerViewModel() : ViewModel()
     var renderedFirst = false
     var video: Video? = null
 
+    val dataSourceFactory = OkHttpDataSource.Factory(createOkHttp())
+    var imageLoader: ImageLoader? = null;
+
+    @OptIn(UnstableApi::class)
     @Composable
     fun Init(videoId: String)
     {
@@ -53,11 +62,20 @@ class VideoPlayerViewModel() : ViewModel()
         val context = LocalContext.current
         val v = videoId.hexToString()
 
+        imageLoader =  ImageLoader.Builder(context)
+            .components {
+                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+            }
+            .build()
+
         remember {
             viewModelScope.launch {
                 video = MediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
                 RecentManager.Push(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
-                _player = ExoPlayer.Builder(context).build().apply {
+                _player = ExoPlayer
+                    .Builder(context)
+                    .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+                    .build().apply {
                     val url = video?.getVideo() ?: ""
                     val mediaItem = MediaItem.fromUri(url)
                     setMediaItem(mediaItem)

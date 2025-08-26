@@ -11,11 +11,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import coil3.ImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import okhttp3.OkHttpClient
 import com.acitelight.aether.Global
 import com.acitelight.aether.dataStore
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoQueryIndex
 import com.acitelight.aether.service.ApiClient
+import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.AuthManager
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.MediaManager.token
@@ -52,6 +56,7 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     var _init = false
+    var imageLoader: ImageLoader? = null;
 
     @Composable
     fun Init(){
@@ -59,6 +64,11 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
         _init = true
 
         val context = LocalContext.current
+        imageLoader =  ImageLoader.Builder(context)
+            .components {
+                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+            }
+            .build()
         remember {
             viewModelScope.launch {
                 RecentManager.Query(context)

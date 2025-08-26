@@ -23,16 +23,17 @@ object MediaManager
         }
     }
 
-    suspend fun listVideos(klass: String): List<Video>
+    suspend fun listVideos(klass: String, callback: (Video) -> Unit)
     {
-        try {
-            val j = ApiClient.api!!.queryVideoClasses(klass, token)
-            return j.map{
-                queryVideo(klass, it)!!
-            }.toList()
-        }catch (e: Exception)
+        val j = ApiClient.api!!.queryVideoClasses(klass, token)
+        for(it in j)
         {
-            return listOf()
+            try {
+                callback(queryVideo(klass, it)!!)
+            }catch (e: Exception)
+            {
+
+            }
         }
     }
 

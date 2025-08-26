@@ -72,7 +72,7 @@ fun String.hexToString(charset: Charset = Charsets.UTF_8): String {
 @Composable
 fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navController: NavHostController)
 {
-    val videoList by videoScreenViewModel.videos.collectAsState()
+    videoScreenViewModel.SetupClient()
 
     Column(
         modifier = Modifier.fillMaxSize() // 或至少 fillMaxWidth()
@@ -86,7 +86,7 @@ fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navCon
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         )
         {
-            items(videoList) { video ->
+            items(videoScreenViewModel.videos) { video ->
                 VideoCard(video, navController, videoScreenViewModel)
             }
         }
@@ -115,15 +115,13 @@ fun TopRow(videoScreenViewModel: VideoScreenViewModel)
 
 @Composable
 fun VideoCard(video: Video, navController: NavHostController, videoScreenViewModel: VideoScreenViewModel) {
-    val videoList by videoScreenViewModel.videos.collectAsState()
-
     Card(
         shape = RoundedCornerShape(6.dp),
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(),
         onClick = {
-            Global.sameClassVideos = videoList
+            Global.sameClassVideos = videoScreenViewModel.videos
             val route = "video_player_route/${ "${video.klass}/${video.id}".toHex() }"
             navController.navigate(route)
         }
@@ -142,7 +140,8 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    imageLoader = videoScreenViewModel.imageLoader!!
                 )
 
                 Text(
