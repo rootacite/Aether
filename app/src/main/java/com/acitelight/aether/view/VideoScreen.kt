@@ -1,6 +1,5 @@
 package com.acitelight.aether.view
 
-import android.R.id.tabs
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,12 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -39,19 +33,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.acitelight.aether.model.Video
-import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.viewModel.VideoScreenViewModel
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavHostController
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global
-import kotlinx.coroutines.flow.first
 import java.nio.charset.Charset
 
 fun String.toHex(): String {
@@ -72,6 +63,7 @@ fun String.hexToString(charset: Charset = Charsets.UTF_8): String {
 @Composable
 fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navController: NavHostController)
 {
+    val tabIndex by videoScreenViewModel.tabIndex;
     videoScreenViewModel.SetupClient()
 
     Column(
@@ -86,8 +78,11 @@ fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navCon
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         )
         {
-            items(videoScreenViewModel.videos) { video ->
-                VideoCard(video, navController, videoScreenViewModel)
+            if(videoScreenViewModel.classes.isNotEmpty())
+            {
+                items(videoScreenViewModel.classesMap[videoScreenViewModel.classes[tabIndex]] ?: mutableStateListOf()) { video ->
+                    VideoCard(video, navController, videoScreenViewModel)
+                }
             }
         }
     }
@@ -98,12 +93,11 @@ fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navCon
 fun TopRow(videoScreenViewModel: VideoScreenViewModel)
 {
     val tabIndex by videoScreenViewModel.tabIndex;
-    val klasses by videoScreenViewModel.klasses.collectAsState();
 
-    if(klasses.isEmpty()) return
+    if(videoScreenViewModel.classes.isEmpty()) return
 
     ScrollableTabRow (selectedTabIndex = tabIndex) {
-        klasses.forEachIndexed { index, title ->
+        videoScreenViewModel.classes.forEachIndexed { index, title ->
             Tab(
                 selected = tabIndex == index,
                 onClick = { videoScreenViewModel.setTabIndex(index)  },
@@ -115,13 +109,14 @@ fun TopRow(videoScreenViewModel: VideoScreenViewModel)
 
 @Composable
 fun VideoCard(video: Video, navController: NavHostController, videoScreenViewModel: VideoScreenViewModel) {
+    val tabIndex by videoScreenViewModel.tabIndex;
     Card(
         shape = RoundedCornerShape(6.dp),
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(),
         onClick = {
-            Global.sameClassVideos = videoScreenViewModel.videos
+            Global.sameClassVideos = videoScreenViewModel.classesMap[videoScreenViewModel.classes[tabIndex]] ?: mutableStateListOf()
             val route = "video_player_route/${ "${video.klass}/${video.id}".toHex() }"
             navController.navigate(route)
         }
