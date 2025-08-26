@@ -1,5 +1,6 @@
 package com.acitelight.aether.viewModel
 
+import android.app.Activity
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -40,7 +41,12 @@ class VideoPlayerViewModel() : ViewModel()
     var playProcess by mutableFloatStateOf(0.0f)
     var planeVisibility by mutableStateOf(true)
     var isLongPressing by mutableStateOf(false)
-    var dragging by mutableStateOf(false)
+
+    // -1 : Not dragging
+    // 0  : Seek
+    // 1  : Volume
+    // 2  : Brightness
+    var draggingPurpose by mutableIntStateOf(-1)
 
     var thumbUp by mutableIntStateOf(0)
     var thumbDown by mutableIntStateOf(0)
@@ -53,6 +59,7 @@ class VideoPlayerViewModel() : ViewModel()
 
     val dataSourceFactory = OkHttpDataSource.Factory(createOkHttp())
     var imageLoader: ImageLoader? = null;
+    var brit by  mutableFloatStateOf(0.5f)
 
     @OptIn(UnstableApi::class)
     @Composable
