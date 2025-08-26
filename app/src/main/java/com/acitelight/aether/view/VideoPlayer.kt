@@ -1,8 +1,10 @@
 package com.acitelight.aether.view
 
 import android.app.Activity
+import android.content.Context
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.media.AudioManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -12,7 +14,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -50,7 +51,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Info
@@ -58,6 +62,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.DividerDefaults
@@ -68,6 +73,8 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -95,6 +102,7 @@ import com.acitelight.aether.Global
 import com.acitelight.aether.ToggleFullScreen
 import com.acitelight.aether.model.KeyImage
 import com.acitelight.aether.model.Video
+import kotlin.math.abs
 
 fun formatTime(ms: Long): String {
     if (ms <= 0) return "00:00:00"
@@ -223,6 +231,18 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
     val context = LocalContext.current
     val activity = context as? Activity
 
+    val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+    val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
+    var volFactor by remember { mutableFloatStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / maxVolume.toFloat()) }
+
+    fun setVolume(value: Int) {
+        audioManager.setStreamVolume(
+            AudioManager.STREAM_MUSIC,
+            value.coerceIn(0, maxVolume),
+            AudioManager.FLAG_PLAY_SOUND
+        )
+    }
+
     Box(modifier)
     {
         AndroidView(
@@ -239,19 +259,53 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                 .fillMaxWidth()
                 .pointerInput(Unit) {
                     detectDragGestures(
-                        onDragStart = {
-                            videoPlayerViewModel.dragging = true
-                            videoPlayerViewModel.planeVisibility = true
-                            exoPlayer.pause()
+                        onDragStart = { offset ->
+                            if(offset.x < size.width / 2)
+                            {
+                                videoPlayerViewModel.draggingPurpose = -1;
+                            }else{
+                                videoPlayerViewModel.draggingPurpose = -2;
+                            }
                         },
                         onDragEnd = {
-                            videoPlayerViewModel.dragging = false
-                            if (videoPlayerViewModel.isPlaying)
+                            if (videoPlayerViewModel.isPlaying && videoPlayerViewModel.draggingPurpose == 0)
                                 exoPlayer.play()
+
+                            videoPlayerViewModel.draggingPurpose = -1;
                         },
                         onDrag = { change, dragAmount ->
-                            exoPlayer.seekTo((exoPlayer.currentPosition + dragAmount.x * 200.0f).toLong())
-                            videoPlayerViewModel.playProcess = exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()
+                            if(abs(dragAmount.x) > abs(dragAmount.y) &&
+                                (videoPlayerViewModel.draggingPurpose == -1 || videoPlayerViewModel.draggingPurpose == -2))
+                            {
+                                videoPlayerViewModel.draggingPurpose = 0
+                                videoPlayerViewModel.planeVisibility = true
+                                exoPlayer.pause()
+                            }
+                            else if(videoPlayerViewModel.draggingPurpose == -1) videoPlayerViewModel.draggingPurpose = 1
+                            else if(videoPlayerViewModel.draggingPurpose == -2) videoPlayerViewModel.draggingPurpose = 2
+
+                            if(videoPlayerViewModel.draggingPurpose == 0)
+                            {
+                                exoPlayer.seekTo((exoPlayer.currentPosition + dragAmount.x * 200.0f).toLong())
+                                videoPlayerViewModel.playProcess = exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()
+                            }else if(videoPlayerViewModel.draggingPurpose == 2)
+                            {
+                                val cu = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                                volFactor = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / maxVolume.toFloat()
+                                if(dragAmount.y < 0)
+                                    setVolume( cu + 1);
+                                else if(dragAmount.y > 0)
+                                    setVolume( cu - 1);
+                            }else if(videoPlayerViewModel.draggingPurpose == 1)
+                            {
+                                videoPlayerViewModel.brit = (videoPlayerViewModel.brit - dragAmount.y * 0.002f).coerceIn(0f, 1f);
+
+                                activity?.window?.attributes = activity.window.attributes.apply {
+                                    screenBrightness = videoPlayerViewModel.brit.coerceIn(0f, 1f)
+                                }
+                                activity?.window?.setAttributes(activity.window.attributes)
+                            }
+
                         }
                     )
                 }
@@ -312,7 +366,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
         }
 
         androidx.compose.animation.AnimatedVisibility(
-            visible = videoPlayerViewModel.dragging,
+            visible = videoPlayerViewModel.draggingPurpose == 0,
             enter = fadeIn(
                 initialAlpha = 0f,
             ),
@@ -320,7 +374,8 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                 targetAlpha = 0f
             ),
             modifier = Modifier.align(Alignment.Center)
-        ) {
+        )
+        {
             Text(
                 text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
                     formatTime(
@@ -328,11 +383,73 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                     )
                 }",
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(bottom = 12.dp),
+                modifier = Modifier.padding(bottom = 12.dp),
                 fontSize = 18.sp
             )
         }
+
+        androidx.compose.animation.AnimatedVisibility(
+            visible = videoPlayerViewModel.draggingPurpose == 2,
+            enter = fadeIn(
+                initialAlpha = 0f,
+            ),
+            exit = fadeOut(
+                targetAlpha = 0f
+            ),
+            modifier = Modifier.align(Alignment.Center)
+        )
+        {
+            Row(Modifier.background(Color(0x88000000), RoundedCornerShape(18)).width(200.dp))
+            {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                    contentDescription = "Vol",
+                    tint = Color.White,
+                    modifier = Modifier.size(48.dp).padding(8.dp)
+                        .align(Alignment.CenterVertically)
+                )
+                BiliMiniSlider(
+                    value = volFactor,
+                    onValueChange = {},
+                    modifier = Modifier
+                        .height(4.dp)
+                        .padding(horizontal = 8.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
+        }
+
+        androidx.compose.animation.AnimatedVisibility(
+            visible = videoPlayerViewModel.draggingPurpose == 1,
+            enter = fadeIn(
+                initialAlpha = 0f,
+            ),
+            exit = fadeOut(
+                targetAlpha = 0f
+            ),
+            modifier = Modifier.align(Alignment.Center)
+        )
+        {
+            Row(Modifier.background(Color(0x88000000), RoundedCornerShape(18)).width(200.dp))
+            {
+                Icon(
+                    imageVector = Icons.Default.Brightness4,
+                    contentDescription = "Brightness",
+                    tint = Color.White,
+                    modifier = Modifier.size(48.dp).padding(8.dp)
+                        .align(Alignment.CenterVertically)
+                )
+                BiliMiniSlider(
+                    value = videoPlayerViewModel.brit,
+                    onValueChange = {},
+                    modifier = Modifier
+                        .height(4.dp)
+                        .padding(horizontal = 8.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
+        }
+
 
         if(cover > 0.0f)
             Spacer(Modifier.background(Color(0x00FF6699 - 0x00222222 + ((0x000000FF * cover).toLong() shl 24) )).fillMaxSize())
@@ -371,7 +488,13 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 2.dp)
-                    .align(Alignment.BottomCenter),
+                    .align(Alignment.BottomCenter).background(
+                        brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.4f),
+                        )
+                    )),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 IconButton(
@@ -713,6 +836,18 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
     val activity = context as? Activity
     val exoPlayer: ExoPlayer = videoPlayerViewModel._player!!;
 
+    val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+    val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
+    var volFactor by remember { mutableFloatStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / maxVolume.toFloat()) }
+
+    fun setVolume(value: Int) {
+        audioManager.setStreamVolume(
+            AudioManager.STREAM_MUSIC,
+            value.coerceIn(0, maxVolume),
+            AudioManager.FLAG_PLAY_SOUND
+        )
+    }
+
     BackHandler {
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
     }
@@ -738,19 +873,53 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
                     .fillMaxWidth()
                     .pointerInput(Unit) {
                         detectDragGestures(
-                            onDragStart = {
-                                videoPlayerViewModel.planeVisibility = true
-                                videoPlayerViewModel.dragging = true;
-                                exoPlayer.pause()
+                            onDragStart = { offset ->
+                                if(offset.x < size.width / 2)
+                                {
+                                    videoPlayerViewModel.draggingPurpose = -1;
+                                }else{
+                                    videoPlayerViewModel.draggingPurpose = -2;
+                                }
                             },
                             onDragEnd = {
-                                videoPlayerViewModel.dragging = false;
-                                if (videoPlayerViewModel.isPlaying)
+                                if (videoPlayerViewModel.isPlaying && videoPlayerViewModel.draggingPurpose == 0)
                                     exoPlayer.play()
+
+                                videoPlayerViewModel.draggingPurpose = -1;
                             },
                             onDrag = { change, dragAmount ->
-                                exoPlayer.seekTo((exoPlayer.currentPosition + dragAmount.x * 200.0f).toLong())
-                                videoPlayerViewModel.playProcess = exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()
+                                if(abs(dragAmount.x) > abs(dragAmount.y) &&
+                                    (videoPlayerViewModel.draggingPurpose == -1 || videoPlayerViewModel.draggingPurpose == -2))
+                                {
+                                    videoPlayerViewModel.draggingPurpose = 0
+                                    videoPlayerViewModel.planeVisibility = true
+                                    exoPlayer.pause()
+                                }
+                                else if(videoPlayerViewModel.draggingPurpose == -1) videoPlayerViewModel.draggingPurpose = 1
+                                else if(videoPlayerViewModel.draggingPurpose == -2) videoPlayerViewModel.draggingPurpose = 2
+
+                                if(videoPlayerViewModel.draggingPurpose == 0)
+                                {
+                                    exoPlayer.seekTo((exoPlayer.currentPosition + dragAmount.x * 200.0f).toLong())
+                                    videoPlayerViewModel.playProcess = exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()
+                                }else if(videoPlayerViewModel.draggingPurpose == 2)
+                                {
+                                    val cu = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                                    volFactor = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / maxVolume.toFloat()
+                                    if(dragAmount.y < 0)
+                                        setVolume( cu + 1);
+                                    else if(dragAmount.y > 0)
+                                        setVolume( cu - 1);
+                                }else if(videoPlayerViewModel.draggingPurpose == 1)
+                                {
+                                    videoPlayerViewModel.brit = (videoPlayerViewModel.brit - dragAmount.y * 0.002f).coerceIn(0f, 1f);
+
+                                    activity?.window?.attributes = activity.window.attributes.apply {
+                                        screenBrightness = videoPlayerViewModel.brit.coerceIn(0f, 1f)
+                                    }
+                                    activity?.window?.setAttributes(activity.window.attributes)
+                                }
+
                             }
                         )
                     }
@@ -782,7 +951,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
             )
 
             androidx.compose.animation.AnimatedVisibility(
-                visible = videoPlayerViewModel.dragging,
+                visible = videoPlayerViewModel.draggingPurpose == 0,
                 enter = fadeIn(
                     initialAlpha = 0f,
                 ),
@@ -790,7 +959,8 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
                     targetAlpha = 0f
                 ),
                 modifier = Modifier.align(Alignment.Center)
-            ) {
+            )
+            {
                 Text(
                     text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
                         formatTime(
@@ -801,6 +971,68 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
                     modifier = Modifier.padding(bottom = 12.dp),
                     fontSize = 18.sp
                 )
+            }
+
+            androidx.compose.animation.AnimatedVisibility(
+                visible = videoPlayerViewModel.draggingPurpose == 2,
+                enter = fadeIn(
+                    initialAlpha = 0f,
+                ),
+                exit = fadeOut(
+                    targetAlpha = 0f
+                ),
+                modifier = Modifier.align(Alignment.Center)
+            )
+            {
+                Row(Modifier.background(Color(0x88000000), RoundedCornerShape(18)).width(200.dp))
+                {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = "Vol",
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp).padding(8.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    BiliMiniSlider(
+                        value = volFactor,
+                        onValueChange = {},
+                        modifier = Modifier
+                            .height(4.dp)
+                            .padding(horizontal = 8.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                }
+            }
+
+            androidx.compose.animation.AnimatedVisibility(
+                visible = videoPlayerViewModel.draggingPurpose == 1,
+                enter = fadeIn(
+                    initialAlpha = 0f,
+                ),
+                exit = fadeOut(
+                    targetAlpha = 0f
+                ),
+                modifier = Modifier.align(Alignment.Center)
+            )
+            {
+                Row(Modifier.background(Color(0x88000000), RoundedCornerShape(18)).width(200.dp))
+                {
+                    Icon(
+                        imageVector = Icons.Default.Brightness4,
+                        contentDescription = "Brightness",
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp).padding(8.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    BiliMiniSlider(
+                        value = videoPlayerViewModel.brit,
+                        onValueChange = {},
+                        modifier = Modifier
+                            .height(4.dp)
+                            .padding(horizontal = 8.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                }
             }
 
             AnimatedVisibility(
@@ -832,20 +1064,49 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel)
                 }
             }
 
-            IconButton(
-                onClick = {
-                    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                },
+            AnimatedVisibility(
+                visible = videoPlayerViewModel.planeVisibility,
+                enter = slideInVertically(initialOffsetY = { fullHeight -> -fullHeight }),
+                exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
                 modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+            )
+            {
+                Row(Modifier
                     .align(Alignment.TopStart)
-                    .padding(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
+                    .padding(horizontal = 32.dp).background(
+                        brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.4f),
+                            Color.Transparent,
+                        )
+                    )))
+                {
+                    IconButton(
+                        onClick = {
+                            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                        },
+                        modifier = Modifier.size(36.dp).align(Alignment.CenterVertically)
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(36.dp),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+
+                    Text(
+                        text = "${videoPlayerViewModel.video?.video?.name}",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 12.dp).align(Alignment.CenterVertically),
+                        fontSize = 18.sp
+                    )
+                }
             }
+
+
 
             AnimatedVisibility(
                 visible = videoPlayerViewModel.planeVisibility,
