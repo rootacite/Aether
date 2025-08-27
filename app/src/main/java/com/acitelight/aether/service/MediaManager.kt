@@ -23,11 +23,13 @@ object MediaManager
         }
     }
 
-    suspend fun listVideos(klass: String, callback: (Video) -> Unit)
+    suspend fun listVideos(klass: String, filter: List<String>, callback: (Video) -> Unit)
     {
         val j = ApiClient.api!!.queryVideoClasses(klass, token)
         for(it in j)
         {
+            if(filter.contains(it))
+                continue
             try {
                 callback(queryVideo(klass, it)!!)
             }catch (e: Exception)

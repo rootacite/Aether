@@ -34,6 +34,7 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
     val classesMap = mutableStateMapOf<String, SnapshotStateList<Video>>()
 
     var imageLoader: ImageLoader? = null;
+    val updatingMap: MutableMap<Int, Boolean> = mutableMapOf()
 
     @Composable
     fun SetupClient()
@@ -48,12 +49,14 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
 
     suspend fun init() {
         classes.addAll(MediaManager.listVideoKlasses())
+        var i = 0
         for(it in classes)
         {
+            updatingMap[i++] = false
             classesMap[it] = mutableStateListOf<Video>()
         }
-
-        MediaManager.listVideos(classes[0]){
+        updatingMap[0] = true
+        MediaManager.listVideos(classes[0], listOf()){
             v -> classesMap[classes[0]]?.insertInNaturalOrder(v)
         }
     }
@@ -63,10 +66,14 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch()
         {
             _tabIndex.intValue = index;
+            if(updatingMap[index] == true) return@launch
 
-            MediaManager.listVideos(classes[index])
+            updatingMap[index] = true
+            MediaManager.listVideos(classes[index], (classesMap[classes[index]]?:listOf()).map{ it.id })
             {
-                v -> classesMap[classes[index]]?.insertInNaturalOrder(v)
+                v ->
+                if(classesMap[classes[index]]?.contains(v) == false)
+                    classesMap[classes[index]]?.insertInNaturalOrder(v)
             }
         }
     }
