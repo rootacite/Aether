@@ -15,6 +15,7 @@ import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.dataStore
+import com.acitelight.aether.helper.insertInNaturalOrder
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
@@ -53,7 +54,7 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         MediaManager.listVideos(classes[0]){
-            v -> classesMap[classes[0]]?.add(v)
+            v -> classesMap[classes[0]]?.insertInNaturalOrder(v)
         }
     }
 
@@ -65,7 +66,7 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
 
             MediaManager.listVideos(classes[index])
             {
-                v -> classesMap[classes[index]]?.add(v)
+                v -> classesMap[classes[index]]?.insertInNaturalOrder(v)
             }
         }
     }
