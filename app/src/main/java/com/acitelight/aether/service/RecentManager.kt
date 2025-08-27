@@ -73,26 +73,22 @@ object RecentManager
     {
         mutex.withLock{
             val content = readFile(context, "recent.json")
-            var o = Json.decodeFromString<List<VideoQueryIndex>>(content).toMutableList();
+            val o = recent.map{ VideoQueryIndex(it.klass, it.id) }.toMutableList()
 
             if(o.contains(video))
             {
-                val temp = o[0]
                 val index = o.indexOf(video)
+                val temp = recent[index]
+
                 recent.removeAt(index)
-                o[0] = o[index]
-                o[index] = temp
             }
-            else
-            {
-                o.add(0, video)
-            }
-
-            if(o.size >= 21)
-                o.removeAt(o.size - 1)
-
             recent.add(0, MediaManager.queryVideo(video.klass, video.id)!!)
-            writeFile(context, "recent.json", Json.encodeToString(o))
+
+
+            if(recent.size >= 21)
+                recent.removeAt(o.size - 1)
+
+            writeFile(context, "recent.json", Json.encodeToString(recent.map{ VideoQueryIndex(it.klass, it.id) }))
         }
     }
 
