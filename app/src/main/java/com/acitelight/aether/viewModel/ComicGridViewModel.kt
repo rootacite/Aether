@@ -7,19 +7,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.Comic
-import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class ComicScreenViewModel : ViewModel() {
-
-    var imageLoader: ImageLoader? = null;
-
-    val comics = mutableStateListOf<Comic>()
+class ComicGridViewModel : ViewModel()
+{
+    var imageLoader: ImageLoader? = null
+    var comic: Comic? = null
+    val chapterList = mutableStateListOf<BookMark>()
 
     @Composable
     fun SetupClient()
@@ -32,14 +30,15 @@ class ComicScreenViewModel : ViewModel() {
             .build()
     }
 
-    init {
+    fun Resolve(id: String)
+    {
+        if(comic != null) return
         viewModelScope.launch {
-            val l = MediaManager.listComics()
-            for(i in l)
+            comic = MediaManager.queryComicInfo(id)
+            val c = comic!!
+            for(i in c.comic.bookmarks)
             {
-                val m = MediaManager.queryComicInfo(i)
-                if(m != null)
-                    comics.add(m)
+                chapterList.add(i)
             }
         }
     }

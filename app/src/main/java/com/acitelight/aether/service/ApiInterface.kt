@@ -1,7 +1,7 @@
 package com.acitelight.aether.service
 
 import com.acitelight.aether.model.ChallengeResponse
-import com.acitelight.aether.model.Comic
+import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.model.VideoResponse
 import okhttp3.ResponseBody
 import retrofit2.http.Body
@@ -9,7 +9,6 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
-import retrofit2.http.Streaming
 
 interface ApiInterface {
     @GET("api/video")
@@ -28,18 +27,10 @@ interface ApiInterface {
         @Query("token") token: String
     ): VideoResponse
 
-    @GET("api/video/{klass}/{id}/nv")
-    @Streaming
-    suspend fun getNailVideo(
-        @Path("klass") klass: String,
-        @Path("id") id: String,
-        @Query("token") token: String
-    ): ResponseBody
-
-    @GET("api/image/collections")
-    suspend fun getComicCollections(): List<String>
-    @GET("api/image/meta")
-    suspend fun queryComicInfo(@Query("collection") collection: String): Comic
+    @GET("api/image")
+    suspend fun getComics(@Query("token") token: String): List<String>
+    @GET("api/image/{id}")
+    suspend fun queryComicInfo(@Path("id") id: String, @Query("token") token: String): ComicResponse
 
 
     @GET("api/user/{user}")

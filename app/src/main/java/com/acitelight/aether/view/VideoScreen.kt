@@ -72,7 +72,7 @@ fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navCon
         TopRow(videoScreenViewModel);
 
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Adaptive(200.dp),
             contentPadding = PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)

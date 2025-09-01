@@ -1,10 +1,8 @@
 package com.acitelight.aether.service
 
 import com.acitelight.aether.model.Comic
+import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.model.Video
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.IOException
 
 
 object MediaManager
@@ -52,13 +50,23 @@ object MediaManager
 
     suspend fun listComics() : List<String>
     {
-        // TODO: try
-        return ApiClient.api!!.getComicCollections()
+        try{
+            val j = ApiClient.api!!.getComics(token)
+            return j
+        }catch (e: Exception)
+        {
+            return listOf()
+        }
     }
 
-    suspend fun queryComicInfo(c: String) : Comic
+    suspend fun queryComicInfo(id: String) : Comic?
     {
-        // TODO: try
-        return ApiClient.api!!.queryComicInfo(c)
+        try{
+            val j = ApiClient.api!!.queryComicInfo(id, token)
+            return Comic(id = id, comic = j, token = token)
+        }catch (e: Exception)
+        {
+            return null
+        }
     }
 }

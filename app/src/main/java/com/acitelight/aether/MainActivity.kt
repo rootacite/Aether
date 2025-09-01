@@ -48,6 +48,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.acitelight.aether.view.ComicGridView
+import com.acitelight.aether.view.ComicPageView
 import com.acitelight.aether.view.ComicScreen
 import com.acitelight.aether.view.HomeScreen
 import com.acitelight.aether.view.MeScreen
@@ -98,6 +100,8 @@ fun AppNavigation() {
 
     val hideBottomBarRoutes = listOf(
         Screen.VideoPlayer.route,
+        Screen.ComicGrid.route,
+        Screen.ComicPage.route
     )
     val shouldShowBottomBar = currentRoute !in hideBottomBarRoutes
 
@@ -126,7 +130,7 @@ fun AppNavigation() {
                 VideoScreen(navController = navController)
             }
             composable(Screen.Comic.route) {
-                ComicScreen()
+                ComicScreen(navController = navController)
             }
 
             composable(Screen.Transmission.route) {
@@ -144,6 +148,30 @@ fun AppNavigation() {
                 val videoId = backStackEntry.arguments?.getString("videoId")
                 if (videoId != null) {
                     VideoPlayer(videoId = videoId, navController = navController)
+                }
+            }
+
+            composable(
+                route = Screen.ComicGrid.route,
+                arguments = listOf(navArgument("comicId") { type = NavType.StringType })
+            ) {
+                    backStackEntry ->
+                val comicId = backStackEntry.arguments?.getString("comicId")
+                if (comicId != null) {
+                    ComicGridView(comicId = comicId, navController = navController)
+                }
+            }
+
+            composable(
+                route = Screen.ComicPage.route,
+                arguments = listOf(navArgument("comicId") { type = NavType.StringType }, navArgument("page") { type = NavType.StringType })
+            ) {
+                    backStackEntry ->
+                val comicId = backStackEntry.arguments?.getString("comicId")
+                val page = backStackEntry.arguments?.getString("page")
+                if (comicId != null && page != null) {
+                    ComicPageView(comicId = comicId, page = page, navController = navController)
+                    ToggleFullScreen(true)
                 }
             }
         }
@@ -195,4 +223,6 @@ sealed class Screen(val route: String, val icon: ImageVector, val title: String)
         Icons.AutoMirrored.Filled.CompareArrows, "Transmission")
     data object Me : Screen("me_route", Icons.Filled.AccountCircle, "me")
     data object VideoPlayer : Screen("video_player_route/{videoId}", Icons.Filled.PlayArrow, "VideoPlayer")
+    data object ComicGrid : Screen("comic_grid_route/{comicId}", Icons.Filled.PlayArrow, "ComicGrid")
+    data object ComicPage : Screen("comic_page_route/{comicId}/{page}", Icons.Filled.PlayArrow, "ComicPage")
 }
