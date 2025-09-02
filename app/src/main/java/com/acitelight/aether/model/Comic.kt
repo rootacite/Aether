@@ -47,4 +47,22 @@ class Comic(
 
         return -1
     }
+
+    fun getPageChapterIndex(page: Int): Pair<BookMark, Int>?
+    {
+        var p = page
+        while(p >= 0 && !comic.bookmarks.any{ x -> x.page == comic.list[p] })
+        {
+            p--
+        }
+        for(i in comic.bookmarks)
+        {
+            if(i.page == comic.list[p])
+            {
+                return Pair(i, page - comic.list.indexOf(i.page) + 1)
+            }
+        }
+
+        return null
+    }
 }

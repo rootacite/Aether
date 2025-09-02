@@ -1,6 +1,7 @@
 package com.acitelight.aether.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,27 +40,112 @@ import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global
+import com.acitelight.aether.ToggleFullScreen
 import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.Comic
+import com.acitelight.aether.model.ComicRecordDatabase
 import com.acitelight.aether.viewModel.ComicGridViewModel
 import java.util.EnumSet.range
 import java.util.stream.IntStream.range
 
 @Composable
-fun ComicGridView(comicId: String, navController: NavHostController, comicGridViewModel: ComicGridViewModel = viewModel())
-{
+fun ComicGridView(comicId: String, navController: NavHostController, comicGridViewModel: ComicGridViewModel = viewModel()) {
     comicGridViewModel.SetupClient()
     comicGridViewModel.Resolve(comicId.hexToString())
-    LazyColumn(modifier = Modifier.fillMaxWidth())
-    {
-        items(comicGridViewModel.chapterList)
-        {
-            c ->
-            ChapterCard(comicGridViewModel.comic!!, navController, c, comicGridViewModel)
+    comicGridViewModel.updateProcess(comicId.hexToString()){}
+    ToggleFullScreen(false)
+
+    val context = LocalContext.current
+    val comic by comicGridViewModel.comic
+    val record by comicGridViewModel.record
+
+    if (comic != null) {
+        Column {
+            Box(
+                Modifier
+                    .padding(horizontal = 16.dp).padding(top = 36.dp)
+                    .background(Color.White.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp))
+            )
+            {
+                Column {
+                    Text(
+                        text = comic!!.comic.comic_name,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        maxLines = 1,
+                        modifier = Modifier.padding(4.dp)
+                    )
+
+                    Text(
+                        text = comic!!.comic.author,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        maxLines = 1,
+                        modifier = Modifier.padding(4.dp).fillMaxWidth()
+                    )
+                }
+            }
+
+            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 6.dp).clip(RoundedCornerShape(6.dp)))
+            {
+                items(comicGridViewModel.chapterList)
+                { c ->
+                    ChapterCard(comic!!, navController, c, comicGridViewModel)
+                }
+            }
+
+            Box(
+                Modifier
+                    .padding(horizontal = 16.dp).padding(top = 6.dp).padding(bottom = 20.dp).heightIn(min = 42.dp)
+                    .background(Color.White.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp))
+                    .clickable{
+                        comicGridViewModel.updateProcess(comicId.hexToString())
+                        {
+                            if(record != null) {
+                                val k = comic!!.getPageChapterIndex(record!!.position)!!
+                                val route = "comic_page_route/${"${comic!!.id}".toHex()}/${
+                                    comic!!.getPageIndex(k.first.page)
+                                }"
+                                navController.navigate(route)
+                            }else
+                            {
+                                val route = "comic_page_route/${"${comic!!.id}".toHex()}/${0}"
+                                navController.navigate(route)
+                            }
+                        }
+                    }
+            )
+            {
+                Row(Modifier.fillMaxWidth().align(Alignment.Center).padding(horizontal = 8.dp)) {
+                    if(record != null)
+                    {
+                        val k = comic!!.getPageChapterIndex(record!!.position)!!
+
+                        Text(
+                            text = "Last Read Position: ${k.first.name} ${k.second}/${comic!!.getChapterLength(k.first.page)}",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            maxLines = 1,
+                            modifier = Modifier.padding(4.dp).weight(1f)
+                        )
+                    }else{
+                        Text(
+                            text = "Read from scratch",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            maxLines = 1,
+                            modifier = Modifier.padding(4.dp).weight(1f)
+                        )
+                    }
+                }
+            }
         }
     }
 }
-
 
 @Composable
 fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMark, comicGridViewModel: ComicGridViewModel = viewModel())
@@ -70,7 +158,7 @@ fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMar
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp).padding(vertical = 6.dp),
         onClick = {
             val route = "comic_page_route/${"${comic.id}".toHex()}/${comic.getPageIndex(chapter.page)}"
             navController.navigate(route)
@@ -78,10 +166,10 @@ fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMar
     ) {
         Column(Modifier.fillMaxWidth())
         {
-            Row(Modifier.padding(12.dp))
+            Row(Modifier.padding(6.dp))
             {
                 Box(Modifier
-                    .height(260.dp)
+                    .height(170.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color(0x44FFFFFF)))
                 {
@@ -117,7 +205,7 @@ fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMar
             }
 
             val r = comic.comic.list.subList(iv, iv + comic.getChapterLength(c.page))
-            LazyRow(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+            LazyRow(modifier = Modifier.fillMaxWidth().padding(6.dp)) {
                 items(r)
                 {
                     r ->
@@ -126,7 +214,7 @@ fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMar
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight()
-                            .height(200.dp)
+                            .height(140.dp)
                             .padding(horizontal = 6.dp),
                         onClick = {
                             val route = "comic_page_route/${"${comic.id}".toHex()}/${comic.getPageIndex(r)}"

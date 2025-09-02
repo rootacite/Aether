@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "1.9.0"
+    id("kotlin-kapt")
 }
 
 android {
@@ -42,6 +43,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    kapt("androidx.room:room-compiler:2.7.2")
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.bcprov.jdk15on)
     implementation(libs.converter.gson)
