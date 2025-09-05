@@ -15,7 +15,6 @@ import com.acitelight.aether.model.ComicRecord
 import com.acitelight.aether.model.ComicRecordDatabase
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
-import com.acitelight.aether.view.hexToString
 import kotlinx.coroutines.launch
 
 class ComicGridViewModel : ViewModel()
@@ -44,16 +43,16 @@ class ComicGridViewModel : ViewModel()
         }
     }
 
-    fun Resolve(id: String)
+    fun resolve(id: String)
     {
-        if(comic.value != null) return
         viewModelScope.launch {
-            comic.value = MediaManager.queryComicInfo(id)
-            val c = comic.value!!
-            for(i in c.comic.bookmarks)
-            {
-                chapterList.add(i)
-            }
+            if(comic.value == null) {
+                comic.value = MediaManager.queryComicInfo(id)
+                val c = comic.value!!
+                for (i in c.comic.bookmarks) {
+                    chapterList.add(i)
+                }
+            }else comic.value = MediaManager.queryComicInfo(id)
         }
     }
 

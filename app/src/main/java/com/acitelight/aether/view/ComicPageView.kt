@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,11 +24,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,7 +53,9 @@ import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.ToggleFullScreen
+import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.ComicRecord
+import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.viewModel.ComicPageViewModel
 import kotlinx.coroutines.launch
 
@@ -59,6 +68,7 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
     val title by comicPageViewModel.title
     val pagerState = rememberPagerState(initialPage = page.toInt(), pageCount = { comicPageViewModel.pageList.size })
     var showPlane by comicPageViewModel.showPlane
+    var showBookMarkPop by remember { mutableStateOf(false) }
 
     comicPageViewModel.UpdateProcess(pagerState.currentPage)
 
@@ -101,7 +111,7 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
             ){
                 Box()
                 {
-                    Box(modifier = Modifier.height(240.dp).align(Alignment.TopCenter).fillMaxWidth().background(
+                    Box(modifier = Modifier.height(160.dp).align(Alignment.TopCenter).fillMaxWidth().background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
                                 Color.Black.copy(alpha = 0.75f),
@@ -134,29 +144,52 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                                 modifier = Modifier.padding(8.dp).widthIn(min = 60.dp).align(Alignment.CenterVertically)
                             )
                         }
-                        Row(modifier = Modifier
-                            .padding(top = 6.dp).padding(horizontal = 12.dp)
-                            .height(42.dp)
-                            .background(Color(0x90FFFFFF), shape = RoundedCornerShape(12.dp)))
-                        {
-                            val k = it.getPageChapterIndex(pagerState.currentPage)!!
-                            Text(
-                                text = k.first.name,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black,
-                                maxLines = 1,
-                                modifier = Modifier.padding(8.dp).padding(horizontal = 10.dp).align(Alignment.CenterVertically)
-                            )
 
-                            Text(
-                                text = "${k.second}/${it.getChapterLength(k.first.page)}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black,
-                                maxLines = 1,
-                                modifier = Modifier.padding(8.dp).widthIn(min = 60.dp).align(Alignment.CenterVertically)
-                            )
+                        Row {
+                            Row(modifier = Modifier
+                                .padding(top = 6.dp).padding(horizontal = 12.dp)
+                                .height(42.dp)
+                                .background(Color(0x90FFFFFF), shape = RoundedCornerShape(12.dp)))
+                            {
+                                val k = it.getPageChapterIndex(pagerState.currentPage)
+                                Text(
+                                    text = k.first.name,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(8.dp).padding(horizontal = 10.dp).align(Alignment.CenterVertically)
+                                )
+
+                                Text(
+                                    text = "${k.second}/${it.getChapterLength(k.first.page)}",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(8.dp).widthIn(min = 60.dp).align(Alignment.CenterVertically)
+                                )
+                            }
+
+                            Spacer(Modifier.weight(1f))
+
+                            Row(modifier = Modifier
+                                .padding(top = 6.dp).padding(horizontal = 12.dp)
+                                .height(42.dp).width(42.dp)
+                                .background(Color(0x90FFFFFF), shape = RoundedCornerShape(12.dp)))
+                            {
+                                Box (Modifier.clickable {
+                                    showBookMarkPop = true
+                                }){
+                                    Icon(
+                                        Icons.Filled.Bookmarks,
+                                        tint = Color.Black,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(8.dp),
+                                        contentDescription = "Bookmark")
+                                }
+                            }
                         }
                     }
                 }
@@ -214,7 +247,7 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                                             .align(Alignment.Center),
                                         contentScale = ContentScale.Fit,
                                     )
-                                    val k = it.getPageChapterIndex(r)!!
+                                    val k = it.getPageChapterIndex(r)
                                     Box(Modifier
                                         .align(Alignment.TopEnd)
                                         .padding(6.dp)
@@ -247,5 +280,19 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                 }
             }
         }
+    }
+
+    if(showBookMarkPop)
+    {
+        BookmarkPop({
+            showBookMarkPop = false
+        }, {
+            s ->
+            showBookMarkPop = false
+            comicPageViewModel.coroutineScope?.launch {
+                MediaManager.postBookmark(comicId.hexToString(), BookMark(name = s, page = comicPageViewModel.pageList[pagerState.currentPage]))
+                comicPageViewModel.comic.value = MediaManager.queryComicInfo(comicId.hexToString())
+            }
+        });
     }
 }

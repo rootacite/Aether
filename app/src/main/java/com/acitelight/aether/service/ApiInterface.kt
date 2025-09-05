@@ -1,5 +1,6 @@
 package com.acitelight.aether.service
 
+import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.ChallengeResponse
 import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.model.VideoResponse
@@ -32,6 +33,8 @@ interface ApiInterface {
     @GET("api/image/{id}")
     suspend fun queryComicInfo(@Path("id") id: String, @Query("token") token: String): ComicResponse
 
+    @POST("api/image/{id}/bookmark")
+    suspend fun postBookmark(@Path("id") id: String, @Query("token") token: String, @Body bookmark: BookMark)
 
     @GET("api/user/{user}")
     suspend fun getChallenge(

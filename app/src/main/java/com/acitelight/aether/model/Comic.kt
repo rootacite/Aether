@@ -48,13 +48,14 @@ class Comic(
         return -1
     }
 
-    fun getPageChapterIndex(page: Int): Pair<BookMark, Int>?
+    fun getPageChapterIndex(page: Int): Pair<BookMark, Int>
     {
         var p = page
         while(p >= 0 && !comic.bookmarks.any{ x -> x.page == comic.list[p] })
         {
             p--
         }
+        if(p < 0) return Pair(BookMark(name="null", page=comic.list[0]), page + 1)
         for(i in comic.bookmarks)
         {
             if(i.page == comic.list[p])
@@ -63,6 +64,6 @@ class Comic(
             }
         }
 
-        return null
+        return Pair(BookMark(name="null", page=comic.list[0]), page + 1)
     }
 }

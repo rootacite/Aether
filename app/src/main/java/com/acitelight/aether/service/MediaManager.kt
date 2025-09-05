@@ -1,5 +1,6 @@
 package com.acitelight.aether.service
 
+import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.Comic
 import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.model.Video
@@ -67,6 +68,17 @@ object MediaManager
         }catch (e: Exception)
         {
             return null
+        }
+    }
+
+    suspend fun postBookmark(id: String, bookMark: BookMark): Boolean
+    {
+        try{
+            val j = ApiClient.api!!.postBookmark(id, token, bookMark)
+            return true
+        }catch (e: Exception)
+        {
+            return false
         }
     }
 }
