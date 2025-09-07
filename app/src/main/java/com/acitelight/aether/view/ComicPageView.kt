@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -224,14 +225,14 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                             Card(
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier
-                                    .fillMaxWidth()
+                                    .fillMaxHeight()
                                     .wrapContentHeight()
                                     .padding(horizontal = 6.dp).padding(vertical = 6.dp),
                                 onClick = {
                                     pagerState.requestScrollToPage(page = r)
                                 }
                             ){
-                                Box(Modifier.fillMaxSize())
+                                Box()
                                 {
                                     AsyncImage(
                                         model = ImageRequest.Builder(LocalContext.current)
@@ -242,7 +243,7 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                                         contentDescription = null,
                                         imageLoader = comicPageViewModel.imageLoader!!,
                                         modifier = Modifier
-                                            .fillMaxSize()
+                                            .fillMaxHeight()
                                             .clip(RoundedCornerShape(12.dp))
                                             .align(Alignment.Center),
                                         contentScale = ContentScale.Fit,
@@ -260,7 +261,7 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
                                                 maxLines = 1,
-                                                modifier = Modifier.padding(4.dp).align(Alignment.CenterVertically)
+                                                modifier = Modifier.padding(2.dp).widthIn(max = 100.dp).align(Alignment.CenterVertically)
                                             )
 
                                             Text(
@@ -269,7 +270,7 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
                                                 maxLines = 1,
-                                                modifier = Modifier.padding(4.dp).fillMaxWidth().align(Alignment.CenterVertically)
+                                                modifier = Modifier.padding(2.dp).align(Alignment.CenterVertically)
                                             )
                                         }
                                     }

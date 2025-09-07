@@ -20,6 +20,28 @@ class ComicScreenViewModel : ViewModel() {
     var imageLoader: ImageLoader? = null;
 
     val comics = mutableStateListOf<Comic>()
+    val excluded = mutableStateListOf<String>()
+    val included = mutableStateListOf<String>()
+    val tags = mutableStateListOf<String>()
+    private val counter = mutableMapOf<String, Int>()
+
+    fun insertItem(newItem: String) {
+        val newCount = (counter[newItem] ?: 0) + 1
+        counter[newItem] = newCount
+
+        if (newItem !in tags) {
+            val insertIndex = tags.indexOfFirst { counter[it]!! < newCount }
+                .takeIf { it >= 0 } ?: tags.size
+            tags.add(insertIndex, newItem)
+        } else {
+            var currentIndex = tags.indexOf(newItem)
+            while (currentIndex > 0 && counter[tags[currentIndex - 1]]!! < newCount) {
+                tags[currentIndex] = tags[currentIndex - 1]
+                tags[currentIndex - 1] = newItem
+                currentIndex--
+            }
+        }
+    }
 
     @Composable
     fun SetupClient()
@@ -38,8 +60,13 @@ class ComicScreenViewModel : ViewModel() {
             for(i in l)
             {
                 val m = MediaManager.queryComicInfo(i)
-                if(m != null)
+                if(m != null) {
                     comics.add(m)
+                    for(i in m.comic.tags)
+                    {
+                        insertItem(i)
+                    }
+                }
             }
         }
     }

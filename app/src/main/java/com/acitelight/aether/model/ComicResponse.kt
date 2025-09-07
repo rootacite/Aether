@@ -5,5 +5,6 @@ data class ComicResponse(
     val page_count: Int,
     val bookmarks: List<BookMark>,
     val list: List<String>,
+    val tags: List<String>,
     val author: String
 )

@@ -487,7 +487,6 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 2.dp)
                     .align(Alignment.BottomCenter).background(
                         brush = Brush.verticalGradient(
                         colors = listOf(

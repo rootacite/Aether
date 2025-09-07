@@ -56,27 +56,44 @@ fun ComicGridView(comicId: String, navController: NavHostController, comicGridVi
                     .background(Color.White.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp))
             )
             {
-                Column {
-                    Text(
-                        text = comic!!.comic.comic_name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black,
-                        maxLines = 1,
-                        modifier = Modifier.padding(4.dp)
-                    )
-
-                    Text(
-                        text = comic!!.comic.author,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black,
-                        maxLines = 1,
-                        modifier = Modifier.padding(4.dp).fillMaxWidth()
-                    )
-                }
+                Text(
+                text = comic!!.comic.comic_name,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                maxLines = 1,
+                modifier = Modifier.padding(4.dp)
+                )
+            }
+            Box(
+                Modifier
+                    .padding(horizontal = 16.dp).padding(top = 4.dp)
+                    .background(Color.White.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp))
+            ) {
+                Text(
+                    text = comic!!.comic.author,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    maxLines = 1,
+                    modifier = Modifier.padding(4.dp)
+                )
             }
 
+            Box(
+                Modifier
+                    .padding(horizontal = 16.dp).padding(top = 4.dp)
+                    .background(Color.White.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp))
+            ) {
+                Text(
+                    text = "Tags : ${comic!!.comic.tags.joinToString(", ")}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    maxLines = 5,
+                    modifier = Modifier.padding(4.dp)
+                )
+            }
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 6.dp).clip(RoundedCornerShape(6.dp)))
             {
                 items(comicGridViewModel.chapterList)
