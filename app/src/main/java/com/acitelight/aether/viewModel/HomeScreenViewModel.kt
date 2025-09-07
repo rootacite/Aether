@@ -1,6 +1,7 @@
 package com.acitelight.aether.viewModel
 
 import android.app.Application
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -86,7 +87,7 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
             if(u=="" || p=="" || ur=="" || c=="") return@launch
 
             try{
-                ApiClient.apply(ur, c)
+                val usedUrl = ApiClient.apply(ur, c)
 
                 if (MediaManager.token == "null")
                     MediaManager.token = AuthManager.fetchToken(

@@ -3,6 +3,8 @@ package com.acitelight.aether.service
 
 import android.content.Context
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.CertificatePinner
 import okhttp3.HttpUrl
@@ -12,6 +14,9 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayInputStream
+import java.net.HttpURLConnection
+import java.net.InetAddress
+import java.net.URL
 import java.security.KeyStore
 import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
@@ -88,19 +93,43 @@ object ApiClient {
 
     var api: ApiInterface? = null
 
-    fun apply(url: String, crt: String)
-    {
-        try{
-            domain = url.toHttpUrlOrNull()?.host !!
+    suspend fun apply(urls: String, crt: String): String? {
+        try {
+            val urlList = urls.split(";").map { it.trim() }
+
+            var selectedUrl: String? = null
+            for (url in urlList) {
+                val host = url.toHttpUrlOrNull()?.host
+                if (host != null && pingHost(host)) {
+                    selectedUrl = url
+                    break
+                }
+            }
+
+            if (selectedUrl == null) {
+                throw Exception("No reachable URL found")
+            }
+
+            domain = selectedUrl.toHttpUrlOrNull()?.host ?: ""
             cert = crt
-            base = url
+            base = selectedUrl
             api = createRetrofit().create(ApiInterface::class.java)
-        }catch (e: Exception)
-        {
+            return base
+        } catch (e: Exception) {
             api = null
             base = ""
             domain = ""
             cert = ""
+            return null
+        }
+    }
+
+    private suspend fun pingHost(host: String): Boolean = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val address = InetAddress.getByName(host)
+            address.isReachable(200)
+        } catch (e: Exception) {
+            false
         }
     }
 }

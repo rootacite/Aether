@@ -76,14 +76,14 @@ class MeScreenViewModel(application: Application) : AndroidViewModel(application
             if (u == "" || c == "" || p == "" || us == "") return@launch
 
             try {
-                ApiClient.apply(u, c)
+                val usedUrl = ApiClient.apply(u, c)
                 MediaManager.token = AuthManager.fetchToken(
                     us,
                     p
                 )!!
 
                 Global.loggedIn = true
-                Toast.makeText(context, "Server Updated", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Server Updated, Used Url: $usedUrl", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 print(e.message)
                 Toast.makeText(context, "Invalid Account or Server Information", Toast.LENGTH_SHORT).show()
