@@ -19,6 +19,7 @@ import java.net.InetAddress
 import java.net.URL
 import java.security.KeyStore
 import java.security.cert.Certificate
+import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
@@ -47,26 +48,67 @@ object ApiClient {
         }
     }
 
-    fun createOkHttpClientWithDynamicCert(trustedCert: X509Certificate): OkHttpClient {
+    fun createOkHttpClientWithDynamicCert(trustedCert: X509Certificate?): OkHttpClient {
         try {
-            val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
-                load(null, null)
-                setCertificateEntry("ca", trustedCert)
+            val defaultTmFactory = TrustManagerFactory.getInstance(
+                TrustManagerFactory.getDefaultAlgorithm()
+            ).apply {
+                init(null as KeyStore?)
+            }
+            val defaultTm = defaultTmFactory.trustManagers
+                .first { it is X509TrustManager } as X509TrustManager
+
+            val customTm: X509TrustManager? = trustedCert?.let {
+                val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
+                    load(null, null)
+                    setCertificateEntry("ca", it)
+                }
+                val tmf = TrustManagerFactory.getInstance(
+                    TrustManagerFactory.getDefaultAlgorithm()
+                ).apply {
+                    init(keyStore)
+                }
+                tmf.trustManagers.first { it is X509TrustManager } as X509TrustManager
             }
 
-            val tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm()
-            val tmf = TrustManagerFactory.getInstance(tmfAlgorithm).apply {
-                init(keyStore)
-            }
+            val combinedTm = object : X509TrustManager {
+                override fun getAcceptedIssuers(): Array<X509Certificate> {
+                    return (defaultTm.acceptedIssuers + (customTm?.acceptedIssuers ?: emptyArray()))
+                }
 
-            val trustManager = tmf.trustManagers.first { it is X509TrustManager } as X509TrustManager
+                override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
+                    var passed = false
+                    try {
+                        defaultTm.checkClientTrusted(chain, authType)
+                        passed = true
+                    } catch (_: CertificateException) { }
+                    if (!passed && customTm != null) {
+                        customTm.checkClientTrusted(chain, authType)
+                        passed = true
+                    }
+                    if (!passed) throw CertificateException("Untrusted client certificate chain")
+                }
+
+                override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
+                    var passed = false
+                    try {
+                        defaultTm.checkServerTrusted(chain, authType)
+                        passed = true
+                    } catch (_: CertificateException) { }
+                    if (!passed && customTm != null) {
+                        customTm.checkServerTrusted(chain, authType)
+                        passed = true
+                    }
+                    if (!passed) throw CertificateException("Untrusted server certificate chain")
+                }
+            }
 
             val sslContext = SSLContext.getInstance("TLS").apply {
-                init(null, arrayOf(trustManager), null)
+                init(null, arrayOf(combinedTm), null)
             }
 
             return OkHttpClient.Builder()
-                .sslSocketFactory(sslContext.socketFactory, trustManager)
+                .sslSocketFactory(sslContext.socketFactory, combinedTm)
                 .build()
 
         } catch (e: Exception) {
@@ -74,9 +116,9 @@ object ApiClient {
         }
     }
 
-    fun createOkHttp(): OkHttpClient
-    {
-        return createOkHttpClientWithDynamicCert(loadCertificateFromString(cert))
+    fun createOkHttp(cert: String?): OkHttpClient {
+        val trustedCert = cert?.let { loadCertificateFromString(it) }
+        return createOkHttpClientWithDynamicCert(trustedCert)
     }
 
     private fun createRetrofit(): Retrofit {

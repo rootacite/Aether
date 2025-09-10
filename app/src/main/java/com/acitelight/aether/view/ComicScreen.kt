@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -70,7 +71,7 @@ fun VariableGrid(
 
     Layout(
         modifier = modifier
-            .verticalScroll(scrollState), // ✅ 支持垂直滚动
+            .verticalScroll(scrollState),
         content = content
     ) { measurables, constraints ->
 
@@ -137,6 +138,7 @@ fun ComicScreen(
 ) {
     comicScreenViewModel.SetupClient()
     val included = comicScreenViewModel.included
+    val state = rememberLazyGridState()
 
     Column {
 
@@ -185,7 +187,8 @@ fun ComicScreen(
             columns = GridCells.Adaptive(128.dp),
             contentPadding = PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            state = state
         )
         {
             items(comicScreenViewModel.comics.filter { x ->
