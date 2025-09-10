@@ -1,30 +1,27 @@
 
 package com.acitelight.aether.service
 
-import android.content.Context
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import okhttp3.CertificatePinner
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayInputStream
-import java.net.HttpURLConnection
-import java.net.InetAddress
-import java.net.URL
 import java.security.KeyStore
-import java.security.cert.Certificate
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.EventListener
+import java.net.InetAddress
+import android.util.Log
+import okhttp3.ConnectionSpec
 
 object ApiClient {
     var base: String = ""
@@ -32,6 +29,14 @@ object ApiClient {
     var cert: String = ""
     private val json = Json {
         ignoreUnknownKeys = true
+    }
+
+    private val dnsEventListener = object : EventListener() {
+        override fun dnsEnd(call: okhttp3.Call, domainName: String, inetAddressList: List<InetAddress>) {
+            super.dnsEnd(call, domainName, inetAddressList)
+            val ipAddresses = inetAddressList.joinToString(", ") { it.hostAddress }
+            Log.d("OkHttp_DNS", "Domain '$domainName' resolved to IPs: [$ipAddresses]")
+        }
     }
 
     fun loadCertificateFromString(pemString: String): X509Certificate {
@@ -108,6 +113,7 @@ object ApiClient {
             }
 
             return OkHttpClient.Builder()
+                .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
                 .sslSocketFactory(sslContext.socketFactory, combinedTm)
                 .build()
 
@@ -116,13 +122,20 @@ object ApiClient {
         }
     }
 
-    fun createOkHttp(cert: String?): OkHttpClient {
-        val trustedCert = cert?.let { loadCertificateFromString(it) }
-        return createOkHttpClientWithDynamicCert(trustedCert)
+    fun createOkHttp(): OkHttpClient {
+        return if (cert == "")
+            OkHttpClient
+                .Builder()
+                .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+                .eventListener(dnsEventListener)
+                .build()
+        else
+            createOkHttpClientWithDynamicCert(loadCertificateFromString(cert))
+
     }
 
     private fun createRetrofit(): Retrofit {
-        val okHttpClient = createOkHttpClientWithDynamicCert(loadCertificateFromString(cert))
+        val okHttpClient = createOkHttp()
 
         return Retrofit.Builder()
             .baseUrl(base)

@@ -55,10 +55,17 @@ import com.acitelight.aether.view.HomeScreen
 import com.acitelight.aether.view.MeScreen
 import com.acitelight.aether.view.VideoPlayer
 import com.acitelight.aether.view.VideoScreen
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         window.attributes = window.attributes.apply {
             screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
         }

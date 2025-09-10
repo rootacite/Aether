@@ -31,33 +31,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import com.acitelight.aether.service.*
+import dagger.hilt.android.lifecycle.HiltViewModel
 
-class HomeScreenViewModel(application: Application) : AndroidViewModel(application)
+
+@HiltViewModel
+class HomeScreenViewModel @Inject constructor(
+    private val settingsDataStoreManager: SettingsDataStoreManager
+) : ViewModel()
 {
-    private val dataStore = application.dataStore
-    private val USER_NAME_KEY = stringPreferencesKey("user_name")
-    private val PRIVATE_KEY   = stringPreferencesKey("private_key")
-    private val URL_KEY = stringPreferencesKey("url")
-    private val CERT_KEY   = stringPreferencesKey("cert")
-
-    val userNameFlow: Flow<String> = dataStore.data.map { preferences ->
-        preferences[USER_NAME_KEY] ?: ""
-    }
-
-    val privateKeyFlow: Flow<String> = dataStore.data.map {  preferences ->
-        preferences[PRIVATE_KEY] ?: ""
-    }
-
-    val urlFlow: Flow<String> = dataStore.data.map { preferences ->
-        preferences[URL_KEY] ?: ""
-    }
-
-    val certFlow: Flow<String> = dataStore.data.map {  preferences ->
-        preferences[CERT_KEY] ?: ""
-    }
-
     var _init = false
     var imageLoader: ImageLoader? = null;
+    val uss = settingsDataStoreManager.useSelfSignedFlow
 
     @Composable
     fun Init(){
@@ -79,15 +65,15 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
 
     init {
         viewModelScope.launch {
-            val u = userNameFlow.first()
-            val p = privateKeyFlow.first()
-            val ur = urlFlow.first()
-            val c = certFlow.first()
+            val u = settingsDataStoreManager.userNameFlow.first()
+            val p = settingsDataStoreManager.privateKeyFlow.first()
+            val ur = settingsDataStoreManager.urlFlow.first()
+            val c = settingsDataStoreManager.certFlow.first()
 
-            if(u=="" || p=="" || ur=="" || c=="") return@launch
+            if(u=="" || p=="" || ur=="") return@launch
 
             try{
-                val usedUrl = ApiClient.apply(ur, c)
+                val usedUrl = ApiClient.apply(ur, if(uss.first()) c else "")
 
                 if (MediaManager.token == "null")
                     MediaManager.token = AuthManager.fetchToken(

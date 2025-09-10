@@ -3,11 +3,13 @@ package com.acitelight.aether.view
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -32,16 +35,19 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.acitelight.aether.viewModel.MeScreenViewModel
 
 @Composable
-fun MeScreen(meScreenViewModel: MeScreenViewModel = viewModel()) {
+fun MeScreen(meScreenViewModel: MeScreenViewModel = hiltViewModel()) {
     val context = LocalContext.current
     var username by meScreenViewModel.username;
     var privateKey by meScreenViewModel.privateKey;
     var url by meScreenViewModel.url
     var cert by meScreenViewModel.cert
+
+    val uss by meScreenViewModel.uss.collectAsState(initial = false)
 
     LazyColumn(
         modifier = Modifier
@@ -134,6 +140,8 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = viewModel()) {
                             .align(Alignment.Start)
                     )
 
+                    Spacer(modifier = Modifier.width(8.dp))
+
                     // Username input field
                     OutlinedTextField(
                         value = url,
@@ -146,21 +154,37 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = viewModel()) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                    // Private key input field
-                    OutlinedTextField(
-                        value = cert,
-                        onValueChange = { cert = it },
-                        label = { Text("Cert") },
-                        singleLine = false,
-                        maxLines = 40,
-                        minLines = 20,
-                        modifier = Modifier.fillMaxWidth(),
-                        textStyle = TextStyle(
-                            fontSize = 8.sp
+                    Row(Modifier.align(Alignment.Start)) {
+                        Checkbox(
+                            checked = uss,
+                            onCheckedChange = { isChecked ->
+                                meScreenViewModel.onUseSelfSignedCheckedChange(isChecked)
+                            },
+                            modifier = Modifier.align(Alignment.CenterVertically)
                         )
-                    )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Use Self-Signed Cert",
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    // Private key input field
+                    if (uss)
+                        OutlinedTextField(
+                            value = cert,
+                            onValueChange = { cert = it },
+                            label = { Text("Cert") },
+                            singleLine = false,
+                            maxLines = 40,
+                            minLines = 20,
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = TextStyle(
+                                fontSize = 8.sp
+                            )
+                        )
 
                     Spacer(modifier = Modifier.height(24.dp))
 

@@ -1,10 +1,21 @@
 package com.acitelight.aether.service
 
 import android.util.Base64
+import android.util.Log
 import com.acitelight.aether.model.ChallengeResponse
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import okhttp3.Call
+import okhttp3.EventListener
+import okhttp3.Handshake
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
+import java.io.IOException
+import java.lang.reflect.Proxy
+import java.net.InetSocketAddress
 import java.security.PrivateKey
 import java.security.Signature
 
@@ -17,13 +28,13 @@ object AuthManager {
             challengeBase64 = api!!.getChallenge(username).string()
         }catch (e: Exception)
         {
-            print(e.message)
+            return null
         }
 
         val signedBase64 = signChallenge(db64(privateKey), db64(challengeBase64))
 
         return try {
-            api!!.verifyChallenge(username, ChallengeResponse(response = signedBase64)).string()
+            api.verifyChallenge(username, ChallengeResponse(response = signedBase64)).string()
         } catch (e: Exception) {
             e.printStackTrace()
             null

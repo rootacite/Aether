@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.acitelight.aether.Global
@@ -30,7 +31,7 @@ import com.acitelight.aether.service.RecentManager
 import com.acitelight.aether.viewModel.HomeScreenViewModel
 
 @Composable
-fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = viewModel(), navController: NavController)
+fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = hiltViewModel(), navController: NavController)
 {
     if(Global.loggedIn)
         homeScreenViewModel.Init()
