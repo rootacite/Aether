@@ -1,6 +1,7 @@
 package com.acitelight.aether.viewModel
 
 import android.app.Application
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -34,11 +35,13 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.acitelight.aether.service.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val settingsDataStoreManager: SettingsDataStoreManager
+    private val settingsDataStoreManager: SettingsDataStoreManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel()
 {
     var _init = false
@@ -73,7 +76,7 @@ class HomeScreenViewModel @Inject constructor(
             if(u=="" || p=="" || ur=="") return@launch
 
             try{
-                val usedUrl = ApiClient.apply(ur, if(uss.first()) c else "")
+                val usedUrl = ApiClient.apply(context, ur, if(uss.first()) c else "")
 
                 if (MediaManager.token == "null")
                     MediaManager.token = AuthManager.fetchToken(

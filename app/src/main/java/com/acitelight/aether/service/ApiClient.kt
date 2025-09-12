@@ -1,16 +1,25 @@
 
 package com.acitelight.aether.service
 
+import android.content.Context
+import android.util.Log
+import androidx.core.net.toUri
+import com.acitelight.aether.AetherApp
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import okhttp3.ConnectionSpec
+import okhttp3.EventListener
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayInputStream
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.security.KeyStore
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
@@ -18,17 +27,21 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
-import okhttp3.EventListener
-import java.net.InetAddress
-import android.util.Log
-import okhttp3.ConnectionSpec
+
 
 object ApiClient {
-    var base: String = ""
+    fun getBase(): String{
+        return replaceAbyssProtocol(base)
+    }
+    private var base: String = ""
     var domain: String = ""
     var cert: String = ""
     private val json = Json {
         ignoreUnknownKeys = true
+    }
+
+    fun replaceAbyssProtocol(uri: String): String {
+        return uri.replaceFirst("^abyss://".toRegex(), "https://")
     }
 
     private val dnsEventListener = object : EventListener() {
@@ -112,10 +125,32 @@ object ApiClient {
                 init(null, arrayOf(combinedTm), null)
             }
 
-            return OkHttpClient.Builder()
-                .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
-                .sslSocketFactory(sslContext.socketFactory, combinedTm)
-                .build()
+            return if (base.startsWith("abyss://"))
+                OkHttpClient.Builder()
+                    .connectionSpecs(
+                        listOf(
+                            ConnectionSpec.MODERN_TLS,
+                            ConnectionSpec.COMPATIBLE_TLS
+                        )
+                    )
+                    .proxy(
+                        Proxy(
+                            Proxy.Type.HTTP,
+                            InetSocketAddress("127.0.0.1", 4095)
+                        )
+                    )
+                    .sslSocketFactory(sslContext.socketFactory, combinedTm)
+                    .build()
+            else
+                OkHttpClient.Builder()
+                    .connectionSpecs(
+                        listOf(
+                            ConnectionSpec.MODERN_TLS,
+                            ConnectionSpec.COMPATIBLE_TLS
+                        )
+                    )
+                    .sslSocketFactory(sslContext.socketFactory, combinedTm)
+                    .build()
 
         } catch (e: Exception) {
             throw RuntimeException("Failed to create OkHttpClient with dynamic certificate", e)
@@ -124,11 +159,24 @@ object ApiClient {
 
     fun createOkHttp(): OkHttpClient {
         return if (cert == "")
-            OkHttpClient
-                .Builder()
-                .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
-                .eventListener(dnsEventListener)
-                .build()
+            if (base.startsWith("abyss://"))
+                OkHttpClient
+                    .Builder()
+                    .proxy(
+                        Proxy(
+                            Proxy.Type.HTTP,
+                            InetSocketAddress("::1", 4095)
+                        )
+                    )
+                    .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+                    .eventListener(dnsEventListener)
+                    .build()
+            else
+                OkHttpClient
+                    .Builder()
+                    .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+                    .eventListener(dnsEventListener)
+                    .build()
         else
             createOkHttpClientWithDynamicCert(loadCertificateFromString(cert))
 
@@ -136,9 +184,10 @@ object ApiClient {
 
     private fun createRetrofit(): Retrofit {
         val okHttpClient = createOkHttp()
+        val b = replaceAbyssProtocol(base)
 
         return Retrofit.Builder()
-            .baseUrl(base)
+            .baseUrl(b)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
@@ -148,13 +197,13 @@ object ApiClient {
 
     var api: ApiInterface? = null
 
-    suspend fun apply(urls: String, crt: String): String? {
+    suspend fun apply(context: Context, urls: String, crt: String): String? {
         try {
             val urlList = urls.split(";").map { it.trim() }
 
             var selectedUrl: String? = null
             for (url in urlList) {
-                val host = url.toHttpUrlOrNull()?.host
+                val host = url.toUri().host
                 if (host != null && pingHost(host)) {
                     selectedUrl = url
                     break
@@ -168,6 +217,12 @@ object ApiClient {
             domain = selectedUrl.toHttpUrlOrNull()?.host ?: ""
             cert = crt
             base = selectedUrl
+
+            withContext(Dispatchers.IO)
+            {
+                (context as AetherApp).abyssService?.proxy?.config(base.toUri().host!!, 4096)
+            }
+
             api = createRetrofit().create(ApiInterface::class.java)
             return base
         } catch (e: Exception) {

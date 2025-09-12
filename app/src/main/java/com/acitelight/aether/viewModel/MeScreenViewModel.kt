@@ -24,10 +24,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.acitelight.aether.service.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 @HiltViewModel
 class MeScreenViewModel @Inject constructor(
-    private val settingsDataStoreManager: SettingsDataStoreManager
+    private val settingsDataStoreManager: SettingsDataStoreManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     val username = mutableStateOf("");
@@ -66,7 +68,7 @@ class MeScreenViewModel @Inject constructor(
             if (u == "" || p == "" || us == "") return@launch
 
             try {
-                val usedUrl = ApiClient.apply(u, if(uss.first()) c else "")
+                val usedUrl = ApiClient.apply(context, u, if(uss.first()) c else "")
                 MediaManager.token = AuthManager.fetchToken(
                     us,
                     p

@@ -1,6 +1,7 @@
 package com.acitelight.aether
 
 import android.app.Activity
+import android.content.Intent
 import androidx.compose.material.icons.Icons
 import android.graphics.drawable.Icon
 import android.net.http.SslCertificate.saveState
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -57,6 +59,9 @@ import com.acitelight.aether.view.VideoPlayer
 import com.acitelight.aether.view.VideoScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -66,6 +71,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val app = application as AetherApp
+
+        lifecycleScope.launch {
+            app.isServiceInitialized?.filter { it }?.first()
+            val intent = Intent(this@MainActivity, MainScreenActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+    }
+}
+
+@AndroidEntryPoint
+class MainScreenActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         window.attributes = window.attributes.apply {
             screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
         }

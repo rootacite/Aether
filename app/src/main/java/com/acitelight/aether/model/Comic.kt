@@ -10,7 +10,7 @@ class Comic(
 {
     fun getPage(pageNumber: Int): String
     {
-        return "${ApiClient.base}api/image/$id/${comic.list[pageNumber]}?token=$token"
+        return "${ApiClient.getBase()}api/image/$id/${comic.list[pageNumber]}?token=$token"
     }
 
     fun getPage(pageName: String): String?

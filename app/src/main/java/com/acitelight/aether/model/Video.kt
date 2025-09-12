@@ -11,18 +11,18 @@ class Video constructor(
     ){
     fun getCover(): String
     {
-        return "${ApiClient.base}api/video/$klass/$id/cover?token=$token"
+        return "${ApiClient.getBase()}api/video/$klass/$id/cover?token=$token"
     }
 
     fun getVideo(): String
     {
-        return "${ApiClient.base}api/video/$klass/$id/av?token=$token"
+        return "${ApiClient.getBase()}api/video/$klass/$id/av?token=$token"
     }
 
     fun getGallery(): List<KeyImage>
     {
         return video.gallery.map{
-            KeyImage(url = "${ApiClient.base}api/video/$klass/$id/gallery/$it?token=$token", key = "$klass/$id/gallery/$it")
+            KeyImage(url = "${ApiClient.getBase()}api/video/$klass/$id/gallery/$it?token=$token", key = "$klass/$id/gallery/$it")
         }
     }
 
