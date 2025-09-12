@@ -136,7 +136,7 @@ object ApiClient {
                     .proxy(
                         Proxy(
                             Proxy.Type.HTTP,
-                            InetSocketAddress("127.0.0.1", 4095)
+                            InetSocketAddress("::1", 4095)
                         )
                     )
                     .sslSocketFactory(sslContext.socketFactory, combinedTm)
