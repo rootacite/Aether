@@ -55,4 +55,14 @@ object AuthManager {
         val signature = signer.generateSignature()
         return Base64.encodeToString(signature, Base64.NO_WRAP)
     }
+
+    fun signChallengeByte(privateKey: ByteArray, data: ByteArray): ByteArray //64 Byte
+    {
+        val privateKeyParams = Ed25519PrivateKeyParameters(privateKey, 0)
+        val signer = Ed25519Signer()
+        signer.init(true, privateKeyParams)
+
+        signer.update(data, 0, data.size)
+        return signer.generateSignature()
+    }
 }

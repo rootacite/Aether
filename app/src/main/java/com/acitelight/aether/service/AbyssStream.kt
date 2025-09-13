@@ -1,5 +1,8 @@
 package com.acitelight.aether.service
 
+import com.acitelight.aether.service.AuthManager.db64
+import com.acitelight.aether.service.AuthManager.signChallenge
+import com.acitelight.aether.service.AuthManager.signChallengeByte
 import kotlinx.coroutines.*
 import java.io.InputStream
 import java.io.OutputStream
@@ -63,6 +66,12 @@ class AbyssStream private constructor(
             writeExact(outStream, localPub, 0, PUBLIC_KEY_LEN)
             val remotePub = ByteArray(PUBLIC_KEY_LEN)
             readExact(inStream, remotePub, 0, PUBLIC_KEY_LEN)
+
+            val ch = ByteArray(32)
+            readExact(inStream, ch, 0, 32)
+            val signed = signChallengeByte(localPriv, ch)
+            writeExact(outStream, signed, 0, signed.size)
+            readExact(inStream, ch, 0, 16)
 
             // 3) compute shared secret: X25519.scalarMult(private, remotePublic)
             val shared = ByteArray(PUBLIC_KEY_LEN)

@@ -1,18 +1,22 @@
 package com.acitelight.aether.service
 
 
+import com.acitelight.aether.service.AuthManager.db64
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.selects.select
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
-class AbyssTunnelProxy(
-    private val coroutineContext: CoroutineContext = Dispatchers.IO
+class AbyssTunnelProxy @Inject constructor(
+    private val settingsDataStoreManager: SettingsDataStoreManager
 ) {
+    private val coroutineContext: CoroutineContext = Dispatchers.IO
     private var serverHost: String = ""
     private var serverPort: Int = 0
 
@@ -65,7 +69,7 @@ class AbyssTunnelProxy(
         var abyssStream: AbyssStream? = null
         try {
             abyssSocket = Socket(serverHost, serverPort)
-            abyssStream = AbyssStream.create(abyssSocket)
+            abyssStream = AbyssStream.create(abyssSocket, db64(settingsDataStoreManager.privateKeyFlow.first()))
 
             // concurrently copy in both directions
             val job1 = launch { copyExactSuspend(localIn, abyssStream) }   // local -> abyss
