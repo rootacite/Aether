@@ -1,6 +1,7 @@
 package com.acitelight.aether.service
 
 
+import android.util.Log
 import com.acitelight.aether.service.AuthManager.db64
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -102,7 +103,9 @@ class AbyssTunnelProxy @Inject constructor(
             val read = localIn.read(buffer)
             if (read <= 0)
                 break
+            Log.i("Delay Analyze", "Read $read Bytes from HttpClient")
             abyss.write(buffer, 0, read)
+            Log.i("Delay Analyze", "Wrote $read Bytes to Remote Abyss")
         }
     }
 
@@ -113,7 +116,9 @@ class AbyssTunnelProxy @Inject constructor(
             val n = abyss.read(buffer, 0, buffer.size)
             if (n <= 0)
                 break
+            Log.i("Delay Analyze", "Read $n Bytes from Remote Abyss")
             localOut.write(buffer, 0, n)
+            Log.i("Delay Analyze", "Wrote $n Bytes to HttpClient")
         }
     }
 }

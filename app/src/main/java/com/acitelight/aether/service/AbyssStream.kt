@@ -278,15 +278,15 @@ class AbyssStream private constructor(
     private fun sendPlaintextChunk(plaintext: ByteArray) {
         if (closed) throw IllegalStateException("AbyssStream closed")
 
-        val ciphertextAndTag: ByteArray
         val nonce = ByteArray(NONCE_LEN)
+        val ciphertextAndTag: ByteArray
         val counterValue: Long
         synchronized(sendLock) {
             counterValue = sendCounter.getAndIncrement()
         }
+
         System.arraycopy(sendSalt, 0, nonce, 0, NONCE_SALT_LEN)
-        val bb = ByteBuffer.wrap(nonce, NONCE_SALT_LEN, 8)
-        bb.putLong(counterValue)
+        ByteBuffer.wrap(nonce, NONCE_SALT_LEN, 8).putLong(counterValue)
 
         try {
             ciphertextAndTag = aeadEncrypt(nonce, plaintext)
@@ -295,17 +295,22 @@ class AbyssStream private constructor(
         }
 
         val payloadLen = ciphertextAndTag.size
-        val header = ByteBuffer.allocate(4).putInt(payloadLen).array()
+        // header + ciphertextAndTag 一次性合并
+        val packet = ByteBuffer.allocate(4 + payloadLen)
+            .putInt(payloadLen)
+            .put(ciphertextAndTag)
+            .array()
+
         try {
             synchronized(output) {
-                output.write(header)
-                if (payloadLen > 0) output.write(ciphertextAndTag)
+                output.write(packet)
                 output.flush()
             }
         } finally {
             // clear sensitive
             ciphertextAndTag.fill(0)
             plaintext.fill(0)
+            packet.fill(0)
         }
     }
 

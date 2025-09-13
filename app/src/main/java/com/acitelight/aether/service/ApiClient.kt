@@ -224,6 +224,11 @@ object ApiClient {
             }
 
             api = createRetrofit().create(ApiInterface::class.java)
+
+            Log.i("Delay Analyze", "Start Abyss Hello")
+            val h = api!!.hello()
+            Log.i("Delay Analyze", "Abyss Hello: ${h.string()}")
+
             return base
         } catch (e: Exception) {
             api = null

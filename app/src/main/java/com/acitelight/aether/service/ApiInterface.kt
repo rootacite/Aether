@@ -4,12 +4,14 @@ import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.ChallengeResponse
 import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.model.VideoResponse
+import okhttp3.Response
 import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Streaming
 
 interface ApiInterface {
     @GET("api/video")
@@ -56,4 +58,7 @@ interface ApiInterface {
         @Path("user") user: String,
         @Body challengeResponse: ChallengeResponse
     ): ResponseBody
+
+    @GET("api/abyss")
+    suspend fun hello(): ResponseBody
 }
