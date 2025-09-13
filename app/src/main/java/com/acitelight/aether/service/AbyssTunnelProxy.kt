@@ -93,7 +93,7 @@ class AbyssTunnelProxy(
 
     // Copy from local InputStream into AbyssStream.write in frames.
     private suspend fun copyExactSuspend(localIn: InputStream, abyss: AbyssStream) = withContext(coroutineContext) {
-        val buffer = ByteArray(16 * 1024)
+        val buffer = ByteArray(64 * 1024)
         while (true) {
             val read = localIn.read(buffer)
             if (read <= 0)
@@ -104,13 +104,12 @@ class AbyssTunnelProxy(
 
     // Copy from AbyssStream (read frames/decrypt) to local OutputStream
     private suspend fun copyFromAbyssToLocal(abyss: AbyssStream, localOut: OutputStream) = withContext(coroutineContext) {
-        val buffer = ByteArray(16 * 1024)
+        val buffer = ByteArray(64 * 1024)
         while (true) {
             val n = abyss.read(buffer, 0, buffer.size)
             if (n <= 0)
                 break
             localOut.write(buffer, 0, n)
-            localOut.flush()
         }
     }
 }

@@ -63,7 +63,7 @@ class ComicPageViewModel : ViewModel()
         if(comic.value != null) return
         LaunchedEffect(id, page) {
             coroutineScope?.launch {
-                comic.value = MediaManager.queryComicInfo(id)
+                comic.value = MediaManager.queryComicInfoSingle(id)
                 comic.value?.let {
                     pageList.addAll(it.comic.list)
                     title.value = it.comic.comic_name

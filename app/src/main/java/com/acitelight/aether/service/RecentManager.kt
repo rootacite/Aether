@@ -52,12 +52,16 @@ object RecentManager
             val r = Json.decodeFromString<List<VideoQueryIndex>>(content)
 
             recent.clear()
+            val gr = r.groupBy { it.klass }
 
-            for(it in r)
+            for(it in gr)
             {
-                val v = MediaManager.queryVideo(it.klass, it.id)
+                val v = MediaManager.queryVideoBulk(it.key, it.value.map { it.id })
                 if(v != null)
-                    recent.add(recent.size, v)
+                    for(j in v)
+                    {
+                        recent.add(recent.size, j)
+                    }
             }
 
             return r
@@ -82,7 +86,7 @@ object RecentManager
 
                 recent.removeAt(index)
             }
-            recent.add(0, MediaManager.queryVideo(video.klass, video.id)!!)
+            recent.add(0, MediaManager.queryVideoBulk(video.klass, listOf(video.id))!![0])
 
 
             if(recent.size >= 21)

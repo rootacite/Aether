@@ -19,6 +19,7 @@ import com.acitelight.aether.helper.insertInNaturalOrder
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
+import com.acitelight.aether.service.MediaManager.queryVideoKlasses
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -56,9 +57,15 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
             classesMap[it] = mutableStateListOf<Video>()
         }
         updatingMap[0] = true
-        MediaManager.listVideos(classes[0], listOf()){
-            v -> classesMap[classes[0]]?.insertInNaturalOrder(v)
-        }
+        val vl = MediaManager.queryVideoBulk(classes[0],
+            queryVideoKlasses(classes[0])
+        )
+
+        if(vl != null)
+            for(it in vl)
+            {
+                classesMap[classes[0]]?.insertInNaturalOrder(it)
+            }
     }
 
     fun setTabIndex(index: Int)
@@ -69,12 +76,16 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
             if(updatingMap[index] == true) return@launch
 
             updatingMap[index] = true
-            MediaManager.listVideos(classes[index], (classesMap[classes[index]]?:listOf()).map{ it.id })
-            {
-                v ->
-                if(classesMap[classes[index]]?.contains(v) == false)
-                    classesMap[classes[index]]?.insertInNaturalOrder(v)
-            }
+
+            val vl = MediaManager.queryVideoBulk(classes[index],
+                queryVideoKlasses(classes[index])
+            )
+
+            if(vl != null)
+                for(it in vl)
+                {
+                    classesMap[classes[index]]?.insertInNaturalOrder(it)
+                }
         }
     }
 

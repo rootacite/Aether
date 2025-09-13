@@ -57,14 +57,14 @@ class ComicScreenViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             val l = MediaManager.listComics()
-            for(i in l)
-            {
-                val m = MediaManager.queryComicInfo(i)
-                if(m != null) {
-                    comics.add(m)
-                    for(i in m.comic.tags)
+            val m = MediaManager.queryComicInfoBulk(l)
+            if(m != null) {
+                for(i in m)
+                {
+                    comics.add(i)
+                    for(j in i.comic.tags)
                     {
-                        insertItem(i)
+                        insertItem(j)
                     }
                 }
             }

@@ -22,7 +22,19 @@ object MediaManager
         }
     }
 
-    suspend fun listVideos(klass: String, filter: List<String>, callback: (Video) -> Unit)
+    suspend fun queryVideoKlasses(klass: String): List<String>
+    {
+        try
+        {
+            val j = ApiClient.api!!.queryVideoClasses(klass, token)
+            return j.toList()
+        }catch(e: Exception)
+        {
+            return listOf()
+        }
+    }
+
+    private suspend fun listVideos(klass: String, filter: List<String>, callback: (Video) -> Unit)
     {
         val j = ApiClient.api!!.queryVideoClasses(klass, token)
         for(it in j)
@@ -49,6 +61,17 @@ object MediaManager
         }
     }
 
+    suspend fun queryVideoBulk(klass: String, id: List<String>): List<Video>?
+    {
+        try {
+            val j = ApiClient.api!!.queryVideoBulk(klass, id, token)
+            return j.zip(id).map {Video(klass = klass, id = it.second, token=token, it.first)}
+        }catch (e: Exception)
+        {
+            return null
+        }
+    }
+
     suspend fun listComics() : List<String>
     {
         try{
@@ -60,11 +83,22 @@ object MediaManager
         }
     }
 
-    suspend fun queryComicInfo(id: String) : Comic?
+    suspend fun queryComicInfoSingle(id: String) : Comic?
     {
         try{
             val j = ApiClient.api!!.queryComicInfo(id, token)
             return Comic(id = id, comic = j, token = token)
+        }catch (e: Exception)
+        {
+            return null
+        }
+    }
+
+    suspend fun queryComicInfoBulk(id: List<String>) : List<Comic>?
+    {
+        try{
+            val j = ApiClient.api!!.queryComicInfoBulk(id, token)
+            return j.zip(id).map { Comic(id = it.second, comic = it.first, token = token) }
         }catch (e: Exception)
         {
             return null

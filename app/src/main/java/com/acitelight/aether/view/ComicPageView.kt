@@ -292,7 +292,7 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
             showBookMarkPop = false
             comicPageViewModel.coroutineScope?.launch {
                 MediaManager.postBookmark(comicId.hexToString(), BookMark(name = s, page = comicPageViewModel.pageList[pagerState.currentPage]))
-                comicPageViewModel.comic.value = MediaManager.queryComicInfo(comicId.hexToString())
+                comicPageViewModel.comic.value = MediaManager.queryComicInfoSingle(comicId.hexToString())
             }
         });
     }

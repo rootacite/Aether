@@ -28,10 +28,20 @@ interface ApiInterface {
         @Query("token") token: String
     ): VideoResponse
 
+    @POST("api/video/{klass}/bulkquery")
+    suspend fun queryVideoBulk(
+        @Path("klass") klass: String,
+        @Body() id: List<String>,
+        @Query("token") token: String
+    ): List<VideoResponse>
+
     @GET("api/image")
     suspend fun getComics(@Query("token") token: String): List<String>
     @GET("api/image/{id}")
     suspend fun queryComicInfo(@Path("id") id: String, @Query("token") token: String): ComicResponse
+
+    @POST("api/image/bulkquery")
+    suspend fun queryComicInfoBulk(@Body() id: List<String>, @Query("token") token: String): List<ComicResponse>
 
     @POST("api/image/{id}/bookmark")
     suspend fun postBookmark(@Path("id") id: String, @Query("token") token: String, @Body bookmark: BookMark)

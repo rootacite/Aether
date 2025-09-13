@@ -47,12 +47,12 @@ class ComicGridViewModel : ViewModel()
     {
         viewModelScope.launch {
             if(comic.value == null) {
-                comic.value = MediaManager.queryComicInfo(id)
+                comic.value = MediaManager.queryComicInfoSingle(id)
                 val c = comic.value!!
                 for (i in c.comic.bookmarks) {
                     chapterList.add(i)
                 }
-            }else comic.value = MediaManager.queryComicInfo(id)
+            }else comic.value = MediaManager.queryComicInfoSingle(id)
         }
     }
 
