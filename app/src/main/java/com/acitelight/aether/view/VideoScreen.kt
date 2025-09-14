@@ -45,10 +45,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global
 import com.acitelight.aether.Global.updateRelate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.charset.Charset
 
 fun String.toHex(): String {
@@ -127,7 +131,9 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
                     navController.navigate(route)
                 },
                 onLongClick = {
-                    videoScreenViewModel.download(video)
+                    videoScreenViewModel.viewModelScope.launch {
+                        videoScreenViewModel.download(video)
+                    }
                     Toast.makeText(videoScreenViewModel.context, "Start downloading ${video.video.name}", Toast.LENGTH_SHORT).show()
                 }
             ),
@@ -147,13 +153,13 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize(),
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     imageLoader = videoScreenViewModel.imageLoader!!
                 )
 
                 Text(
                     modifier = Modifier.align(Alignment.BottomEnd).padding(2.dp),
-                    text = formatTime(video.video.duration), fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    text = formatTime(video.video.duration), fontSize = 12.sp, fontWeight = FontWeight.Bold)
 
                 Box(
                     Modifier
@@ -172,14 +178,14 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
-                modifier = Modifier.padding(8.dp).background(Color.Transparent).heightIn(48.dp)
+                modifier = Modifier.padding(8.dp).background(Color.Transparent).heightIn(24.dp)
             )
             Spacer(modifier = Modifier.weight(1f))
             Row(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Class", fontSize = 12.sp)
+                Text("Class: ", fontSize = 12.sp)
                 Text(video.klass, fontSize = 12.sp)
             }
         }
