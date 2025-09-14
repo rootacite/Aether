@@ -32,7 +32,9 @@ import com.acitelight.aether.service.RecentManager
 import com.acitelight.aether.viewModel.HomeScreenViewModel
 
 @Composable
-fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<HomeScreenViewModel>(), navController: NavController)
+fun HomeScreen(
+    homeScreenViewModel: HomeScreenViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<HomeScreenViewModel>(),
+    navController: NavController)
 {
     if(Global.loggedIn)
         homeScreenViewModel.Init()
@@ -50,14 +52,14 @@ fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = androidx.hilt.lifecycl
 
                 HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
 
-                for(i in RecentManager.recent)
+                for(i in homeScreenViewModel.recentManager.recent)
                 {
                     MiniVideoCard(
                         modifier = Modifier
                             .padding(horizontal = 12.dp),
                         i,
                         {
-                            updateRelate(RecentManager.recent, i)
+                            updateRelate(homeScreenViewModel.recentManager.recent, i)
                             val route = "video_player_route/${ "${i.klass}/${i.id}".toHex() }"
                             navController.navigate(route)
                         }, homeScreenViewModel.imageLoader!!)

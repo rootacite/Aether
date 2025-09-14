@@ -29,12 +29,18 @@ import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
 import com.acitelight.aether.view.hexToString
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class VideoPlayerViewModel() : ViewModel()
+@HiltViewModel
+class VideoPlayerViewModel @Inject constructor(
+    val mediaManager: MediaManager,
+    val recentManager: RecentManager
+) : ViewModel()
 {
     var tabIndex by mutableIntStateOf(0)
     var isPlaying by  mutableStateOf(true)
@@ -77,8 +83,8 @@ class VideoPlayerViewModel() : ViewModel()
 
         remember {
             viewModelScope.launch {
-                video = MediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
-                RecentManager.Push(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
+                video = mediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
+                recentManager.Push(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
                 _player = ExoPlayer
                     .Builder(context)
                     .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))

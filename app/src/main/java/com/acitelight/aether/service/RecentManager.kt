@@ -14,8 +14,13 @@ import kotlinx.serialization.json.*
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object RecentManager
+@Singleton
+class RecentManager @Inject constructor(
+    private val mediaManager: MediaManager
+)
 {
     private val mutex = Mutex()
 
@@ -56,7 +61,7 @@ object RecentManager
 
             for(it in gr)
             {
-                val v = MediaManager.queryVideoBulk(it.key, it.value.map { it.id })
+                val v = mediaManager.queryVideoBulk(it.key, it.value.map { it.id })
                 if(v != null)
                     for(j in v)
                     {
@@ -86,7 +91,7 @@ object RecentManager
 
                 recent.removeAt(index)
             }
-            recent.add(0, MediaManager.queryVideoBulk(video.klass, listOf(video.id))!![0])
+            recent.add(0, mediaManager.queryVideoBulk(video.klass, listOf(video.id))!![0])
 
 
             if(recent.size >= 21)

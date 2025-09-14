@@ -1,5 +1,6 @@
 package com.acitelight.aether.viewModel
 
+import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -21,11 +22,18 @@ import com.acitelight.aether.model.ComicRecord
 import com.acitelight.aether.model.ComicRecordDatabase
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
+import com.acitelight.aether.service.SettingsDataStoreManager
 import com.acitelight.aether.view.hexToString
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ComicPageViewModel : ViewModel()
+@HiltViewModel
+class ComicPageViewModel @Inject constructor(
+    val mediaManager: MediaManager
+) : ViewModel()
 {
     var imageLoader: ImageLoader? = null
     var comic = mutableStateOf<Comic?>(null)
@@ -63,7 +71,7 @@ class ComicPageViewModel : ViewModel()
         if(comic.value != null) return
         LaunchedEffect(id, page) {
             coroutineScope?.launch {
-                comic.value = MediaManager.queryComicInfoSingle(id)
+                comic.value = mediaManager.queryComicInfoSingle(id)
                 comic.value?.let {
                     pageList.addAll(it.comic.list)
                     title.value = it.comic.comic_name

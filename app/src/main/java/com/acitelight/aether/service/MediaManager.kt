@@ -1,12 +1,19 @@
 package com.acitelight.aether.service
 
+import android.content.Context
 import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.Comic
 import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.model.Video
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 
-object MediaManager
+@Singleton
+class MediaManager @Inject constructor(
+
+)
 {
     var token: String = "null"
 
@@ -34,27 +41,11 @@ object MediaManager
         }
     }
 
-    private suspend fun listVideos(klass: String, filter: List<String>, callback: (Video) -> Unit)
-    {
-        val j = ApiClient.api!!.queryVideoClasses(klass, token)
-        for(it in j)
-        {
-            if(filter.contains(it))
-                continue
-            try {
-                callback(queryVideo(klass, it)!!)
-            }catch (e: Exception)
-            {
-
-            }
-        }
-    }
-
     suspend fun queryVideo(klass: String, id: String): Video?
     {
         try {
             val j = ApiClient.api!!.queryVideo(klass, id, token)
-            return Video(klass = klass, id = id, token=token, j)
+            return Video(klass = klass, id = id, token=token, isLocal = false, video = j)
         }catch (e: Exception)
         {
             return null
@@ -65,7 +56,7 @@ object MediaManager
     {
         try {
             val j = ApiClient.api!!.queryVideoBulk(klass, id, token)
-            return j.zip(id).map {Video(klass = klass, id = it.second, token=token, it.first)}
+            return j.zip(id).map {Video(klass = klass, id = it.second, token=token, isLocal = false, video = it.first)}
         }catch (e: Exception)
         {
             return null

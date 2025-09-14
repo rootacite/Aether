@@ -11,11 +11,16 @@ import com.acitelight.aether.model.Comic
 import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ComicScreenViewModel : ViewModel() {
+@HiltViewModel
+class ComicScreenViewModel @Inject constructor(
+    val mediaManager: MediaManager
+) : ViewModel() {
 
     var imageLoader: ImageLoader? = null;
 
@@ -56,8 +61,8 @@ class ComicScreenViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-            val l = MediaManager.listComics()
-            val m = MediaManager.queryComicInfoBulk(l)
+            val l = mediaManager.listComics()
+            val m = mediaManager.queryComicInfoBulk(l)
 
             if(m != null) {
                 comics.addAll(m.sortedWith(compareBy(naturalOrder()) { it.comic.comic_name }))

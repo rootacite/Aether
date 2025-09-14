@@ -200,7 +200,7 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = androidx.hilt.lifecycle.view
                             onClick = {
                                 meScreenViewModel.updateServer(url, cert, context)
                             },
-                            modifier = Modifier.weight(0.5f)
+                            modifier = Modifier.weight(0.5f).padding(8.dp)
                         ) {
                             Text("Save")
                         }
@@ -213,7 +213,7 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = androidx.hilt.lifecycle.view
                                     Log.i("Delay Analyze", "Abyss Hello: ${h.string()}")
                                 }
                             },
-                            modifier = Modifier.weight(0.5f)
+                            modifier = Modifier.weight(0.5f).padding(8.dp)
                         ) {
                             Text("Ping")
                         }

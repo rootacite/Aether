@@ -96,7 +96,7 @@ class FetchManager @Inject constructor(
 
     fun startVideoDownload(video: Video)
     {
-        val path = File(context.filesDir, "videos/${video.klass}/${video.id}")
+        val path = File(context.filesDir, "videos/${video.klass}/${video.id}/video.mp4")
         val request = Request(video.getVideo(), path.path).apply {
             extras = Extras(mapOf("name" to video.video.name, "id" to video.id, "class" to video.klass))
         }

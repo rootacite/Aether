@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
@@ -61,7 +62,7 @@ import com.acitelight.aether.viewModel.ComicPageViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun ComicPageView(comicId: String, page: String,  navController: NavHostController, comicPageViewModel: ComicPageViewModel = viewModel())
+fun ComicPageView(comicId: String, page: String,  navController: NavHostController, comicPageViewModel: ComicPageViewModel = hiltViewModel<ComicPageViewModel>())
 {
     comicPageViewModel.SetupClient()
     comicPageViewModel.Resolve(comicId.hexToString(), page.toInt())
@@ -291,8 +292,8 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
             s ->
             showBookMarkPop = false
             comicPageViewModel.coroutineScope?.launch {
-                MediaManager.postBookmark(comicId.hexToString(), BookMark(name = s, page = comicPageViewModel.pageList[pagerState.currentPage]))
-                comicPageViewModel.comic.value = MediaManager.queryComicInfoSingle(comicId.hexToString())
+                comicPageViewModel.mediaManager.postBookmark(comicId.hexToString(), BookMark(name = s, page = comicPageViewModel.pageList[pagerState.currentPage]))
+                comicPageViewModel.comic.value = comicPageViewModel.mediaManager.queryComicInfoSingle(comicId.hexToString())
             }
         });
     }

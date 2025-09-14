@@ -47,7 +47,7 @@ object ApiClient {
     private val dnsEventListener = object : EventListener() {
         override fun dnsEnd(call: okhttp3.Call, domainName: String, inetAddressList: List<InetAddress>) {
             super.dnsEnd(call, domainName, inetAddressList)
-            val ipAddresses = inetAddressList.joinToString(", ") { it.hostAddress }
+            val ipAddresses = inetAddressList.joinToString(", ") { it.hostAddress ?: "" }
             Log.d("OkHttp_DNS", "Domain '$domainName' resolved to IPs: [$ipAddresses]")
         }
     }

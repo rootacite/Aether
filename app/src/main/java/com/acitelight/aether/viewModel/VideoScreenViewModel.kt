@@ -1,43 +1,39 @@
 package com.acitelight.aether.viewModel
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalContext
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import com.acitelight.aether.dataStore
-import com.acitelight.aether.helper.insertInNaturalOrder
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.MediaManager
-import com.acitelight.aether.service.MediaManager.queryVideoKlasses
+import com.acitelight.aether.service.RecentManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class VideoScreenViewModel @Inject constructor(
-    private val fetchManager: FetchManager
+    private val fetchManager: FetchManager,
+    @ApplicationContext val context: Context,
+    val mediaManager: MediaManager,
+    val recentManager: RecentManager
 ) : ViewModel()
 {
     private val _tabIndex = mutableIntStateOf(0)
     val tabIndex: State<Int> = _tabIndex
     // val videos = mutableStateListOf<Video>()
-    // private val _klasses = MutableStateFlow<List<String>>(emptyList())
     var classes = mutableStateListOf<String>()
     val classesMap = mutableStateMapOf<String, SnapshotStateList<Video>>()
 
@@ -56,7 +52,7 @@ class VideoScreenViewModel @Inject constructor(
     }
 
     suspend fun init() {
-        classes.addAll(MediaManager.listVideoKlasses())
+        classes.addAll(mediaManager.listVideoKlasses())
         var i = 0
         for(it in classes)
         {
@@ -64,7 +60,7 @@ class VideoScreenViewModel @Inject constructor(
             classesMap[it] = mutableStateListOf<Video>()
         }
         updatingMap[0] = true
-        val vl = MediaManager.queryVideoBulk(classes[0], queryVideoKlasses(classes[0]))
+        val vl = mediaManager.queryVideoBulk(classes[0], mediaManager.queryVideoKlasses(classes[0]))
 
         if(vl != null){
             val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
@@ -81,7 +77,7 @@ class VideoScreenViewModel @Inject constructor(
 
             updatingMap[index] = true
 
-            val vl = MediaManager.queryVideoBulk(classes[index], queryVideoKlasses(classes[index]))
+            val vl = mediaManager.queryVideoBulk(classes[index], mediaManager.queryVideoKlasses(classes[index]))
 
             if(vl != null){
                 val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })

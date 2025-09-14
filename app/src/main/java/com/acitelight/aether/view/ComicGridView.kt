@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
@@ -109,13 +110,13 @@ fun ComicGridView(comicId: String, navController: NavHostController, comicGridVi
                         {
                             if(record != null) {
                                 val k = comic!!.getPageChapterIndex(record!!.position)
-                                val route = "comic_page_route/${"${comic!!.id}".toHex()}/${
+                                val route = "comic_page_route/${comic!!.id.toHex()}/${
                                     record!!.position
                                 }"
                                 navController.navigate(route)
                             }else
                             {
-                                val route = "comic_page_route/${"${comic!!.id}".toHex()}/${0}"
+                                val route = "comic_page_route/${comic!!.id.toHex()}/${0}"
                                 navController.navigate(route)
                             }
                         }
@@ -150,7 +151,7 @@ fun ComicGridView(comicId: String, navController: NavHostController, comicGridVi
 }
 
 @Composable
-fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMark, comicGridViewModel: ComicGridViewModel = viewModel())
+fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMark, comicGridViewModel: ComicGridViewModel = hiltViewModel<ComicGridViewModel>())
 {
     val c = chapter
     val iv = comic.getPageIndex(c.page)
@@ -162,7 +163,7 @@ fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMar
             .wrapContentHeight()
             .padding(horizontal = 16.dp).padding(vertical = 6.dp),
         onClick = {
-            val route = "comic_page_route/${"${comic.id}".toHex()}/${comic.getPageIndex(chapter.page)}"
+            val route = "comic_page_route/${comic.id.toHex()}/${comic.getPageIndex(chapter.page)}"
             navController.navigate(route)
         }
     ) {

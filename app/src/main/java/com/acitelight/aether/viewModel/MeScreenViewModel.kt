@@ -29,7 +29,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 @HiltViewModel
 class MeScreenViewModel @Inject constructor(
     private val settingsDataStoreManager: SettingsDataStoreManager,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    val mediaManager: MediaManager
 ) : ViewModel() {
 
     val username = mutableStateOf("");
@@ -51,8 +52,8 @@ class MeScreenViewModel @Inject constructor(
             try{
                 val usedUrl = ApiClient.apply(context, url.value, if(uss.first()) cert.value else "")
 
-                if (MediaManager.token == "null")
-                    MediaManager.token = AuthManager.fetchToken(
+                if (mediaManager.token == "null")
+                    mediaManager.token = AuthManager.fetchToken(
                         username.value,
                         settingsDataStoreManager.privateKeyFlow.first()
                     )!!
@@ -87,7 +88,7 @@ class MeScreenViewModel @Inject constructor(
 
             try {
                 val usedUrl = ApiClient.apply(context, u, if(uss.first()) c else "")
-                MediaManager.token = AuthManager.fetchToken(
+                mediaManager.token = AuthManager.fetchToken(
                     us,
                     p
                 )!!
@@ -117,7 +118,7 @@ class MeScreenViewModel @Inject constructor(
             if (u == "" || p == "" || ur == "") return@launch
 
             try {
-                MediaManager.token = AuthManager.fetchToken(
+                mediaManager.token = AuthManager.fetchToken(
                     u,
                     p
                 )!!

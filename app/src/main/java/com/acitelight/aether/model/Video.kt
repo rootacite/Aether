@@ -4,6 +4,7 @@ import com.acitelight.aether.service.ApiClient
 import java.security.KeyPair
 
 class Video constructor(
+    val isLocal: Boolean,
     val klass: String,
     val id: String,
     val token: String,

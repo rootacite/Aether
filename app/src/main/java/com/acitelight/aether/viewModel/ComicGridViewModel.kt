@@ -15,9 +15,15 @@ import com.acitelight.aether.model.ComicRecord
 import com.acitelight.aether.model.ComicRecordDatabase
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
+import com.acitelight.aether.service.RecentManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ComicGridViewModel : ViewModel()
+@HiltViewModel
+class ComicGridViewModel @Inject constructor(
+    val mediaManager: MediaManager
+)  : ViewModel()
 {
     var imageLoader: ImageLoader? = null
     var comic = mutableStateOf<Comic?>(null)
@@ -47,12 +53,12 @@ class ComicGridViewModel : ViewModel()
     {
         viewModelScope.launch {
             if(comic.value == null) {
-                comic.value = MediaManager.queryComicInfoSingle(id)
+                comic.value = mediaManager.queryComicInfoSingle(id)
                 val c = comic.value!!
                 for (i in c.comic.bookmarks) {
                     chapterList.add(i)
                 }
-            }else comic.value = MediaManager.queryComicInfoSingle(id)
+            }else comic.value = mediaManager.queryComicInfoSingle(id)
         }
     }
 

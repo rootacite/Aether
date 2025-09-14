@@ -53,6 +53,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.modifier.modifierLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global
@@ -135,7 +136,7 @@ fun VariableGrid(
 @Composable
 fun ComicScreen(
     navController: NavHostController,
-    comicScreenViewModel: ComicScreenViewModel = viewModel()
+    comicScreenViewModel: ComicScreenViewModel = hiltViewModel<ComicScreenViewModel>()
 ) {
     comicScreenViewModel.SetupClient()
     val included = comicScreenViewModel.included

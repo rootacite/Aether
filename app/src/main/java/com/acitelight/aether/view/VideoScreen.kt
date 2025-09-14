@@ -1,5 +1,6 @@
 package com.acitelight.aether.view
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -127,6 +128,7 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
                 },
                 onLongClick = {
                     videoScreenViewModel.download(video)
+                    Toast.makeText(videoScreenViewModel.context, "Start downloading ${video.video.name}", Toast.LENGTH_SHORT).show()
                 }
             ),
         shape = RoundedCornerShape(6.dp),

@@ -95,6 +95,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -208,7 +209,7 @@ fun BiliMiniSlider(
 
 @Composable
 fun VideoPlayer(
-    videoPlayerViewModel: VideoPlayerViewModel = viewModel(),
+    videoPlayerViewModel: VideoPlayerViewModel = hiltViewModel<VideoPlayerViewModel>(),
     videoId: String,
     navController: NavHostController
 ) {
