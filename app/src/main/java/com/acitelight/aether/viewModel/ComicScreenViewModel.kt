@@ -58,15 +58,12 @@ class ComicScreenViewModel : ViewModel() {
         viewModelScope.launch {
             val l = MediaManager.listComics()
             val m = MediaManager.queryComicInfoBulk(l)
+
             if(m != null) {
-                for(i in m)
-                {
-                    comics.add(i)
-                    for(j in i.comic.tags)
-                    {
-                        insertItem(j)
-                    }
-                }
+                comics.addAll(m.sortedWith(compareBy(naturalOrder()) { it.comic.comic_name }))
+                tags.addAll(m.flatMap { it.comic.tags }.groupingBy { it }.eachCount()
+                    .entries.sortedByDescending { it.value }
+                    .map { it.key })
             }
         }
     }

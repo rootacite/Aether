@@ -57,15 +57,12 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
             classesMap[it] = mutableStateListOf<Video>()
         }
         updatingMap[0] = true
-        val vl = MediaManager.queryVideoBulk(classes[0],
-            queryVideoKlasses(classes[0])
-        )
+        val vl = MediaManager.queryVideoBulk(classes[0], queryVideoKlasses(classes[0]))
 
-        if(vl != null)
-            for(it in vl)
-            {
-                classesMap[classes[0]]?.insertInNaturalOrder(it)
-            }
+        if(vl != null){
+            val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
+            classesMap[classes[0]]?.addAll(r)
+        }
     }
 
     fun setTabIndex(index: Int)
@@ -77,15 +74,12 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
 
             updatingMap[index] = true
 
-            val vl = MediaManager.queryVideoBulk(classes[index],
-                queryVideoKlasses(classes[index])
-            )
+            val vl = MediaManager.queryVideoBulk(classes[index], queryVideoKlasses(classes[index]))
 
-            if(vl != null)
-                for(it in vl)
-                {
-                    classesMap[classes[index]]?.insertInNaturalOrder(it)
-                }
+            if(vl != null){
+                val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
+                classesMap[classes[index]]?.addAll(r)
+            }
         }
     }
 
