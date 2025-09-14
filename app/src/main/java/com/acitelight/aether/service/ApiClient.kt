@@ -217,13 +217,10 @@ object ApiClient {
             domain = selectedUrl.toHttpUrlOrNull()?.host ?: ""
             cert = crt
             base = selectedUrl
-
             withContext(Dispatchers.IO)
             {
-                (context as AetherApp).abyssService?.proxy?.config(base.toUri().host!!, 4096)
-                context.abyssService?.downloader?.init()
+                (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
             }
-
             api = createRetrofit().create(ApiInterface::class.java)
 
             Log.i("Delay Analyze", "Start Abyss Hello")

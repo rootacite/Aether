@@ -5,14 +5,18 @@ import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.Comic
 import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.model.Video
+import com.tonyodev.fetch2.Status
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.json.Json
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
 
 @Singleton
 class MediaManager @Inject constructor(
-
+    val fetchManager: FetchManager,
+    @ApplicationContext val context: Context
 )
 {
     var token: String = "null"
@@ -43,23 +47,86 @@ class MediaManager @Inject constructor(
 
     suspend fun queryVideo(klass: String, id: String): Video?
     {
+        val downloaded = fetchManager.getAllDownloadsAsync().filter {
+            it.status == Status.COMPLETED &&
+            it.extras.getString("id", "") == id &&
+            it.extras.getString("class", "") == klass
+        }
+
+        if(!downloaded.isEmpty())
+        {
+            val jsonString = File(
+                context.getExternalFilesDir(null),
+                "videos/$klass/$id/summary.json"
+            ).readText()
+            return Json.decodeFromString<Video>(jsonString).toLocal(context.getExternalFilesDir(null)?.path!!)
+        }
+
         try {
             val j = ApiClient.api!!.queryVideo(klass, id, token)
-            return Video(klass = klass, id = id, token=token, isLocal = false, video = j)
+            return Video(klass = klass, id = id, token=token, isLocal = false, localBase = "", video = j)
         }catch (e: Exception)
         {
             return null
         }
     }
 
-    suspend fun queryVideoBulk(klass: String, id: List<String>): List<Video>?
-    {
-        try {
-            val j = ApiClient.api!!.queryVideoBulk(klass, id, token)
-            return j.zip(id).map {Video(klass = klass, id = it.second, token=token, isLocal = false, video = it.first)}
-        }catch (e: Exception)
-        {
-            return null
+    suspend fun queryVideoBulk(klass: String, id: List<String>): List<Video>? {
+        return try {
+            val completedDownloads = fetchManager.getAllDownloadsAsync()
+                .filter { it.status == Status.COMPLETED }
+            val localIds = mutableSetOf<String>()
+            val remoteIds = mutableListOf<String>()
+
+            for (videoId in id) {
+                if (completedDownloads.any {
+                        it.extras.getString("id", "") == videoId &&
+                                it.extras.getString("class", "") == klass
+                    }) {
+                    localIds.add(videoId)
+                } else {
+                    remoteIds.add(videoId)
+                }
+            }
+
+            val localVideos = localIds.mapNotNull { videoId ->
+                val localFile = File(
+                    context.getExternalFilesDir(null),
+                    "videos/$klass/$videoId/summary.json"
+                )
+                if (localFile.exists()) {
+                    try {
+                        val jsonString = localFile.readText()
+                        Json.decodeFromString<Video>(jsonString).toLocal(
+                            context.getExternalFilesDir(null)?.path ?: ""
+                        )
+                    } catch (e: Exception) {
+                        null
+                    }
+                } else {
+                    null
+                }
+            }
+
+            val remoteVideos = if (remoteIds.isNotEmpty()) {
+                val j = ApiClient.api!!.queryVideoBulk(klass, remoteIds, token)
+                j.zip(remoteIds).map {
+                    Video(
+                        klass = klass,
+                        id = it.second,
+                        token = token,
+                        isLocal = false,
+                        localBase = "",
+                        video = it.first
+                    )
+                }
+            } else {
+                emptyList()
+            }
+
+            localVideos + remoteVideos
+        } catch (e: Exception) {
+            null
         }
     }
 

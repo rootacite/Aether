@@ -13,7 +13,9 @@ class DownloadItemState(
     progress: Int,
     status: Status,
     downloadedBytes: Long,
-    totalBytes: Long
+    totalBytes: Long,
+    klass: String,
+    vid: String
 ) {
     var fileName by mutableStateOf(fileName)
     var filePath by mutableStateOf(filePath)
@@ -22,4 +24,7 @@ class DownloadItemState(
     var status by mutableStateOf(status)
     var downloadedBytes by mutableStateOf(downloadedBytes)
     var totalBytes by mutableStateOf(totalBytes)
+
+    var klass by mutableStateOf(klass)
+    var vid by mutableStateOf(vid)
 }

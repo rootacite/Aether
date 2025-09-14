@@ -1,5 +1,6 @@
 package com.acitelight.aether.viewModel
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,11 +18,13 @@ import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ComicGridViewModel @Inject constructor(
+    @ApplicationContext val context: Context,
     val mediaManager: MediaManager
 )  : ViewModel()
 {
@@ -31,22 +34,17 @@ class ComicGridViewModel @Inject constructor(
     var db: ComicRecordDatabase? = null
     var record = mutableStateOf<ComicRecord?>(null)
 
-    @Composable
-    fun SetupClient()
-    {
-        val context = LocalContext.current
+    init {
         imageLoader =  ImageLoader.Builder(context)
             .components {
                 add(OkHttpNetworkFetcherFactory(createOkHttp()))
             }
             .build()
-        db = remember {
-            try{
+        db = try{
                 ComicRecordDatabase.getDatabase(context)
             }catch (e: Exception) {
                 print(e.message)
             } as ComicRecordDatabase?
-        }
     }
 
     fun resolve(id: String)

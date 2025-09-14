@@ -138,7 +138,6 @@ fun ComicScreen(
     navController: NavHostController,
     comicScreenViewModel: ComicScreenViewModel = hiltViewModel<ComicScreenViewModel>()
 ) {
-    comicScreenViewModel.SetupClient()
     val included = comicScreenViewModel.included
     val state = rememberLazyGridState()
     val colorScheme = MaterialTheme.colorScheme

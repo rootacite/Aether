@@ -1,5 +1,8 @@
 package com.acitelight.aether.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class VideoResponse(
     val name: String,
     val duration: Long,

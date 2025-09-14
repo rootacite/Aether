@@ -40,14 +40,12 @@ import com.acitelight.aether.model.Comic
 import com.acitelight.aether.viewModel.ComicGridViewModel
 
 @Composable
-fun ComicGridView(comicId: String, navController: NavHostController, comicGridViewModel: ComicGridViewModel = viewModel()) {
-    comicGridViewModel.SetupClient()
+fun ComicGridView(comicId: String, navController: NavHostController, comicGridViewModel: ComicGridViewModel = hiltViewModel<ComicGridViewModel>()) {
     comicGridViewModel.resolve(comicId.hexToString())
     comicGridViewModel.updateProcess(comicId.hexToString()){}
     ToggleFullScreen(false)
     val colorScheme = MaterialTheme.colorScheme
 
-    val context = LocalContext.current
     val comic by comicGridViewModel.comic
     val record by comicGridViewModel.record
 

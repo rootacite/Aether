@@ -13,86 +13,106 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.acitelight.aether.Global
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
+import com.acitelight.aether.service.VideoLibrary
+import com.tonyodev.fetch2.Status
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import java.io.File
 import javax.inject.Inject
+import javax.inject.Singleton
+
 
 @HiltViewModel
 class VideoScreenViewModel @Inject constructor(
     private val fetchManager: FetchManager,
     @ApplicationContext val context: Context,
     val mediaManager: MediaManager,
-    val recentManager: RecentManager
-) : ViewModel()
-{
+    val recentManager: RecentManager,
+    val videoLibrary: VideoLibrary
+) : ViewModel() {
     private val _tabIndex = mutableIntStateOf(0)
     val tabIndex: State<Int> = _tabIndex
-    // val videos = mutableStateListOf<Video>()
-    var classes = mutableStateListOf<String>()
-    val classesMap = mutableStateMapOf<String, SnapshotStateList<Video>>()
-
     var imageLoader: ImageLoader? = null;
-    val updatingMap: MutableMap<Int, Boolean> = mutableMapOf()
-
-    @Composable
-    fun SetupClient()
-    {
-        val context = LocalContext.current
-        imageLoader =  ImageLoader.Builder(context)
-            .components {
-                add(OkHttpNetworkFetcherFactory(createOkHttp()))
-            }
-            .build()
-    }
 
     suspend fun init() {
-        classes.addAll(mediaManager.listVideoKlasses())
-        var i = 0
-        for(it in classes)
-        {
-            updatingMap[i++] = false
-            classesMap[it] = mutableStateListOf<Video>()
-        }
-        updatingMap[0] = true
-        val vl = mediaManager.queryVideoBulk(classes[0], mediaManager.queryVideoKlasses(classes[0]))
+        fetchManager.configured.filter { it }.first()
 
-        if(vl != null){
-            val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
-            classesMap[classes[0]]?.addAll(r)
+        if (Global.loggedIn) {
+            videoLibrary.classes.addAll(mediaManager.listVideoKlasses())
+            var i = 0
+            for (it in videoLibrary.classes) {
+                videoLibrary.updatingMap[i++] = false
+                videoLibrary.classesMap[it] = mutableStateListOf<Video>()
+            }
+            videoLibrary.updatingMap[0] = true
+            val vl =
+                mediaManager.queryVideoBulk(videoLibrary.classes[0], mediaManager.queryVideoKlasses(videoLibrary.classes[0]))
+
+            if (vl != null) {
+                val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
+                videoLibrary.classesMap[videoLibrary.classes[0]]?.addAll(r)
+            }
+        } else {
+            videoLibrary.classes.add("Offline")
+            videoLibrary.updatingMap[0] = true
+            videoLibrary.classesMap["Offline"] = mutableStateListOf<Video>()
+
+            val downloaded = fetchManager.getAllDownloadsAsync().filter {
+                it.status == Status.COMPLETED && it.extras.getString("isComic", "") != "true"
+            }
+
+            val jsonQuery = downloaded.map{ File(
+                context.getExternalFilesDir(null),
+                "videos/${it.extras.getString("class", "")}/${it.extras.getString("id", "")}/summary.json").readText() }
+                .map {  Json.decodeFromString<Video>(it).toLocal(context.getExternalFilesDir(null)!!.path) }
+
+            videoLibrary.classesMap[videoLibrary.classes[0]]?.addAll(jsonQuery)
         }
     }
 
-    fun setTabIndex(index: Int)
-    {
+    fun setTabIndex(index: Int) {
         viewModelScope.launch()
         {
             _tabIndex.intValue = index;
-            if(updatingMap[index] == true) return@launch
+            if (videoLibrary.updatingMap[index] == true) return@launch
 
-            updatingMap[index] = true
+            videoLibrary.updatingMap[index] = true
 
-            val vl = mediaManager.queryVideoBulk(classes[index], mediaManager.queryVideoKlasses(classes[index]))
+            val vl = mediaManager.queryVideoBulk(
+                videoLibrary.classes[index],
+                mediaManager.queryVideoKlasses(videoLibrary.classes[index])
+            )
 
-            if(vl != null){
+            if (vl != null) {
                 val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
-                classesMap[classes[index]]?.addAll(r)
+                videoLibrary.classesMap[videoLibrary.classes[index]]?.addAll(r)
             }
         }
     }
 
-    fun download(video :Video)
-    {
+    suspend fun download(video: Video) {
         fetchManager.startVideoDownload(video)
     }
 
     init {
-        viewModelScope.launch {
+        imageLoader = ImageLoader.Builder(context)
+            .components {
+                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+            }
+            .build()
+
+        viewModelScope.launch(Dispatchers.IO) {
             init()
         }
     }

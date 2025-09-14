@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -71,14 +72,15 @@ fun String.hexToString(charset: Charset = Charsets.UTF_8): String {
 }
 
 @Composable
-fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = hiltViewModel<VideoScreenViewModel>(), navController: NavHostController)
-{
+fun VideoScreen(
+    videoScreenViewModel: VideoScreenViewModel = hiltViewModel<VideoScreenViewModel>(),
+    navController: NavHostController
+) {
     val tabIndex by videoScreenViewModel.tabIndex;
-    videoScreenViewModel.SetupClient()
 
     Column(
-        modifier = Modifier.fillMaxSize() // 或至少 fillMaxWidth()
-    ){
+        modifier = Modifier.fillMaxSize()
+    ) {
         TopRow(videoScreenViewModel);
 
         LazyVerticalGrid(
@@ -88,9 +90,11 @@ fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = hiltViewModel<Video
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         )
         {
-            if(videoScreenViewModel.classes.isNotEmpty())
-            {
-                items(videoScreenViewModel.classesMap[videoScreenViewModel.classes[tabIndex]] ?: mutableStateListOf()) { video ->
+            if (videoScreenViewModel.videoLibrary.classes.isNotEmpty()) {
+                items(
+                    videoScreenViewModel.videoLibrary.classesMap[videoScreenViewModel.videoLibrary.classes[tabIndex]]
+                        ?: mutableStateListOf()
+                ) { video ->
                     VideoCard(video, navController, videoScreenViewModel)
                 }
             }
@@ -100,17 +104,19 @@ fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = hiltViewModel<Video
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopRow(videoScreenViewModel: VideoScreenViewModel)
-{
+fun TopRow(videoScreenViewModel: VideoScreenViewModel) {
     val tabIndex by videoScreenViewModel.tabIndex;
-    if(videoScreenViewModel.classes.isEmpty()) return
+    if (videoScreenViewModel.videoLibrary.classes.isEmpty()) return
     val colorScheme = MaterialTheme.colorScheme
 
-    ScrollableTabRow (selectedTabIndex = tabIndex, modifier = Modifier.background(colorScheme.surface)) {
-        videoScreenViewModel.classes.forEachIndexed { index, title ->
+    ScrollableTabRow(
+        selectedTabIndex = tabIndex,
+        modifier = Modifier.background(colorScheme.surface)
+    ) {
+        videoScreenViewModel.videoLibrary.classes.forEachIndexed { index, title ->
             Tab(
                 selected = tabIndex == index,
-                onClick = { videoScreenViewModel.setTabIndex(index)  },
+                onClick = { videoScreenViewModel.setTabIndex(index) },
                 text = { Text(text = title, maxLines = 1) },
             )
         }
@@ -118,7 +124,11 @@ fun TopRow(videoScreenViewModel: VideoScreenViewModel)
 }
 
 @Composable
-fun VideoCard(video: Video, navController: NavHostController, videoScreenViewModel: VideoScreenViewModel) {
+fun VideoCard(
+    video: Video,
+    navController: NavHostController,
+    videoScreenViewModel: VideoScreenViewModel
+) {
     val tabIndex by videoScreenViewModel.tabIndex;
     Card(
         modifier = Modifier
@@ -126,15 +136,22 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
             .wrapContentHeight()
             .combinedClickable(
                 onClick = {
-                    updateRelate(videoScreenViewModel.classesMap[videoScreenViewModel.classes[tabIndex]] ?: mutableStateListOf(), video)
-                    val route = "video_player_route/${ "${video.klass}/${video.id}".toHex() }"
+                    updateRelate(
+                        videoScreenViewModel.videoLibrary.classesMap[videoScreenViewModel.videoLibrary.classes[tabIndex]]
+                            ?: mutableStateListOf(), video
+                    )
+                    val route = "video_player_route/${"${video.klass}/${video.id}".toHex()}"
                     navController.navigate(route)
                 },
                 onLongClick = {
                     videoScreenViewModel.viewModelScope.launch {
                         videoScreenViewModel.download(video)
                     }
-                    Toast.makeText(videoScreenViewModel.context, "Start downloading ${video.video.name}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        videoScreenViewModel.context,
+                        "Start downloading ${video.video.name}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             ),
         shape = RoundedCornerShape(6.dp),
@@ -142,8 +159,9 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-        )  {
-            Box(modifier = Modifier.fillMaxSize()){
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(video.getCover())
@@ -158,27 +176,54 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
                 )
 
                 Text(
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(2.dp),
-                    text = formatTime(video.video.duration), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(2.dp),
+                    text = formatTime(video.video.duration),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
                 Box(
                     Modifier
                         .fillMaxWidth()
                         .height(24.dp)
-                        .background( brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.45f)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.45f)
+                                )
                             )
-                        ))
-                        .align(Alignment.BottomCenter))
+                        )
+                        .align(Alignment.BottomCenter)
+                )
+
+                if (video.isLocal)
+                    Card(Modifier
+                        .align(Alignment.TopStart)
+                        .padding(5.dp)
+                        .widthIn(max = 46.dp)) {
+                        Box(Modifier.fillMaxWidth())
+                        {
+                            Text(
+                                modifier = Modifier.align(Alignment.Center),
+                                text = "Local",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
             }
             Text(
                 text = video.video.name,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
-                modifier = Modifier.padding(8.dp).background(Color.Transparent).heightIn(24.dp)
+                modifier = Modifier
+                    .padding(8.dp)
+                    .background(Color.Transparent)
+                    .heightIn(24.dp)
             )
             Spacer(modifier = Modifier.weight(1f))
             Row(

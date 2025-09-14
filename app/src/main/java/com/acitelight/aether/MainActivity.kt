@@ -179,7 +179,7 @@ fun AppNavigation() {
 
             composable(Screen.Transmission.route) {
                 CardPage(title = "Tasks") {
-                    TransmissionScreen()
+                    TransmissionScreen(navigator = navController)
                 }
             }
             composable(Screen.Me.route) {
@@ -236,6 +236,8 @@ fun BottomNavigationBar(navController: NavController) {
         Screen.Transmission,
         Screen.Me
     ) else  listOf(
+        Screen.Video,
+        Screen.Transmission,
         Screen.Me
     )
 

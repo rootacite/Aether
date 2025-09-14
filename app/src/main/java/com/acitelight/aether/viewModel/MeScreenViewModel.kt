@@ -5,11 +5,13 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.acitelight.aether.AetherApp
 import com.acitelight.aether.Global
 import com.acitelight.aether.dataStore
 import com.acitelight.aether.model.Video
@@ -25,6 +27,8 @@ import javax.inject.Inject
 import com.acitelight.aether.service.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class MeScreenViewModel @Inject constructor(
@@ -59,10 +63,19 @@ class MeScreenViewModel @Inject constructor(
                     )!!
 
                 Global.loggedIn = true
+                withContext(Dispatchers.IO)
+                {
+                    (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
+                    context.abyssService?.downloader?.init()
+                }
             }catch(e: Exception)
             {
                 Global.loggedIn = false
-                print(e.message)
+                withContext(Dispatchers.IO)
+                {
+                    (context as AetherApp).abyssService?.downloader?.init()
+                }
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -94,6 +107,11 @@ class MeScreenViewModel @Inject constructor(
                 )!!
 
                 Global.loggedIn = true
+                withContext(Dispatchers.IO)
+                {
+                    (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
+                    context.abyssService?.downloader?.init()
+                }
                 Toast.makeText(context, "Server Updated, Used Url: $usedUrl", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 print(e.message)
@@ -124,6 +142,11 @@ class MeScreenViewModel @Inject constructor(
                 )!!
 
                 Global.loggedIn = true
+                withContext(Dispatchers.IO)
+                {
+                    (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
+                    context.abyssService?.downloader?.init()
+                }
                 Toast.makeText(context, "Account Updated", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 print(e.message)

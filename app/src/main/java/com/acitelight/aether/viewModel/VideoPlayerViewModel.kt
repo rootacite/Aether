@@ -1,6 +1,7 @@
 package com.acitelight.aether.viewModel
 
 import android.app.Activity
+import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -14,8 +15,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.STATE_READY
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -34,16 +37,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class VideoPlayerViewModel @Inject constructor(
     val mediaManager: MediaManager,
     val recentManager: RecentManager
-) : ViewModel()
-{
+) : ViewModel() {
     var tabIndex by mutableIntStateOf(0)
-    var isPlaying by  mutableStateOf(true)
+    var isPlaying by mutableStateOf(true)
     var playProcess by mutableFloatStateOf(0.0f)
     var planeVisibility by mutableStateOf(true)
     var isLongPressing by mutableStateOf(false)
@@ -65,17 +68,16 @@ class VideoPlayerViewModel @Inject constructor(
 
     val dataSourceFactory = OkHttpDataSource.Factory(createOkHttp())
     var imageLoader: ImageLoader? = null;
-    var brit by  mutableFloatStateOf(0.5f)
+    var brit by mutableFloatStateOf(0.5f)
 
     @OptIn(UnstableApi::class)
     @Composable
-    fun Init(videoId: String)
-    {
-        if(_init) return;
+    fun Init(videoId: String) {
+        if (_init) return;
         val context = LocalContext.current
         val v = videoId.hexToString()
 
-        imageLoader =  ImageLoader.Builder(context)
+        imageLoader = ImageLoader.Builder(context)
             .components {
                 add(OkHttpNetworkFetcherFactory(createOkHttp()))
             }
@@ -85,29 +87,35 @@ class VideoPlayerViewModel @Inject constructor(
             viewModelScope.launch {
                 video = mediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
                 recentManager.Push(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
-                _player = ExoPlayer
-                    .Builder(context)
-                    .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+                _player = (if(video!!.isLocal) ExoPlayer.Builder(context) else ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory)))
                     .build().apply {
-                    val url = video?.getVideo() ?: ""
-                    val mediaItem = MediaItem.fromUri(url)
-                    setMediaItem(mediaItem)
-                    prepare()
-                    playWhenReady = true
+                        val url = video?.getVideo() ?: ""
+                        val mediaItem = if (video!!.isLocal)
+                            MediaItem.fromUri(Uri.fromFile(File(url)))
+                        else
+                            MediaItem.fromUri(url)
 
-                    addListener(object : Player.Listener {
-                        override fun onPlaybackStateChanged(playbackState: Int) {
-                            if (playbackState == STATE_READY) {
-                                startPlaying = true
+                        setMediaItem(mediaItem)
+                        prepare()
+                        playWhenReady = true
+
+                        addListener(object : Player.Listener {
+                            override fun onPlaybackStateChanged(playbackState: Int) {
+                                if (playbackState == STATE_READY) {
+                                    startPlaying = true
+                                }
                             }
-                        }
 
-                        override fun onRenderedFirstFrame() {
-                            super.onRenderedFirstFrame()
-                            renderedFirst = true
-                        }
-                    })
-                }
+                            override fun onRenderedFirstFrame() {
+                                super.onRenderedFirstFrame()
+                                renderedFirst = true
+                            }
+
+                            override fun onPlayerError(error: PlaybackException) {
+                                Log.e("ExoPlayer", "Playback error: ", error)
+                            }
+                        })
+                    }
                 startListen()
             }
         }
@@ -116,8 +124,7 @@ class VideoPlayerViewModel @Inject constructor(
     }
 
     @OptIn(UnstableApi::class)
-    fun startListen()
-    {
+    fun startListen() {
         CoroutineScope(Dispatchers.Main).launch {
             while (_player?.isReleased != true) {
                 val __player = _player!!;

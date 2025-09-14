@@ -1,5 +1,6 @@
 package com.acitelight.aether.viewModel
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.platform.LocalContext
@@ -12,6 +13,7 @@ import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,6 +21,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ComicScreenViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     val mediaManager: MediaManager
 ) : ViewModel() {
 
@@ -48,18 +51,13 @@ class ComicScreenViewModel @Inject constructor(
         }
     }
 
-    @Composable
-    fun SetupClient()
-    {
-        val context = LocalContext.current
+    init {
         imageLoader =  ImageLoader.Builder(context)
             .components {
                 add(OkHttpNetworkFetcherFactory(createOkHttp()))
             }
             .build()
-    }
 
-    init {
         viewModelScope.launch {
             val l = mediaManager.listComics()
             val m = mediaManager.queryComicInfoBulk(l)

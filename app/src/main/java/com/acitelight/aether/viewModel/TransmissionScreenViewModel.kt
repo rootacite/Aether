@@ -1,25 +1,28 @@
 package com.acitelight.aether.viewModel
 
+import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.acitelight.aether.model.DownloadItemState
 import com.acitelight.aether.service.FetchManager
+import com.acitelight.aether.service.VideoLibrary
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchListener
 import com.tonyodev.fetch2core.DownloadBlock
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.io.File
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class TransmissionScreenViewModel @Inject constructor(
-    private val fetchManager: FetchManager
+    val fetchManager: FetchManager,
+    @ApplicationContext val context: Context,
+    private val videoLibrary: VideoLibrary
 ) : ViewModel() {
     private val _downloads: SnapshotStateList<DownloadItemState> = mutableStateListOf()
     val downloads: SnapshotStateList<DownloadItemState> = _downloads
@@ -37,11 +40,18 @@ class TransmissionScreenViewModel @Inject constructor(
         override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) { handleUpsert(download) }
         override fun onPaused(download: Download) { handleUpsert(download) }
         override fun onResumed(download: Download) { handleUpsert(download) }
-        override fun onCompleted(download: Download) { handleUpsert(download) }
+        override fun onCompleted(download: Download) {
+            val ii = videoLibrary.classesMap[download.extras.getString("class", "")]
+                ?.indexOfFirst { it.id == download.extras.getString("id", "") }!!
+
+            val newi = videoLibrary.classesMap[download.extras.getString("class", "")]!![ii]
+            videoLibrary.classesMap[download.extras.getString("class", "")]!![ii] = newi.toLocal(context.getExternalFilesDir(null)!!.path)
+            handleUpsert(download)
+        }
         override fun onCancelled(download: Download) { handleUpsert(download) }
         override fun onRemoved(download: Download) { handleRemove(download.id) }
         override fun onDeleted(download: Download) { handleRemove(download.id) }
-        override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, blockCount: Int) { handleUpsert(download) }
+        override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) { handleUpsert(download) }
         override fun onStarted(
             download: Download,
             downloadBlocks: List<DownloadBlock>,
@@ -107,7 +117,9 @@ class TransmissionScreenViewModel @Inject constructor(
             progress = download.progress,
             status = download.status,
             downloadedBytes = download.downloaded,
-            totalBytes = download.total
+            totalBytes = download.total,
+            klass = download.extras.getString("class", ""),
+            vid = download.extras.getString("id", "")
         )
     }
 
@@ -128,15 +140,17 @@ class TransmissionScreenViewModel @Inject constructor(
     }
 
     init {
-        fetchManager.setListener(fetchListener)
-        viewModelScope.launch(Dispatchers.Main) {
-            fetchManager.getAllDownloads { list ->
-                _downloads.clear()
-                idToState.clear()
-                list.sortedByDescending { it.id }.forEach { d ->
-                    val s = downloadToState(d)
-                    _downloads.add(s)
-                    idToState[s.id] = s
+        viewModelScope.launch {
+            fetchManager.setListener(fetchListener)
+            withContext(Dispatchers.Main) {
+                fetchManager.getAllDownloads { list ->
+                    _downloads.clear()
+                    idToState.clear()
+                    list.sortedBy { it.extras.getString("name", "") }.forEach { d ->
+                        val s = downloadToState(d)
+                        _downloads.add(s)
+                        idToState[s.id] = s
+                    }
                 }
             }
         }

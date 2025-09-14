@@ -91,7 +91,7 @@ class RecentManager @Inject constructor(
 
                 recent.removeAt(index)
             }
-            recent.add(0, mediaManager.queryVideoBulk(video.klass, listOf(video.id))!![0])
+            recent.add(0, mediaManager.queryVideo(video.klass, video.id)!!)
 
 
             if(recent.size >= 21)
