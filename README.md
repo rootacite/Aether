@@ -6,11 +6,8 @@
 
 _🚀This is the client of the multimedia server Abyss, which can also be extended to other purposes🚀_
 
+<img src="aether_clip.png" width="25%" alt="Logo">
 </div>
-
-<br/>
-<br/>
-<br/>
 
 ## Development background
 
