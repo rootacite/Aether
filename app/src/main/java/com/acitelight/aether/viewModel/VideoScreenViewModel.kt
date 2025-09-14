@@ -11,6 +11,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
@@ -18,14 +19,20 @@ import com.acitelight.aether.dataStore
 import com.acitelight.aether.helper.insertInNaturalOrder
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient.createOkHttp
+import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.MediaManager.queryVideoKlasses
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class VideoScreenViewModel(application: Application) : AndroidViewModel(application)
+@HiltViewModel
+class VideoScreenViewModel @Inject constructor(
+    private val fetchManager: FetchManager
+) : ViewModel()
 {
     private val _tabIndex = mutableIntStateOf(0)
     val tabIndex: State<Int> = _tabIndex
@@ -81,6 +88,11 @@ class VideoScreenViewModel(application: Application) : AndroidViewModel(applicat
                 classesMap[classes[index]]?.addAll(r)
             }
         }
+    }
+
+    fun download(video :Video)
+    {
+        fetchManager.startVideoDownload(video)
     }
 
     init {

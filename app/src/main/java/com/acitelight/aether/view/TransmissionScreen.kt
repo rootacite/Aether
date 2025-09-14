@@ -81,7 +81,6 @@ private fun DownloadCard(
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = model.fileName, style = MaterialTheme.typography.titleMedium)
-                    Text(text = model.url, style = MaterialTheme.typography.displayMedium, modifier = Modifier.padding(top = 4.dp))
                 }
 
                 // progress percentage

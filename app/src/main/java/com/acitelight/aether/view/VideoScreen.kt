@@ -1,6 +1,8 @@
 package com.acitelight.aether.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +43,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global
@@ -63,7 +66,7 @@ fun String.hexToString(charset: Charset = Charsets.UTF_8): String {
 }
 
 @Composable
-fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navController: NavHostController)
+fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = hiltViewModel<VideoScreenViewModel>(), navController: NavHostController)
 {
     val tabIndex by videoScreenViewModel.tabIndex;
     videoScreenViewModel.SetupClient()
@@ -113,15 +116,20 @@ fun TopRow(videoScreenViewModel: VideoScreenViewModel)
 fun VideoCard(video: Video, navController: NavHostController, videoScreenViewModel: VideoScreenViewModel) {
     val tabIndex by videoScreenViewModel.tabIndex;
     Card(
-        shape = RoundedCornerShape(6.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight(),
-        onClick = {
-            updateRelate(videoScreenViewModel.classesMap[videoScreenViewModel.classes[tabIndex]] ?: mutableStateListOf(), video)
-            val route = "video_player_route/${ "${video.klass}/${video.id}".toHex() }"
-            navController.navigate(route)
-        }
+            .wrapContentHeight()
+            .combinedClickable(
+                onClick = {
+                    updateRelate(videoScreenViewModel.classesMap[videoScreenViewModel.classes[tabIndex]] ?: mutableStateListOf(), video)
+                    val route = "video_player_route/${ "${video.klass}/${video.id}".toHex() }"
+                    navController.navigate(route)
+                },
+                onLongClick = {
+                    videoScreenViewModel.download(video)
+                }
+            ),
+        shape = RoundedCornerShape(6.dp),
     ) {
         Column(
             modifier = Modifier

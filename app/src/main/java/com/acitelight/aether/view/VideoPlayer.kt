@@ -128,6 +128,7 @@ fun BiliStyleSlider(
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val thumbRadius = 6.dp
     val trackHeight = 3.dp
 
@@ -137,8 +138,8 @@ fun BiliStyleSlider(
         valueRange = valueRange,
         modifier = modifier,
         colors = SliderDefaults.colors(
-            thumbColor = Color(0xFFFFFFFF),  // B站粉色
-            activeTrackColor = Color(0xFFFF6699),
+            thumbColor = Color(0xFFFFFFFF),
+            activeTrackColor = colorScheme.primary,
             inactiveTrackColor = Color.LightGray.copy(alpha = 0.4f)
         ),
 
@@ -154,7 +155,7 @@ fun BiliStyleSlider(
                         .align(Alignment.CenterStart)
                         .fillMaxWidth(value)
                         .fillMaxHeight()
-                        .background(Color(0xFFFF6699), RoundedCornerShape(50))
+                        .background(colorScheme.primary, RoundedCornerShape(50))
                 )
             }
         }
@@ -169,6 +170,7 @@ fun BiliMiniSlider(
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val thumbRadius = 6.dp
     val trackHeight = 3.dp
 
@@ -178,8 +180,8 @@ fun BiliMiniSlider(
         valueRange = valueRange,
         modifier = modifier,
         colors = SliderDefaults.colors(
-            thumbColor = Color(0xFFFFFFFF),  // B站粉色
-            activeTrackColor = Color(0xFFFF6699),
+            thumbColor = Color(0xFFFFFFFF),
+            activeTrackColor = colorScheme.primary,
             inactiveTrackColor = Color.LightGray.copy(alpha = 0.4f)
         ),
         thumb = {
@@ -197,7 +199,7 @@ fun BiliMiniSlider(
                         .align(Alignment.CenterStart)
                         .fillMaxWidth(value)
                         .fillMaxHeight()
-                        .background(Color(0xFFFF6699), RoundedCornerShape(50))
+                        .background(colorScheme.primary, RoundedCornerShape(50))
                 )
             }
         }
@@ -450,9 +452,8 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
             }
         }
 
-
         if(cover > 0.0f)
-            Spacer(Modifier.background(Color(0x00FF6699 - 0x00222222 + ((0x000000FF * cover).toLong() shl 24) )).fillMaxSize())
+            Spacer(Modifier.background(MaterialTheme.colorScheme.primary.copy(cover)).fillMaxSize())
 
         androidx.compose.animation.AnimatedVisibility(
             visible = !videoPlayerViewModel.planeVisibility,
@@ -704,6 +705,7 @@ fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController:
 @Composable
 fun SocialPanel(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel)
 {
+    val colorScheme = MaterialTheme.colorScheme
     Row(
         modifier,
         horizontalArrangement = Arrangement.Center
@@ -760,7 +762,7 @@ fun SocialPanel(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel)
                     modifier = Modifier.size(28.dp),
                     imageVector = Icons.Filled.Star,
                     contentDescription = "Star",
-                    tint = if(videoPlayerViewModel.star) Color(0xFFFF6699) else Color.Gray
+                    tint = if(videoPlayerViewModel.star) colorScheme.primary else Color.Gray
                 )
             }
         }

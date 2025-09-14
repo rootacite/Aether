@@ -69,8 +69,8 @@ class TransmissionScreenViewModel @Inject constructor(
         val existing = idToState[download.id]
         if (existing != null) {
             // update fields in-place -> minimal recomposition
-            existing.filePath = download.file ?: existing.filePath
-            existing.fileName = try { File(existing.filePath).name } catch (_: Exception) { existing.fileName }
+            existing.filePath = download.file
+            existing.fileName = download.request.extras.getString("name", "")
             existing.url = download.url
             existing.progress = download.progress
             existing.status = download.status
@@ -97,11 +97,11 @@ class TransmissionScreenViewModel @Inject constructor(
         }
     }
     private fun downloadToState(download: Download): DownloadItemState {
-        val filePath = download.file ?: ""
-        val fileName = try { File(filePath).name } catch (_: Exception) { filePath }
+        val filePath = download.file
+
         return DownloadItemState(
             id = download.id,
-            fileName = fileName,
+            fileName = download.request.extras.getString("name", ""),
             filePath = filePath,
             url = download.url,
             progress = download.progress,

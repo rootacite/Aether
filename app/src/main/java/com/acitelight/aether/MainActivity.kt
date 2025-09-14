@@ -275,7 +275,7 @@ fun CardPage(
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(6.dp),
             elevation = CardDefaults.cardElevation(4.dp),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = colorScheme.background)
