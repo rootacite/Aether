@@ -12,8 +12,10 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.CoroutineContext
 
+@Singleton
 class AbyssTunnelProxy @Inject constructor(
     private val settingsDataStoreManager: SettingsDataStoreManager
 ) {

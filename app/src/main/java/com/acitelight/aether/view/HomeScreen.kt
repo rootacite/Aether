@@ -26,12 +26,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.acitelight.aether.Global
+import com.acitelight.aether.Global.updateRelate
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
 import com.acitelight.aether.viewModel.HomeScreenViewModel
 
 @Composable
-fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = hiltViewModel(), navController: NavController)
+fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<HomeScreenViewModel>(), navController: NavController)
 {
     if(Global.loggedIn)
         homeScreenViewModel.Init()
@@ -42,9 +43,9 @@ fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = hiltViewModel(), navCo
         {
             Column {
                 Text(
-                    text = "Recent",
+                    text = "Videos",
                     style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(16.dp).align(Alignment.Start)
+                    modifier = Modifier.padding(8.dp).align(Alignment.Start)
                 )
 
                 HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
@@ -56,7 +57,7 @@ fun HomeScreen(homeScreenViewModel: HomeScreenViewModel = hiltViewModel(), navCo
                             .padding(horizontal = 12.dp),
                         i,
                         {
-                            Global.sameClassVideos = RecentManager.recent
+                            updateRelate(RecentManager.recent, i)
                             val route = "video_player_route/${ "${i.klass}/${i.id}".toHex() }"
                             navController.navigate(route)
                         }, homeScreenViewModel.imageLoader!!)

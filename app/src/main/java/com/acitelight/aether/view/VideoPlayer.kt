@@ -625,7 +625,7 @@ fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController:
         {
             TabRow (
                 selectedTabIndex = videoPlayerViewModel.tabIndex,
-                modifier = Modifier.height(38.dp).fillMaxWidth(0.6f)
+                modifier = Modifier.height(38.dp)
             ) {
                 Tab(
                     selected = videoPlayerViewModel.tabIndex == 0,
@@ -645,8 +645,6 @@ fun VideoPlayerPortal(videoPlayerViewModel: VideoPlayerViewModel, navController:
 
         LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
             item{
-                HorizontalDivider(Modifier, 2.dp, DividerDefaults.color)
-
                 Text(
                     modifier = Modifier.align(Alignment.Start).padding(horizontal = 12.dp).padding(top = 12.dp),
                     text = videoPlayerViewModel.video?.video?.name ?: "",

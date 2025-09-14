@@ -40,13 +40,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val settingsDataStoreManager: SettingsDataStoreManager,
-    @ApplicationContext private val context: Context
+
 ) : ViewModel()
 {
     var _init = false
     var imageLoader: ImageLoader? = null;
-    val uss = settingsDataStoreManager.useSelfSignedFlow
 
     @Composable
     fun Init(){
@@ -62,33 +60,6 @@ class HomeScreenViewModel @Inject constructor(
         remember {
             viewModelScope.launch {
                 RecentManager.Query(context)
-            }
-        }
-    }
-
-    init {
-        viewModelScope.launch {
-            val u = settingsDataStoreManager.userNameFlow.first()
-            val p = settingsDataStoreManager.privateKeyFlow.first()
-            val ur = settingsDataStoreManager.urlFlow.first()
-            val c = settingsDataStoreManager.certFlow.first()
-
-            if(u=="" || p=="" || ur=="") return@launch
-
-            try{
-                val usedUrl = ApiClient.apply(context, ur, if(uss.first()) c else "")
-
-                if (MediaManager.token == "null")
-                    MediaManager.token = AuthManager.fetchToken(
-                        u,
-                        p
-                    )!!
-
-                Global.loggedIn = true
-            }catch(e: Exception)
-            {
-                Global.loggedIn = false
-                print(e.message)
             }
         }
     }

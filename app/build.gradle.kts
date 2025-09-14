@@ -46,6 +46,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.fetch2)
+    implementation(libs.fetch2okhttp)
+
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.android.compiler)

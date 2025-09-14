@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun MeScreen(meScreenViewModel: MeScreenViewModel = hiltViewModel()) {
+fun MeScreen(meScreenViewModel: MeScreenViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<MeScreenViewModel>()) {
     val context = LocalContext.current
     var username by meScreenViewModel.username;
     var privateKey by meScreenViewModel.privateKey;
@@ -200,7 +200,7 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = hiltViewModel()) {
                             onClick = {
                                 meScreenViewModel.updateServer(url, cert, context)
                             },
-                            modifier = Modifier.fillMaxWidth(0.5f)
+                            modifier = Modifier.weight(0.5f)
                         ) {
                             Text("Save")
                         }
@@ -213,7 +213,7 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = hiltViewModel()) {
                                     Log.i("Delay Analyze", "Abyss Hello: ${h.string()}")
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth(0.5f)
+                            modifier = Modifier.weight(0.5f)
                         ) {
                             Text("Ping")
                         }

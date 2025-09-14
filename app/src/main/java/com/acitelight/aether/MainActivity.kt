@@ -13,13 +13,22 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -32,6 +41,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -55,6 +65,7 @@ import com.acitelight.aether.view.ComicPageView
 import com.acitelight.aether.view.ComicScreen
 import com.acitelight.aether.view.HomeScreen
 import com.acitelight.aether.view.MeScreen
+import com.acitelight.aether.view.TransmissionScreen
 import com.acitelight.aether.view.VideoPlayer
 import com.acitelight.aether.view.VideoScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -147,21 +158,29 @@ fun AppNavigation() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Me.route,
             modifier = if(shouldShowBottomBar)Modifier.padding(innerPadding) else Modifier.padding(0.dp)
         ) {
             composable(Screen.Home.route) {
-                HomeScreen(navController = navController)
+                CardPage(title = "Home") {
+                    HomeScreen(navController = navController)
+                }
             }
             composable(Screen.Video.route) {
-                VideoScreen(navController = navController)
+                CardPage(title = "Videos") {
+                    VideoScreen(navController = navController)
+                }
             }
             composable(Screen.Comic.route) {
-                ComicScreen(navController = navController)
+                CardPage(title = "Comic") {
+                    ComicScreen(navController = navController)
+                }
             }
 
             composable(Screen.Transmission.route) {
-                // ComicScreen()
+                CardPage(title = "Tasks") {
+                    TransmissionScreen()
+                }
             }
             composable(Screen.Me.route) {
                 MeScreen();
@@ -217,8 +236,6 @@ fun BottomNavigationBar(navController: NavController) {
         Screen.Transmission,
         Screen.Me
     ) else  listOf(
-        Screen.Home,
-        Screen.Transmission,
         Screen.Me
     )
 
@@ -238,6 +255,37 @@ fun BottomNavigationBar(navController: NavController) {
                 },
                 modifier = Modifier.padding(vertical = 2.dp).height(25.dp)
             )
+        }
+    }
+}
+
+@Composable
+fun CardPage(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Box(Modifier.background(if (isSystemInDarkTheme()) {
+        Color.Black
+    } else {
+        Color.White
+    }).fillMaxSize())
+    {
+        val colorScheme = MaterialTheme.colorScheme
+        Card(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            elevation = CardDefaults.cardElevation(4.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.background)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                content()
+            }
         }
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global
+import com.acitelight.aether.Global.updateRelate
 import java.nio.charset.Charset
 
 fun String.toHex(): String {
@@ -93,10 +95,10 @@ fun VideoScreen(videoScreenViewModel: VideoScreenViewModel = viewModel(), navCon
 fun TopRow(videoScreenViewModel: VideoScreenViewModel)
 {
     val tabIndex by videoScreenViewModel.tabIndex;
-
     if(videoScreenViewModel.classes.isEmpty()) return
+    val colorScheme = MaterialTheme.colorScheme
 
-    ScrollableTabRow (selectedTabIndex = tabIndex) {
+    ScrollableTabRow (selectedTabIndex = tabIndex, modifier = Modifier.background(colorScheme.surface)) {
         videoScreenViewModel.classes.forEachIndexed { index, title ->
             Tab(
                 selected = tabIndex == index,
@@ -116,7 +118,7 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
             .fillMaxWidth()
             .wrapContentHeight(),
         onClick = {
-            Global.sameClassVideos = videoScreenViewModel.classesMap[videoScreenViewModel.classes[tabIndex]] ?: mutableStateListOf()
+            updateRelate(videoScreenViewModel.classesMap[videoScreenViewModel.classes[tabIndex]] ?: mutableStateListOf(), video)
             val route = "video_player_route/${ "${video.klass}/${video.id}".toHex() }"
             navController.navigate(route)
         }
@@ -168,7 +170,7 @@ fun VideoCard(video: Video, navController: NavHostController, videoScreenViewMod
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text("Class", fontSize = 12.sp)
-                Text("${video.klass}", fontSize = 12.sp)
+                Text(video.klass, fontSize = 12.sp)
             }
         }
     }

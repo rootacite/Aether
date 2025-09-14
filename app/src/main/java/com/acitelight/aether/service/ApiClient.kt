@@ -221,6 +221,7 @@ object ApiClient {
             withContext(Dispatchers.IO)
             {
                 (context as AetherApp).abyssService?.proxy?.config(base.toUri().host!!, 4096)
+                context.abyssService?.downloader?.init()
             }
 
             api = createRetrofit().create(ApiInterface::class.java)

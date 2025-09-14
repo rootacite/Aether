@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import com.acitelight.aether.service.AbyssTunnelProxy
+import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.SettingsDataStoreManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,8 @@ import javax.inject.Inject
 class AbyssService: Service() {
     @Inject
     lateinit var proxy: AbyssTunnelProxy
+    @Inject
+    lateinit var downloader: FetchManager
 
     private val binder = AbyssServiceBinder()
     private val _isInitialized = MutableStateFlow(false)

@@ -45,6 +45,24 @@ class MeScreenViewModel @Inject constructor(
             privateKey.value = if (settingsDataStoreManager.privateKeyFlow.first() == "") "" else "******"
             url.value = settingsDataStoreManager.urlFlow.first()
             cert.value = settingsDataStoreManager.certFlow.first()
+
+            if(username.value=="" || privateKey.value=="" || url.value=="") return@launch
+
+            try{
+                val usedUrl = ApiClient.apply(context, url.value, if(uss.first()) cert.value else "")
+
+                if (MediaManager.token == "null")
+                    MediaManager.token = AuthManager.fetchToken(
+                        username.value,
+                        settingsDataStoreManager.privateKeyFlow.first()
+                    )!!
+
+                Global.loggedIn = true
+            }catch(e: Exception)
+            {
+                Global.loggedIn = false
+                print(e.message)
+            }
         }
     }
 

@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +44,7 @@ fun ComicGridView(comicId: String, navController: NavHostController, comicGridVi
     comicGridViewModel.resolve(comicId.hexToString())
     comicGridViewModel.updateProcess(comicId.hexToString()){}
     ToggleFullScreen(false)
+    val colorScheme = MaterialTheme.colorScheme
 
     val context = LocalContext.current
     val comic by comicGridViewModel.comic
@@ -53,28 +55,25 @@ fun ComicGridView(comicId: String, navController: NavHostController, comicGridVi
             Box(
                 Modifier
                     .padding(horizontal = 16.dp).padding(top = 36.dp)
-                    .background(Color.White.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp))
+                    .background(colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(12.dp))
             )
             {
                 Text(
                 text = comic!!.comic.comic_name,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
                 maxLines = 1,
-                modifier = Modifier.padding(4.dp)
-                )
+                modifier = Modifier.padding(4.dp))
             }
             Box(
                 Modifier
                     .padding(horizontal = 16.dp).padding(top = 4.dp)
-                    .background(Color.White.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp))
+                    .background(colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(12.dp))
             ) {
                 Text(
                     text = comic!!.comic.author,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
                     maxLines = 1,
                     modifier = Modifier.padding(4.dp)
                 )
@@ -83,13 +82,12 @@ fun ComicGridView(comicId: String, navController: NavHostController, comicGridVi
             Box(
                 Modifier
                     .padding(horizontal = 16.dp).padding(top = 4.dp)
-                    .background(Color.White.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp))
+                    .background(colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(12.dp))
             ) {
                 Text(
                     text = "Tags : ${comic!!.comic.tags.joinToString(", ")}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
                     maxLines = 5,
                     modifier = Modifier.padding(4.dp)
                 )
@@ -105,7 +103,7 @@ fun ComicGridView(comicId: String, navController: NavHostController, comicGridVi
             Box(
                 Modifier
                     .padding(horizontal = 16.dp).padding(top = 6.dp).padding(bottom = 20.dp).heightIn(min = 42.dp)
-                    .background(Color.White.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp))
+                    .background(colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(12.dp))
                     .clickable{
                         comicGridViewModel.updateProcess(comicId.hexToString())
                         {
@@ -133,7 +131,6 @@ fun ComicGridView(comicId: String, navController: NavHostController, comicGridVi
                             text = "Last Read Position: ${k.first.name} ${k.second}/${comic!!.getChapterLength(k.first.page)}",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black,
                             maxLines = 1,
                             modifier = Modifier.padding(4.dp).weight(1f)
                         )
@@ -142,7 +139,6 @@ fun ComicGridView(comicId: String, navController: NavHostController, comicGridVi
                             text = "Read from scratch",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black,
                             maxLines = 1,
                             modifier = Modifier.padding(4.dp).weight(1f)
                         )

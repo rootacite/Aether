@@ -26,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -139,6 +140,7 @@ fun ComicScreen(
     comicScreenViewModel.SetupClient()
     val included = comicScreenViewModel.included
     val state = rememberLazyGridState()
+    val colorScheme = MaterialTheme.colorScheme
 
     Column {
 
@@ -154,9 +156,7 @@ fun ComicScreen(
                 Box(
                     Modifier
                         .background(
-                            if (included.contains(i)) Color.Green.copy(alpha = 0.65f) else Color.White.copy(
-                                alpha = 0.65f
-                            ),
+                            if (included.contains(i)) Color.Green.copy(alpha = 0.65f) else colorScheme.surfaceContainerHighest,
                             shape = RoundedCornerShape(4.dp)
                         )
                         .height(32.dp).widthIn(max = 72.dp)
@@ -174,8 +174,7 @@ fun ComicScreen(
                         maxLines = 1,
                         modifier = Modifier
                             .padding(2.dp)
-                            .align(Alignment.Center),
-                        color = Color.Black
+                            .align(Alignment.Center)
                     )
                 }
             }
