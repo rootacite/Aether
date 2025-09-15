@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -170,7 +171,7 @@ fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMar
             Row(Modifier.padding(6.dp))
             {
                 Box(Modifier
-                    .height(170.dp)
+                    .heightIn(max = 170.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color(0x44FFFFFF)))
                 {
@@ -182,7 +183,7 @@ fun ChapterCard(comic: Comic, navController: NavHostController, chapter: BookMar
                             .build(),
                         contentDescription = null,
                         imageLoader = comicGridViewModel.imageLoader!!,
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier.padding(8.dp).widthIn(max = 170.dp),
                         contentScale = ContentScale.Fit,
                     )
                 }

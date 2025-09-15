@@ -25,7 +25,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ComicGridViewModel @Inject constructor(
     @ApplicationContext val context: Context,
-    val mediaManager: MediaManager
+    val mediaManager: MediaManager,
+    val recentManager: RecentManager
 )  : ViewModel()
 {
     var imageLoader: ImageLoader? = null
@@ -52,6 +53,7 @@ class ComicGridViewModel @Inject constructor(
         viewModelScope.launch {
             if(comic.value == null) {
                 comic.value = mediaManager.queryComicInfoSingle(id)
+                recentManager.pushComic(context, id)
                 val c = comic.value!!
                 for (i in c.comic.bookmarks) {
                     chapterList.add(i)

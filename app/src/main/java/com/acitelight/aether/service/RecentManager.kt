@@ -2,11 +2,10 @@ package com.acitelight.aether.service
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
+import com.acitelight.aether.model.Comic
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoQueryIndex
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -24,7 +23,7 @@ class RecentManager @Inject constructor(
 {
     private val mutex = Mutex()
 
-    suspend fun readFile(context: Context, filename: String): String {
+    private suspend fun readFile(context: Context, filename: String): String {
         return withContext(Dispatchers.IO) {
             try {
                 val file = File(context.filesDir, filename)
@@ -38,7 +37,7 @@ class RecentManager @Inject constructor(
         }
     }
 
-    suspend fun writeFile(context: Context, filename: String, content: String) {
+    private suspend fun writeFile(context: Context, filename: String, content: String) {
         withContext(Dispatchers.IO) {
             try {
                 val file = File(context.filesDir, filename)
@@ -50,13 +49,85 @@ class RecentManager @Inject constructor(
         }
     }
 
-    suspend fun Query(context: Context): List<VideoQueryIndex>
+    suspend fun queryComic(context: Context): List<String> {
+        val content = readFile(context, "recent_comic.json")
+        try {
+            val ids = Json.decodeFromString<List<String>>(content)
+
+
+            recentComic.clear()
+
+            try {
+                val comics = mediaManager.queryComicInfoBulk(ids)
+                if (comics != null) {
+                    for (c in comics) {
+                        recentComic.add(recentComic.size, c)
+                    }
+                } else {
+                    for (id in ids) {
+                        val c = mediaManager.queryComicInfoSingle(id)
+                        if (c != null) recentComic.add(recentComic.size, c)
+                    }
+                }
+            } catch (e: NoSuchMethodError) {
+                for (id in ids) {
+                    val c = mediaManager.queryComicInfoSingle(id)
+                    if (c != null) recentComic.add(recentComic.size, c)
+                }
+            } catch (e: Exception) {
+                for (id in ids) {
+                    val c = mediaManager.queryComicInfoSingle(id)
+                    if (c != null) recentComic.add(recentComic.size, c)
+                }
+            }
+
+
+            return ids
+        } catch (e: Exception) {
+            print(e.message)
+        }
+
+
+        return listOf()
+    }
+
+    suspend fun pushComic(context: Context, comicId: String) {
+        mutex.withLock {
+            val c = readFile(context, "recent_comic.json")
+
+
+            val o = recentComic.map { it.id }.toMutableList()
+
+
+            if (o.contains(comicId)) {
+                val index = o.indexOf(comicId)
+                recentComic.removeAt(index)
+            }
+
+
+            val comic = mediaManager.queryComicInfoSingle(comicId)
+            if (comic != null) {
+                recentComic.add(0, comic)
+            } else {
+                return
+            }
+
+            if (recentComic.size > 21) {
+                recentComic.removeAt(recentComic.size - 1)
+            }
+
+
+            writeFile(context, "recent_comic.json", Json.encodeToString(recentComic.map { it.id }))
+        }
+    }
+
+    suspend fun queryVideo(context: Context): List<VideoQueryIndex>
     {
         val content = readFile(context, "recent.json")
         try{
             val r = Json.decodeFromString<List<VideoQueryIndex>>(content)
 
-            recent.clear()
+            recentVideo.clear()
             val gr = r.groupBy { it.klass }
 
             for(it in gr)
@@ -65,7 +136,7 @@ class RecentManager @Inject constructor(
                 if(v != null)
                     for(j in v)
                     {
-                        recent.add(recent.size, j)
+                        recentVideo.add(recentVideo.size, j)
                     }
             }
 
@@ -78,28 +149,29 @@ class RecentManager @Inject constructor(
         return listOf()
     }
 
-    suspend fun Push(context: Context, video: VideoQueryIndex)
+    suspend fun pushVideo(context: Context, video: VideoQueryIndex)
     {
         mutex.withLock{
             val content = readFile(context, "recent.json")
-            val o = recent.map{ VideoQueryIndex(it.klass, it.id) }.toMutableList()
+            val o = recentVideo.map{ VideoQueryIndex(it.klass, it.id) }.toMutableList()
 
             if(o.contains(video))
             {
                 val index = o.indexOf(video)
-                val temp = recent[index]
+                val temp = recentVideo[index]
 
-                recent.removeAt(index)
+                recentVideo.removeAt(index)
             }
-            recent.add(0, mediaManager.queryVideo(video.klass, video.id)!!)
+            recentVideo.add(0, mediaManager.queryVideo(video.klass, video.id)!!)
 
 
-            if(recent.size >= 21)
-                recent.removeAt(o.size - 1)
+            if(recentVideo.size >= 21)
+                recentVideo.removeAt(o.size - 1)
 
-            writeFile(context, "recent.json", Json.encodeToString(recent.map{ VideoQueryIndex(it.klass, it.id) }))
+            writeFile(context, "recent.json", Json.encodeToString(recentVideo.map{ VideoQueryIndex(it.klass, it.id) }))
         }
     }
 
-    val recent = mutableStateListOf<Video>()
+    val recentVideo = mutableStateListOf<Video>()
+    val recentComic = mutableStateListOf<Comic>()
 }

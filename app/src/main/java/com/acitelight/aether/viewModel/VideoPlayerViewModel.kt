@@ -1,10 +1,8 @@
 package com.acitelight.aether.viewModel
 
-import android.app.Activity
 import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -25,7 +23,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import com.acitelight.aether.Global
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoQueryIndex
 import com.acitelight.aether.service.ApiClient.createOkHttp
@@ -86,7 +83,7 @@ class VideoPlayerViewModel @Inject constructor(
         remember {
             viewModelScope.launch {
                 video = mediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
-                recentManager.Push(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
+                recentManager.pushVideo(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
                 _player = (if(video!!.isLocal) ExoPlayer.Builder(context) else ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory)))
                     .build().apply {
                         val url = video?.getVideo() ?: ""
