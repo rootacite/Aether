@@ -167,9 +167,7 @@ fun AppNavigation() {
                 }
             }
             composable(Screen.Video.route) {
-                CardPage(title = "Videos") {
-                    VideoScreen(navController = navController)
-                }
+                VideoScreen(navController = navController)
             }
             composable(Screen.Comic.route) {
                 CardPage(title = "Comic") {

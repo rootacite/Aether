@@ -24,14 +24,14 @@ _🚀This is the client of the multimedia server Abyss, which can also be extend
 - [x] Optimize API call logic, do not create crashes
 - [x] Fix the issue of freezing when entering the client without configuring the private key
 - [x] Replace Android robot icon with custom design
-- [ ] Configure server baseURL in client settings
+- [x] Configure server baseURL in client settings
 - [ ] Implement proper access control for directory queries
 
 ### Medium Priority
-- [ ] Increase minHeight for video playback
-- [ ] Add top bar with title and back button in full-screen mode
-- [ ] Optimize data transfer system
-- [ ] Improve manga/comic page display
+- [x] Increase minHeight for video playback
+- [x] Add top bar with title and back button in full-screen mode
+- [x] Optimize data transfer system
+- [x] Improve manga/comic page display
 
 ### Future
 - [ ] (Prospective) Implement search functionality
