@@ -86,7 +86,7 @@ class MeScreenViewModel @Inject constructor(
         }
     }
 
-    fun updateServer(u: String, c: String, context: Context)
+    fun updateServer(u: String, c: String)
     {
         viewModelScope.launch {
             settingsDataStoreManager.saveUrl(u)
@@ -101,26 +101,23 @@ class MeScreenViewModel @Inject constructor(
 
             try {
                 val usedUrl = ApiClient.apply(context, u, if(uss.first()) c else "")
+                (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
+                context.abyssService?.downloader?.init()
                 mediaManager.token = AuthManager.fetchToken(
                     us,
                     p
                 )!!
 
                 Global.loggedIn = true
-                withContext(Dispatchers.IO)
-                {
-                    (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
-                    context.abyssService?.downloader?.init()
-                }
                 Toast.makeText(context, "Server Updated, Used Url: $usedUrl", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 print(e.message)
-                Toast.makeText(context, "Invalid Account or Server Information", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    fun updateAccount(u: String, p: String, context: Context) {
+    fun updateAccount(u: String, p: String) {
         viewModelScope.launch {
             settingsDataStoreManager.saveUserName(u)
             settingsDataStoreManager.savePrivateKey(p)

@@ -116,7 +116,7 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = androidx.hilt.lifecycle.view
                     // Save Button
                     Button(
                         onClick = {
-                            meScreenViewModel.updateAccount(username, privateKey, context)
+                            meScreenViewModel.updateAccount(username, privateKey)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = privateKey != "******"
@@ -198,7 +198,7 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = androidx.hilt.lifecycle.view
                     Row{
                         Button(
                             onClick = {
-                                meScreenViewModel.updateServer(url, cert, context)
+                                meScreenViewModel.updateServer(url, cert)
                             },
                             modifier = Modifier.weight(0.5f).padding(8.dp)
                         ) {
