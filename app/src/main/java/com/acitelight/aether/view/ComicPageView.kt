@@ -29,7 +29,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,13 +64,20 @@ import com.acitelight.aether.viewModel.ComicPageViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun ComicPageView(comicId: String, page: String,  navController: NavHostController, comicPageViewModel: ComicPageViewModel = hiltViewModel<ComicPageViewModel>())
-{
+fun ComicPageView(
+    comicId: String,
+    page: String,
+    navController: NavHostController,
+    comicPageViewModel: ComicPageViewModel = hiltViewModel<ComicPageViewModel>()
+) {
+    val colorScheme = MaterialTheme.colorScheme
     comicPageViewModel.SetupClient()
     comicPageViewModel.Resolve(comicId.hexToString(), page.toInt())
 
     val title by comicPageViewModel.title
-    val pagerState = rememberPagerState(initialPage = page.toInt(), pageCount = { comicPageViewModel.pageList.size })
+    val pagerState = rememberPagerState(
+        initialPage = page.toInt(),
+        pageCount = { comicPageViewModel.pageList.size })
     var showPlane by comicPageViewModel.showPlane
     var showBookMarkPop by remember { mutableStateOf(false) }
 
@@ -80,17 +89,19 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
         {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize().align(Alignment.Center).background(Color.Black).clickable{
-                    showPlane = !showPlane
-                    if(showPlane)
-                    {
-                        comicPageViewModel.coroutineScope?.launch {
-                            comicPageViewModel.listState?.scrollToItem(index = pagerState.currentPage)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.Center)
+                    .background(Color.Black)
+                    .clickable {
+                        showPlane = !showPlane
+                        if (showPlane) {
+                            comicPageViewModel.coroutineScope?.launch {
+                                comicPageViewModel.listState?.scrollToItem(index = pagerState.currentPage)
+                            }
                         }
                     }
-                }
-            ) {
-                    page ->
+            ) { page ->
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(it.getPage(page))
@@ -99,7 +110,9 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                         .build(),
                     contentDescription = null,
                     imageLoader = comicPageViewModel.imageLoader!!,
-                    modifier = Modifier.padding(8.dp).fillMaxSize(),
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxSize(),
                     contentScale = ContentScale.Fit,
                 )
             }
@@ -110,86 +123,107 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                 exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-            ){
+            ) {
                 Box()
                 {
-                    Box(modifier = Modifier.height(160.dp).align(Alignment.TopCenter).fillMaxWidth().background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Black.copy(alpha = 0.75f),
-                                Color.Transparent,
-                            ))))
-
-                    Column(Modifier.align(Alignment.TopCenter).fillMaxWidth())
+                    Column(Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth())
                     {
-                        Row(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 18.dp).padding(horizontal = 12.dp)
-                            .height(42.dp)
-                            .background(Color(0x90FFFFFF), shape = RoundedCornerShape(12.dp)))
-                        {
-                            Text(
-                                text = title,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black,
-                                maxLines = 1,
-                                modifier = Modifier.padding(8.dp).padding(horizontal = 10.dp).weight(1f).align(Alignment.CenterVertically)
-                            )
-
-                            Text(
-                                text = "${pagerState.currentPage + 1}/${pagerState.pageCount}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black,
-                                maxLines = 1,
-                                modifier = Modifier.padding(8.dp).widthIn(min = 60.dp).align(Alignment.CenterVertically)
-                            )
-                        }
-
-                        Row {
-                            Row(modifier = Modifier
-                                .padding(top = 6.dp).padding(horizontal = 12.dp)
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 18.dp)
+                                .padding(horizontal = 12.dp)
                                 .height(42.dp)
-                                .background(Color(0x90FFFFFF), shape = RoundedCornerShape(12.dp)))
+                        )
+                        {
+                            Row(modifier = Modifier.fillMaxSize())
                             {
-                                val k = it.getPageChapterIndex(pagerState.currentPage)
                                 Text(
-                                    text = k.first.name,
+                                    text = title,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.Black,
                                     maxLines = 1,
-                                    modifier = Modifier.padding(8.dp).padding(horizontal = 10.dp).align(Alignment.CenterVertically)
+                                    modifier = Modifier
+                                        .padding(8.dp)
+                                        .padding(horizontal = 10.dp)
+                                        .weight(1f)
+                                        .align(Alignment.CenterVertically)
                                 )
 
                                 Text(
-                                    text = "${k.second}/${it.getChapterLength(k.first.page)}",
+                                    text = "${pagerState.currentPage + 1}/${pagerState.pageCount}",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.Black,
                                     maxLines = 1,
-                                    modifier = Modifier.padding(8.dp).widthIn(min = 60.dp).align(Alignment.CenterVertically)
+                                    modifier = Modifier
+                                        .padding(8.dp)
+                                        .widthIn(min = 60.dp)
+                                        .align(Alignment.CenterVertically)
                                 )
                             }
+                        }
 
-                            Spacer(Modifier.weight(1f))
-
-                            Row(modifier = Modifier
-                                .padding(top = 6.dp).padding(horizontal = 12.dp)
-                                .height(42.dp).width(42.dp)
-                                .background(Color(0x90FFFFFF), shape = RoundedCornerShape(12.dp)))
+                        Box(Modifier.fillMaxWidth()) {
+                            Card(
+                                modifier = Modifier
+                                    .align(Alignment.CenterStart)
+                                    .padding(top = 6.dp)
+                                    .padding(horizontal = 12.dp)
+                                    .height(42.dp),
+                                colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
+                                shape = RoundedCornerShape(12.dp)
+                            )
                             {
-                                Box (Modifier.clickable {
+                                Row {
+                                    val k = it.getPageChapterIndex(pagerState.currentPage)
+                                    Text(
+                                        text = k.first.name,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        modifier = Modifier
+                                            .padding(8.dp)
+                                            .padding(horizontal = 10.dp)
+                                            .align(Alignment.CenterVertically)
+                                    )
+
+                                    Text(
+                                        text = "${k.second}/${it.getChapterLength(k.first.page)}",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        modifier = Modifier
+                                            .padding(8.dp)
+                                            .widthIn(min = 60.dp)
+                                            .align(Alignment.CenterVertically)
+                                    )
+                                }
+                            }
+
+
+                            Card(
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .padding(top = 6.dp)
+                                    .padding(horizontal = 12.dp)
+                                    .height(42.dp),
+                                colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            {
+                                Box(Modifier.clickable {
                                     showBookMarkPop = true
-                                }){
+                                }) {
                                     Icon(
                                         Icons.Filled.Bookmarks,
-                                        tint = Color.Black,
                                         modifier = Modifier
-                                            .fillMaxSize()
                                             .padding(8.dp),
-                                        contentDescription = "Bookmark")
+                                        contentDescription = "Bookmark"
+                                    )
                                 }
                             }
                         }
@@ -205,35 +239,31 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                     .align(Alignment.BottomCenter)
             )
             {
-                Box{
-                    Box(modifier = Modifier.height(360.dp).align(Alignment.BottomCenter).fillMaxWidth().background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.90f),
-                            ))))
-
-                    LazyRow (state = comicPageViewModel.listState!!,  modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 18.dp).padding(horizontal = 12.dp)
-                        .height(240.dp)
-                        .align(Alignment.BottomCenter)
-                        .background(Color(0x90999999), shape = RoundedCornerShape(12.dp)))
+                Box {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        state = comicPageViewModel.listState!!, modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 18.dp)
+                            .padding(horizontal = 12.dp)
+                            .height(240.dp)
+                            .align(Alignment.BottomCenter)
+                    )
                     {
                         items(comicPageViewModel.pageList.size)
-                        {
-                                r ->
+                        { r ->
                             Card(
+                                colors = CardDefaults.cardColors(containerColor = colorScheme.primary.copy(0.8f)),
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier
                                     .fillMaxHeight()
                                     .wrapContentHeight()
-                                    .padding(horizontal = 6.dp).padding(vertical = 6.dp),
+                                    .padding(vertical = 8.dp),
                                 onClick = {
                                     pagerState.requestScrollToPage(page = r)
                                 }
-                            ){
-                                Box()
+                            ) {
+                                Box(Modifier.padding(4.dp))
                                 {
                                     AsyncImage(
                                         model = ImageRequest.Builder(LocalContext.current)
@@ -250,19 +280,27 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                                         contentScale = ContentScale.Fit,
                                     )
                                     val k = it.getPageChapterIndex(r)
-                                    Box(Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(6.dp)
-                                        .background(Color.Black.copy(alpha = 0.65f), shape = RoundedCornerShape(12.dp)))
+                                    Box(
+                                        Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(6.dp)
+                                            .background(
+                                                Color.Black.copy(alpha = 0.65f),
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+                                    )
                                     {
-                                        Row{
+                                        Row {
                                             Text(
                                                 text = k.first.name,
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
                                                 maxLines = 1,
-                                                modifier = Modifier.padding(2.dp).widthIn(max = 100.dp).align(Alignment.CenterVertically)
+                                                modifier = Modifier
+                                                    .padding(2.dp)
+                                                    .widthIn(max = 200.dp)
+                                                    .align(Alignment.CenterVertically)
                                             )
 
                                             Text(
@@ -271,7 +309,9 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
                                                 maxLines = 1,
-                                                modifier = Modifier.padding(2.dp).align(Alignment.CenterVertically)
+                                                modifier = Modifier
+                                                    .padding(2.dp)
+                                                    .align(Alignment.CenterVertically)
                                             )
                                         }
                                     }
@@ -284,16 +324,18 @@ fun ComicPageView(comicId: String, page: String,  navController: NavHostControll
         }
     }
 
-    if(showBookMarkPop)
-    {
+    if (showBookMarkPop) {
         BookmarkPop({
             showBookMarkPop = false
-        }, {
-            s ->
+        }, { s ->
             showBookMarkPop = false
             comicPageViewModel.coroutineScope?.launch {
-                comicPageViewModel.mediaManager.postBookmark(comicId.hexToString(), BookMark(name = s, page = comicPageViewModel.pageList[pagerState.currentPage]))
-                comicPageViewModel.comic.value = comicPageViewModel.mediaManager.queryComicInfoSingle(comicId.hexToString())
+                comicPageViewModel.mediaManager.postBookmark(
+                    comicId.hexToString(),
+                    BookMark(name = s, page = comicPageViewModel.pageList[pagerState.currentPage])
+                )
+                comicPageViewModel.comic.value =
+                    comicPageViewModel.mediaManager.queryComicInfoSingle(comicId.hexToString())
             }
         });
     }

@@ -30,6 +30,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -109,6 +113,7 @@ fun VideoScreen(
     videoScreenViewModel: VideoScreenViewModel = hiltViewModel<VideoScreenViewModel>(),
     navController: NavHostController
 ) {
+    val state = rememberLazyStaggeredGridState()
     val colorScheme = MaterialTheme.colorScheme
     val tabIndex by videoScreenViewModel.tabIndex
     var menuVisibility by videoScreenViewModel.menuVisibility
@@ -172,13 +177,19 @@ fun VideoScreen(
                         }
                     }
 
-                    Box(
+                    Row(
                         modifier = Modifier
                             .height(36.dp).widthIn(max = 240.dp)
                             .background(colorScheme.primary, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 6.dp),
-                        contentAlignment = Alignment.CenterStart
+                            .padding(horizontal = 6.dp)
                     ) {
+                        Icon(
+                            modifier = Modifier
+                                .size(30.dp).align(Alignment.CenterVertically),
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Catalogue"
+                        )
+                        Spacer(Modifier.width(4.dp))
                         BasicTextField(
                             value = searchFilter,
                             onValueChange = { searchFilter = it },
@@ -188,26 +199,34 @@ fun VideoScreen(
                                 textAlign = TextAlign.Start
                             ),
                             singleLine = true,
-                            modifier = Modifier
+                            modifier = Modifier.align(Alignment.CenterVertically)
                         )
                     }
                 }
                 HorizontalDivider(Modifier.padding(bottom = 8.dp), 1.5.dp, DividerDefaults.color)
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(160.dp),
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Adaptive(160.dp),
                     contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                )
-                {
+                    verticalItemSpacing = 8.dp,
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                    state = state,
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     items(
-                        videoScreenViewModel.videoLibrary.classesMap.getOrDefault(
+                        items = videoScreenViewModel.videoLibrary.classesMap.getOrDefault(
                             videoScreenViewModel.videoLibrary.classes.getOrNull(
                                 tabIndex
                             ), listOf()
-                        ).filter { it.video.name.contains(searchFilter) }
+                        ).filter { it.video.name.contains(searchFilter) },
+                        key = { "${it.klass}/${it.id}" }
                     ) { video ->
-                        VideoCard(video, navController, videoScreenViewModel)
+                        androidx.compose.foundation.layout.Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                        ) {
+                            VideoCard(video, navController, videoScreenViewModel)
+                        }
                     }
                 }
             }

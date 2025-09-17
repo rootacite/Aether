@@ -20,6 +20,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -139,7 +143,7 @@ fun ComicScreen(
     comicScreenViewModel: ComicScreenViewModel = hiltViewModel<ComicScreenViewModel>()
 ) {
     val included = comicScreenViewModel.included
-    val state = rememberLazyGridState()
+    val state = rememberLazyStaggeredGridState()
     val colorScheme = MaterialTheme.colorScheme
 
     Column {
@@ -156,7 +160,7 @@ fun ComicScreen(
                 Box(
                     Modifier
                         .background(
-                            if (included.contains(i)) Color.Green.copy(alpha = 0.65f) else colorScheme.surfaceContainerHighest,
+                            if (included.contains(i)) Color.Green.copy(alpha = 0.65f) else colorScheme.primary,
                             shape = RoundedCornerShape(4.dp)
                         )
                         .height(32.dp).widthIn(max = 72.dp)
@@ -182,19 +186,26 @@ fun ComicScreen(
 
         HorizontalDivider(thickness = 1.5.dp)
 
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(128.dp),
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Adaptive(128.dp),
             contentPadding = PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalItemSpacing = 8.dp,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            state = state
-        )
-        {
-            items(comicScreenViewModel.comics.filter { x ->
-                included.all { y -> y in x.comic.tags } || included.isEmpty()
-            })
-            { comic ->
-                ComicCard(comic, navController, comicScreenViewModel)
+            state = state,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(
+                items = comicScreenViewModel.comics.filter { x ->
+                    included.all { y -> y in x.comic.tags } || included.isEmpty()
+                },
+                key = { it.id }
+            ) { comic ->
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                ) {
+                    ComicCard(comic, navController, comicScreenViewModel)
+                }
             }
         }
     }
