@@ -1,11 +1,8 @@
 package com.acitelight.aether.viewModel
 
 import android.content.Context
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -22,8 +19,6 @@ import com.acitelight.aether.model.ComicRecord
 import com.acitelight.aether.model.ComicRecordDatabase
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
-import com.acitelight.aether.service.SettingsDataStoreManager
-import com.acitelight.aether.view.hexToString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +27,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ComicPageViewModel @Inject constructor(
-    val mediaManager: MediaManager
+    val mediaManager: MediaManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel()
 {
     var imageLoader: ImageLoader? = null
@@ -40,29 +36,18 @@ class ComicPageViewModel @Inject constructor(
     var pageList = mutableStateListOf<String>()
     var title = mutableStateOf<String>("")
     var listState: LazyListState? = null
-    var coroutineScope: CoroutineScope? = null
     var showPlane = mutableStateOf(true)
-    var db: ComicRecordDatabase? = null
+    var db: ComicRecordDatabase
 
-    @Composable
-    fun SetupClient()
-    {
-        val context = LocalContext.current
+
+    init{
         imageLoader =  ImageLoader.Builder(context)
             .components {
                 add(OkHttpNetworkFetcherFactory(createOkHttp()))
             }
             .build()
-        listState = rememberLazyListState()
-        coroutineScope = rememberCoroutineScope()
-
-        db = remember {
-            try{
-                ComicRecordDatabase.getDatabase(context)
-            }catch (e: Exception) {
-                print(e.message)
-            } as ComicRecordDatabase?
-        }
+        listState = LazyListState(0, 0)
+        db = ComicRecordDatabase.getDatabase(context)
     }
 
     @Composable
@@ -70,23 +55,23 @@ class ComicPageViewModel @Inject constructor(
     {
         if(comic.value != null) return
         LaunchedEffect(id, page) {
-            coroutineScope?.launch {
+            viewModelScope.launch {
                 comic.value = mediaManager.queryComicInfoSingle(id)
                 comic.value?.let {
                     pageList.addAll(it.comic.list)
                     title.value = it.comic.comic_name
                     listState?.scrollToItem(index = page)
-                    UpdateProcess(page)
+                    updateProcess(page)
                 }
             }
         }
     }
 
-    fun UpdateProcess(page: Int)
+    fun updateProcess(page: Int)
     {
         if(comic.value == null) return
-        coroutineScope?.launch {
-            db?.userDao()?.insert(ComicRecord(id = comic.value!!.id.toInt(), name = comic.value!!.comic.comic_name, position = page))
+        viewModelScope.launch {
+            db.userDao().insert(ComicRecord(id = comic.value!!.id.toInt(), name = comic.value!!.comic.comic_name, position = page))
         }
     }
 }

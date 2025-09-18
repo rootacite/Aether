@@ -213,7 +213,7 @@ fun VideoPlayer(
     videoId: String,
     navController: NavHostController
 ) {
-    videoPlayerViewModel.Init(videoId)
+    videoPlayerViewModel.init(videoId)
 
     if(videoPlayerViewModel.startPlaying)
     {

@@ -1,6 +1,8 @@
 package com.acitelight.aether.viewModel
 
+import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,11 +27,15 @@ import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoQueryIndex
+import com.acitelight.aether.model.VideoRecord
+import com.acitelight.aether.model.VideoRecordDatabase
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
+import com.acitelight.aether.view.formatTime
 import com.acitelight.aether.view.hexToString
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -39,6 +45,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class VideoPlayerViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     val mediaManager: MediaManager,
     val recentManager: RecentManager
 ) : ViewModel() {
@@ -66,25 +73,24 @@ class VideoPlayerViewModel @Inject constructor(
     val dataSourceFactory = OkHttpDataSource.Factory(createOkHttp())
     var imageLoader: ImageLoader? = null;
     var brit by mutableFloatStateOf(0.5f)
+    val database: VideoRecordDatabase = VideoRecordDatabase.getDatabase(context)
 
     @OptIn(UnstableApi::class)
-    @Composable
-    fun Init(videoId: String) {
+    fun init(videoId: String) {
         if (_init) return;
-        val context = LocalContext.current
         val v = videoId.hexToString()
-
         imageLoader = ImageLoader.Builder(context)
             .components {
                 add(OkHttpNetworkFetcherFactory(createOkHttp()))
             }
             .build()
 
-        remember {
-            viewModelScope.launch {
-                video = mediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
-                recentManager.pushVideo(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
-                _player = (if(video!!.isLocal) ExoPlayer.Builder(context) else ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory)))
+        viewModelScope.launch {
+            video = mediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
+            recentManager.pushVideo(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
+            _player =
+                (if (video!!.isLocal) ExoPlayer.Builder(context) else ExoPlayer.Builder(context)
+                    .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory)))
                     .build().apply {
                         val url = video?.getVideo() ?: ""
                         val mediaItem = if (video!!.isLocal)
@@ -105,18 +111,27 @@ class VideoPlayerViewModel @Inject constructor(
 
                             override fun onRenderedFirstFrame() {
                                 super.onRenderedFirstFrame()
+                                if(!renderedFirst)
+                                {
+                                    viewModelScope.launch {
+                                        val ii = database.userDao().getById(video!!.id)
+                                        if(ii != null)
+                                        {
+                                            _player!!.seekTo(ii.position)
+                                            Toast.makeText(context, "Recover from ${formatTime(ii.position)} ", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
                                 renderedFirst = true
                             }
 
                             override fun onPlayerError(error: PlaybackException) {
-                                Log.e("ExoPlayer", "Playback error: ", error)
+
                             }
                         })
                     }
-                startListen()
-            }
+            startListen()
         }
-
         _init = true;
     }
 
@@ -135,6 +150,10 @@ class VideoPlayerViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        val p = _player!!.currentPosition
         _player?.release()
+        CoroutineScope(Dispatchers.IO).launch {
+            database.userDao().insert(VideoRecord(video!!.id, video!!.klass, p))
+        }
     }
 }
