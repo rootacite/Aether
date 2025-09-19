@@ -157,6 +157,11 @@ class FetchManager @Inject constructor(
             video.getCover(),
             File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/cover.jpg"))
 
+        downloadFile(
+            client!!,
+            video.getSubtitle(),
+            File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/subtitle.ass"))
+
         enqueue(request)
         File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/summary.json").writeText(Json.encodeToString(video))
 

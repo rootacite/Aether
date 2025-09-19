@@ -28,6 +28,13 @@ class Video(
             "${ApiClient.getBase()}api/video/$klass/$id/av?token=$token"
     }
 
+    fun getSubtitle(): String {
+        return if (isLocal)
+            "$localBase/videos/$klass/$id/subtitle.ass"
+        else
+            "${ApiClient.getBase()}api/video/$klass/$id/subtitle?token=$token"
+    }
+
     fun getGallery(): List<KeyImage> {
         return if (isLocal)
             video.gallery.map {

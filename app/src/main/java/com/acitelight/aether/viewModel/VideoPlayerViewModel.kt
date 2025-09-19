@@ -18,6 +18,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.STATE_READY
+import androidx.media3.common.text.Cue
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
@@ -40,8 +41,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Request
 import java.io.File
 import javax.inject.Inject
+import androidx.core.net.toUri
+import androidx.media3.common.C
+import androidx.media3.common.Tracks
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
 @HiltViewModel
 class VideoPlayerViewModel @Inject constructor(
@@ -74,6 +81,7 @@ class VideoPlayerViewModel @Inject constructor(
     var imageLoader: ImageLoader? = null;
     var brit by mutableFloatStateOf(0.5f)
     val database: VideoRecordDatabase = VideoRecordDatabase.getDatabase(context)
+    var cues by mutableStateOf(listOf<Cue>())
 
     @OptIn(UnstableApi::class)
     fun init(videoId: String) {
@@ -88,51 +96,153 @@ class VideoPlayerViewModel @Inject constructor(
         viewModelScope.launch {
             video = mediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
             recentManager.pushVideo(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
-            _player =
-                (if (video!!.isLocal) ExoPlayer.Builder(context) else ExoPlayer.Builder(context)
-                    .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory)))
-                    .build().apply {
-                        val url = video?.getVideo() ?: ""
-                        val mediaItem = if (video!!.isLocal)
-                            MediaItem.fromUri(Uri.fromFile(File(url)))
-                        else
-                            MediaItem.fromUri(url)
 
-                        setMediaItem(mediaItem)
-                        prepare()
-                        playWhenReady = true
+            val subtitleCandidate = video?.getSubtitle()?.trim()
+            val subtitleUri = tryResolveSubtitleUri(subtitleCandidate)
 
-                        addListener(object : Player.Listener {
-                            override fun onPlaybackStateChanged(playbackState: Int) {
-                                if (playbackState == STATE_READY) {
-                                    startPlaying = true
-                                }
-                            }
+            // decide whether we need network-capable media source factory:
+            val subtitleIsRemote = subtitleUri?.scheme?.startsWith("http", ignoreCase = true) == true
+            val videoIsRemote = !video!!.isLocal
+            val needNetworkFactory = videoIsRemote || subtitleIsRemote
+            val trackSelector = DefaultTrackSelector(context)
 
-                            override fun onRenderedFirstFrame() {
-                                super.onRenderedFirstFrame()
-                                if(!renderedFirst)
-                                {
-                                    viewModelScope.launch {
-                                        val ii = database.userDao().getById(video!!.id)
-                                        if(ii != null)
-                                        {
-                                            _player!!.seekTo(ii.position)
-                                            Toast.makeText(context, "Recover from ${formatTime(ii.position)} ", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                                }
-                                renderedFirst = true
-                            }
+            // build ExoPlayer with or without custom DefaultMediaSourceFactory
+            val builder = if (needNetworkFactory)
+                ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            else
+                ExoPlayer.Builder(context)
 
-                            override fun onPlayerError(error: PlaybackException) {
+            _player = builder.setTrackSelector(trackSelector).build().apply {
+                val url = video?.getVideo() ?: ""
+                val videoUri = if (video!!.isLocal) Uri.fromFile(File(url)) else url.toUri()
 
-                            }
-                        })
+                val mediaItem: MediaItem = if (subtitleUri != null) {
+                    // prepare subtitle configuration with guessed mime type
+                    val mime = "text/vtt"
+                    val subConfig = MediaItem.SubtitleConfiguration.Builder(subtitleUri)
+                        .setMimeType(mime)
+                        .build()
+
+                    MediaItem.Builder()
+                        .setUri(videoUri)
+                        .setSubtitleConfigurations(listOf(subConfig))
+                        .build()
+                } else {
+                    MediaItem.fromUri(videoUri)
+                }
+
+                setMediaItem(mediaItem)
+                prepare()
+                playWhenReady = true
+
+                addListener(object : Player.Listener {
+                    override fun onTracksChanged(tracks: Tracks) {
+                        super.onTracksChanged(tracks)
+
+                        val trackSelector = _player?.trackSelector
+                        if (trackSelector is DefaultTrackSelector) {
+                            val parameters = trackSelector.buildUponParameters()
+                                .setSelectUndeterminedTextLanguage(true)
+                                .build()
+                            trackSelector.parameters = parameters
+                        }
                     }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == STATE_READY) {
+                            startPlaying = true
+                        }
+                    }
+
+                    override fun onRenderedFirstFrame() {
+                        super.onRenderedFirstFrame()
+                        if(!renderedFirst)
+                        {
+                            viewModelScope.launch {
+                                val ii = database.userDao().getById(video!!.id)
+                                if(ii != null)
+                                {
+                                    _player!!.seekTo(ii.position)
+                                    Toast.makeText(context, "Recover from ${formatTime(ii.position)} ", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                        renderedFirst = true
+                    }
+
+                    override fun onPlayerError(error: PlaybackException)
+                    {
+                        print(error.message)
+                    }
+
+                    override fun onCues(lcues: MutableList<Cue>) {
+                        cues = lcues
+                    }
+                })
+            }
             startListen()
         }
         _init = true;
+    }
+
+    /**
+     * Try to resolve the given subtitle pathOrUrl to a Uri.
+     * - If it's a local path and file exists -> Uri.fromFile
+     * - If it's a http(s) URL -> try HEAD; if HEAD unsupported, try GET with Range: bytes=0-1
+     * - Return null when unreachable / 404 / not exist
+     */
+    private suspend fun tryResolveSubtitleUri(pathOrUrl: String?): Uri? = withContext(Dispatchers.IO) {
+        if (pathOrUrl.isNullOrBlank()) return@withContext null
+        val trimmed = pathOrUrl.trim()
+
+        // Remote URL case (http/https)
+        if (trimmed.startsWith("http://", ignoreCase = true) || trimmed.startsWith("https://", ignoreCase = true)) {
+            try {
+                val client = createOkHttp()
+
+                var headReq = Request.Builder().url(trimmed).head().build()
+                var headResp = try { client.newCall(headReq).execute() } catch (e: Exception) { null }
+
+                headResp?.use { resp ->
+                    val code = resp.code
+                    if (code == 200 || code == 206) {
+                        return@withContext trimmed.toUri()
+                    }
+                    if (code == 404) {
+                        return@withContext null
+                    }
+                }
+                val rangeReq = Request.Builder()
+                    .url(trimmed)
+                    .addHeader("Range", "bytes=0-1")
+                    .get()
+                    .build()
+
+                var rangeResp = try { client.newCall(rangeReq).execute() } catch (e: Exception) { null }
+
+                rangeResp?.use { resp ->
+                    val code = resp.code
+                    if (code == 206) {
+                        return@withContext trimmed.toUri()
+                    }
+
+                    if (code == 200) {
+                        return@withContext trimmed.toUri()
+                    }
+
+                    if (code == 404) {
+                        return@withContext null
+                    }
+                }
+            } catch (e: Exception) {
+                return@withContext null
+            }
+            return@withContext null
+        } else {
+            // Local path
+            val f = File(trimmed)
+            return@withContext if (f.exists() && f.isFile) Uri.fromFile(f) else null
+        }
     }
 
     @OptIn(UnstableApi::class)
