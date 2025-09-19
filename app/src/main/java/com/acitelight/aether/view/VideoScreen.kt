@@ -428,8 +428,8 @@ fun VideoCard(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Class: ", fontSize = 12.sp)
-                Text(video.klass, fontSize = 12.sp)
+                Text("Class: ", fontSize = 12.sp, maxLines = 1)
+                Text(video.klass, fontSize = 12.sp, maxLines = 1)
             }
         }
     }
