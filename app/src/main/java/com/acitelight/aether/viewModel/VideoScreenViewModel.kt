@@ -47,6 +47,7 @@ class VideoScreenViewModel @Inject constructor(
     var imageLoader: ImageLoader? = null;
     var menuVisibility = mutableStateOf(false)
     var searchFilter = mutableStateOf("")
+    var doneInit = mutableStateOf(false)
 
     suspend fun init() {
         fetchManager.configured.filter { it }.first()
@@ -69,7 +70,8 @@ class VideoScreenViewModel @Inject constructor(
                 val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
                 videoLibrary.classesMap[videoLibrary.classes[0]]?.addAll(r)
             }
-        } else {
+        }
+        else {
             videoLibrary.classes.add("Offline")
             videoLibrary.updatingMap[0] = true
             videoLibrary.classesMap["Offline"] = mutableStateListOf<Video>()
@@ -85,6 +87,8 @@ class VideoScreenViewModel @Inject constructor(
 
             videoLibrary.classesMap[videoLibrary.classes[0]]?.addAll(jsonQuery)
         }
+
+        doneInit.value = true
     }
 
     fun setTabIndex(index: Int) {

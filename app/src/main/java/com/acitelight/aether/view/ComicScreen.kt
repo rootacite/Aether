@@ -187,7 +187,7 @@ fun ComicScreen(
         HorizontalDivider(thickness = 1.5.dp)
 
         LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Adaptive(128.dp),
+            columns = StaggeredGridCells.Adaptive(136.dp),
             contentPadding = PaddingValues(8.dp),
             verticalItemSpacing = 8.dp,
             horizontalArrangement = Arrangement.spacedBy(8.dp),

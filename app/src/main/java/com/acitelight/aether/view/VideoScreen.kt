@@ -118,156 +118,168 @@ fun VideoScreen(
     val tabIndex by videoScreenViewModel.tabIndex
     var menuVisibility by videoScreenViewModel.menuVisibility
     var searchFilter by videoScreenViewModel.searchFilter
+    var doneInit by videoScreenViewModel.doneInit
 
-    CardPage(title = "Videos") {
-        Box(Modifier.fillMaxSize())
-        {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // TopRow(videoScreenViewModel);
-                Row(Modifier.padding(bottom = 4.dp))
-                {
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
-                        modifier = Modifier
-                            .align(Alignment.CenterVertically)
-                            .padding(horizontal = 2.dp)
-                            .size(36.dp),
-                        onClick = {
-                            menuVisibility = !menuVisibility
-                        })
+    if (doneInit)
+        CardPage(title = "Videos") {
+            Box(Modifier.fillMaxSize())
+            {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // TopRow(videoScreenViewModel);
+                    Row(Modifier.padding(bottom = 4.dp))
                     {
-                        Box(Modifier.fillMaxSize())
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
+                            modifier = Modifier
+                                .align(Alignment.CenterVertically)
+                                .padding(horizontal = 2.dp)
+                                .size(36.dp),
+                            onClick = {
+                                menuVisibility = !menuVisibility
+                            })
                         {
+                            Box(Modifier.fillMaxSize())
+                            {
+                                Icon(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .align(Alignment.Center),
+                                    imageVector = Icons.Default.Menu,
+                                    contentDescription = "Catalogue"
+                                )
+                            }
+                        }
+
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
+                            modifier = Modifier
+                                .align(Alignment.CenterVertically)
+                                .padding(horizontal = 2.dp)
+                                .height(36.dp),
+                            onClick = {
+                                menuVisibility = !menuVisibility
+                            })
+                        {
+                            Box(Modifier.fillMaxHeight())
+                            {
+                                Text(
+                                    text = videoScreenViewModel.videoLibrary.classes.getOrNull(
+                                        tabIndex
+                                    )
+                                        ?: "",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier
+                                        .align(Alignment.CenterStart)
+                                        .padding(horizontal = 8.dp),
+                                    maxLines = 1
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .height(36.dp)
+                                .widthIn(max = 240.dp)
+                                .background(colorScheme.primary, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 6.dp)
+                        ) {
                             Icon(
                                 modifier = Modifier
                                     .size(30.dp)
-                                    .align(Alignment.Center),
-                                imageVector = Icons.Default.Menu,
+                                    .align(Alignment.CenterVertically),
+                                imageVector = Icons.Default.Search,
                                 contentDescription = "Catalogue"
                             )
-                        }
-                    }
-
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
-                        modifier = Modifier
-                            .align(Alignment.CenterVertically)
-                            .padding(horizontal = 2.dp)
-                            .height(36.dp),
-                        onClick = {
-                            menuVisibility = !menuVisibility
-                        })
-                    {
-                        Box(Modifier.fillMaxHeight())
-                        {
-                            Text(
-                                text = videoScreenViewModel.videoLibrary.classes.getOrNull(tabIndex)
-                                    ?: "",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .padding(horizontal = 8.dp),
-                                maxLines = 1
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .height(36.dp).widthIn(max = 240.dp)
-                            .background(colorScheme.primary, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 6.dp)
-                    ) {
-                        Icon(
-                            modifier = Modifier
-                                .size(30.dp).align(Alignment.CenterVertically),
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Catalogue"
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        BasicTextField(
-                            value = searchFilter,
-                            onValueChange = { searchFilter = it },
-                            textStyle = LocalTextStyle.current.copy(
-                                fontSize = 18.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Start
-                            ),
-                            singleLine = true,
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        )
-                    }
-                }
-                HorizontalDivider(Modifier.padding(bottom = 8.dp), 1.5.dp, DividerDefaults.color)
-                LazyVerticalStaggeredGrid(
-                    columns = StaggeredGridCells.Adaptive(160.dp),
-                    contentPadding = PaddingValues(8.dp),
-                    verticalItemSpacing = 8.dp,
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                    state = state,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(
-                        items = videoScreenViewModel.videoLibrary.classesMap.getOrDefault(
-                            videoScreenViewModel.videoLibrary.classes.getOrNull(
-                                tabIndex
-                            ), listOf()
-                        ).filter { it.video.name.contains(searchFilter) },
-                        key = { "${it.klass}/${it.id}" }
-                    ) { video ->
-                        androidx.compose.foundation.layout.Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                        ) {
-                            VideoCard(video, navController, videoScreenViewModel)
-                        }
-                    }
-                }
-            }
-
-            AnimatedVisibility(
-                visible = menuVisibility,
-                enter = slideInHorizontally(initialOffsetX = { full -> full }),
-                exit = slideOutHorizontally(targetOffsetX = { full -> full }),
-                modifier = Modifier.align(Alignment.CenterEnd)
-            ) {
-                Card(
-                    Modifier
-                        .fillMaxHeight()
-                        .width(200.dp)
-                        .align(Alignment.CenterEnd),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
-                )
-                {
-                    LazyColumn {
-                        items(videoScreenViewModel.videoLibrary.classes) { item ->
-                            CatalogueItemRow(
-                                item = Pair(
-                                    videoScreenViewModel.videoLibrary.classes.indexOf(item),
-                                    item
+                            Spacer(Modifier.width(4.dp))
+                            BasicTextField(
+                                value = searchFilter,
+                                onValueChange = { searchFilter = it },
+                                textStyle = LocalTextStyle.current.copy(
+                                    fontSize = 18.sp,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Start
                                 ),
-                                onItemClick = {
-                                    menuVisibility = false
-                                    videoScreenViewModel.setTabIndex(
-                                        videoScreenViewModel.videoLibrary.classes.indexOf(
-                                            item
-                                        )
-                                    )
-                                }
+                                singleLine = true,
+                                modifier = Modifier.align(Alignment.CenterVertically)
                             )
+                        }
+                    }
+                    HorizontalDivider(
+                        Modifier.padding(bottom = 8.dp),
+                        1.5.dp,
+                        DividerDefaults.color
+                    )
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Adaptive(160.dp),
+                        contentPadding = PaddingValues(8.dp),
+                        verticalItemSpacing = 8.dp,
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(
+                            8.dp
+                        ),
+                        state = state,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(
+                            items = videoScreenViewModel.videoLibrary.classesMap.getOrDefault(
+                                videoScreenViewModel.videoLibrary.classes.getOrNull(
+                                    tabIndex
+                                ), listOf()
+                            ).filter { it.video.name.contains(searchFilter) },
+                            key = { "${it.klass}/${it.id}" }
+                        ) { video ->
+                            androidx.compose.foundation.layout.Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                            ) {
+                                VideoCard(video, navController, videoScreenViewModel)
+                            }
+                        }
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = menuVisibility,
+                    enter = slideInHorizontally(initialOffsetX = { full -> full }),
+                    exit = slideOutHorizontally(targetOffsetX = { full -> full }),
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    Card(
+                        Modifier
+                            .fillMaxHeight()
+                            .width(200.dp)
+                            .align(Alignment.CenterEnd),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
+                    )
+                    {
+                        LazyColumn {
+                            items(videoScreenViewModel.videoLibrary.classes) { item ->
+                                CatalogueItemRow(
+                                    item = Pair(
+                                        videoScreenViewModel.videoLibrary.classes.indexOf(item),
+                                        item
+                                    ),
+                                    onItemClick = {
+                                        menuVisibility = false
+                                        videoScreenViewModel.setTabIndex(
+                                            videoScreenViewModel.videoLibrary.classes.indexOf(
+                                                item
+                                            )
+                                        )
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-    }
 }
 
 @Composable
