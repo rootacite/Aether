@@ -53,6 +53,9 @@ class VideoScreenViewModel @Inject constructor(
 
         if (Global.loggedIn) {
             videoLibrary.classes.addAll(mediaManager.listVideoKlasses())
+            if(videoLibrary.classes.isEmpty())
+                return
+
             var i = 0
             for (it in videoLibrary.classes) {
                 videoLibrary.updatingMap[i++] = false

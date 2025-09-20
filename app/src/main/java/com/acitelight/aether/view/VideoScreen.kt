@@ -298,27 +298,6 @@ fun CatalogueItemRow(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopRow(videoScreenViewModel: VideoScreenViewModel) {
-    val tabIndex by videoScreenViewModel.tabIndex;
-    if (videoScreenViewModel.videoLibrary.classes.isEmpty()) return
-    val colorScheme = MaterialTheme.colorScheme
-
-    ScrollableTabRow(
-        selectedTabIndex = tabIndex,
-        modifier = Modifier.background(colorScheme.surface)
-    ) {
-        videoScreenViewModel.videoLibrary.classes.forEachIndexed { index, title ->
-            Tab(
-                selected = tabIndex == index,
-                onClick = { videoScreenViewModel.setTabIndex(index) },
-                text = { Text(text = title, maxLines = 1) },
-            )
-        }
-    }
-}
-
 @Composable
 fun VideoCard(
     video: Video,
