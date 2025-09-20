@@ -277,9 +277,18 @@ fun ComicCard(
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 modifier = Modifier
-                    .padding(8.dp)
+                    .padding(4.dp)
                     .background(Color.Transparent)
-                    .heightIn(48.dp)
+                    .heightIn(max = 48.dp)
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Id: ${comic.id}",
+                fontSize = 12.sp,
+                maxLines = 2,
+                modifier = Modifier
+                    .padding(bottom = 4.dp).padding(horizontal = 4.dp)
+                    .background(Color.Transparent)
             )
         }
     }
