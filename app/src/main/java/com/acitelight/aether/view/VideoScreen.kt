@@ -345,7 +345,7 @@ fun VideoCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(),
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
 
@@ -406,21 +406,30 @@ fun VideoCard(
             }
             Text(
                 text = video.video.name,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 modifier = Modifier
                     .padding(8.dp)
                     .background(Color.Transparent)
-                    .heightIn(24.dp)
+                    .heightIn(min = 24.dp),
+                lineHeight = 14.sp
             )
             Spacer(modifier = Modifier.weight(1f))
             Row(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Class: ", fontSize = 12.sp, maxLines = 1)
-                Text(video.klass, fontSize = 12.sp, maxLines = 1)
+                Text("Class: ", fontSize = 10.sp, maxLines = 1)
+                Text(video.klass, fontSize = 10.sp, maxLines = 1)
+            }
+
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp).padding(bottom = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text("Id: ", fontSize = 10.sp, maxLines = 1, lineHeight = 10.sp)
+                Text(video.id, fontSize = 10.sp, maxLines = 1, lineHeight = 10.sp)
             }
         }
     }
