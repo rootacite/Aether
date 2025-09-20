@@ -30,7 +30,7 @@ class Video(
 
     fun getSubtitle(): String {
         return if (isLocal)
-            "$localBase/videos/$klass/$id/subtitle.ass"
+            "$localBase/videos/$klass/$id/subtitle.vtt"
         else
             "${ApiClient.getBase()}api/video/$klass/$id/subtitle?token=$token"
     }

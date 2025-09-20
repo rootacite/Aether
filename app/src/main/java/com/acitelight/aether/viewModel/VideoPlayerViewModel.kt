@@ -118,9 +118,8 @@ class VideoPlayerViewModel @Inject constructor(
 
                 val mediaItem: MediaItem = if (subtitleUri != null) {
                     // prepare subtitle configuration with guessed mime type
-                    val mime = "text/vtt"
                     val subConfig = MediaItem.SubtitleConfiguration.Builder(subtitleUri)
-                        .setMimeType(mime)
+                        .setMimeType("text/vtt")
                         .build()
 
                     MediaItem.Builder()
