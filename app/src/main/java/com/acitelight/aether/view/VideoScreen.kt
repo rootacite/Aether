@@ -252,7 +252,7 @@ fun VideoScreen(
                     Card(
                         Modifier
                             .fillMaxHeight()
-                            .width(200.dp)
+                            .width(250.dp)
                             .align(Alignment.CenterEnd),
                         shape = RoundedCornerShape(8.dp),
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
@@ -294,13 +294,13 @@ fun CatalogueItemRow(
             .padding(4.dp)
             .padding(horizontal = 4.dp)
             .heightIn(min = 28.dp)
-            .width(200.dp),
+            .width(250.dp),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = colorScheme.primary)
     ) {
         Text(
             text = item.second,
-            fontSize = 18.sp,
+            fontSize = 14.sp,
             maxLines = 1,
             textAlign = TextAlign.Center,
             modifier = Modifier
@@ -408,7 +408,7 @@ fun VideoCard(
                 text = video.video.name,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                maxLines = 2,
+                maxLines = 4,
                 modifier = Modifier
                     .padding(8.dp)
                     .background(Color.Transparent)

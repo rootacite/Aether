@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.bcprov.jdk15on)
     implementation(libs.converter.gson)
     implementation(libs.gson)
+
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.common)

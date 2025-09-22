@@ -22,6 +22,6 @@ interface VideoRecordDao {
     @Delete
     suspend fun delete(rec: VideoRecord)
 
-    @Query("SELECT * FROM videorecord WHERE id = :id")
-    suspend fun getById(id: String): VideoRecord?
+    @Query("SELECT * FROM videorecord WHERE id = :id and name = :klass")
+    suspend fun get(id: String, klass: String): VideoRecord?
 }

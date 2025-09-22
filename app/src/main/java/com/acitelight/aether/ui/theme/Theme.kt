@@ -130,8 +130,8 @@ fun generateColorScheme(primaryColor: Color, isDarkMode: Boolean): ColorScheme {
     }
 }
 
-private val DarkColorScheme = generateColorScheme(Color(0xFF4A6F9F), isDarkMode = true)
-private val LightColorScheme = generateColorScheme(Color(0xFF4A6F9F), isDarkMode = false)
+private val DarkColorScheme = generateColorScheme(Color(0xFF36A0FF), isDarkMode = true)
+private val LightColorScheme = generateColorScheme(Color(0xFF36A0FF), isDarkMode = false)
 
 @Composable
 fun AetherTheme(

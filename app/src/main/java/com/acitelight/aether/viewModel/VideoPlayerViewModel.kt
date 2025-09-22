@@ -158,7 +158,7 @@ class VideoPlayerViewModel @Inject constructor(
                         if(!renderedFirst)
                         {
                             viewModelScope.launch {
-                                val ii = database.userDao().getById(video!!.id)
+                                val ii = database.userDao().get(video!!.id, video!!.klass)
                                 if(ii != null)
                                 {
                                     _player!!.seekTo(ii.position)
