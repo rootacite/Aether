@@ -71,7 +71,7 @@ class VideoPlayerViewModel @Inject constructor(
     var thumbUp by mutableIntStateOf(0)
     var thumbDown by mutableIntStateOf(0)
     var star by mutableStateOf(false)
-
+    var locked by mutableStateOf(false)
     private var _init: Boolean = false;
     var startPlaying by mutableStateOf(false)
     var renderedFirst = false
