@@ -1352,7 +1352,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                         text = "${videoPlayerViewModel.video?.video?.name}",
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
-                            .padding(horizontal = 52.dp)
+                            .padding(horizontal = 46.dp).padding(top = 12.dp)
                             .align(Alignment.CenterVertically),
                         fontSize = 18.sp
                     )
