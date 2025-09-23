@@ -112,6 +112,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.media3.common.text.Cue
 import androidx.media3.common.util.UnstableApi
+import androidx.wear.compose.materialcore.screenHeightDp
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -686,7 +687,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                         .padding(start = 12.dp)
                 )
 
-                IconButton(
+                /* IconButton(
                     onClick = {
                         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                     },
@@ -700,7 +701,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                         tint = Color.White,
                         modifier = Modifier.size(32.dp)
                     )
-                }
+                } */
             }
         }
 
@@ -1077,10 +1078,6 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
         )
     }
 
-    BackHandler {
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-    }
-
     ToggleFullScreen(true)
     Box(Modifier.fillMaxSize())
     {
@@ -1341,7 +1338,6 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                 Row(
                     Modifier
                         .align(Alignment.TopStart)
-                        .padding(horizontal = 42.dp)
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
@@ -1352,28 +1348,11 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                         )
                 )
                 {
-                    IconButton(
-                        onClick = {
-                            activity?.requestedOrientation =
-                                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                        },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .align(Alignment.CenterVertically)
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(36.dp),
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-
                     Text(
                         text = "${videoPlayerViewModel.video?.video?.name}",
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
-                            .padding(horizontal = 12.dp)
+                            .padding(horizontal = 52.dp)
                             .align(Alignment.CenterVertically),
                         fontSize = 18.sp
                     )
