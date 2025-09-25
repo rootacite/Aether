@@ -10,5 +10,6 @@ data class VideoResponse(
     val comment: List<Comment>,
     val star: Boolean,
     val like: Int,
-    val author: String
+    val author: String,
+    val group: String?
 )

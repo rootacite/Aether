@@ -2,11 +2,9 @@ package com.acitelight.aether.view
 
 import android.app.Activity
 import android.content.Context
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.view.View
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -27,7 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
@@ -54,11 +51,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
@@ -66,9 +61,6 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -76,12 +68,9 @@ import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -97,7 +86,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
@@ -110,9 +98,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.text.Cue
 import androidx.media3.common.util.UnstableApi
-import androidx.wear.compose.materialcore.screenHeightDp
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -120,6 +108,7 @@ import com.acitelight.aether.Global
 import com.acitelight.aether.ToggleFullScreen
 import com.acitelight.aether.model.KeyImage
 import com.acitelight.aether.model.Video
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 fun formatTime(ms: Long): String {
@@ -147,7 +136,6 @@ fun BiliStyleSlider(
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val thumbRadius = 6.dp
     val trackHeight = 3.dp
 
     Slider(
@@ -189,7 +177,6 @@ fun BiliMiniSlider(
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val thumbRadius = 6.dp
     val trackHeight = 3.dp
 
     Slider(
@@ -337,7 +324,7 @@ fun VideoPlayer(
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel, cover: Float) {
-    val exoPlayer: ExoPlayer = videoPlayerViewModel._player!!;
+    val exoPlayer: ExoPlayer = videoPlayerViewModel.player!!
     val context = LocalContext.current
     val activity = context as? Activity
 
@@ -379,16 +366,16 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                         onDragStart = { offset ->
                             if (videoPlayerViewModel.locked) return@detectDragGestures
                             if (offset.x < size.width / 2) {
-                                videoPlayerViewModel.draggingPurpose = -1;
+                                videoPlayerViewModel.draggingPurpose = -1
                             } else {
-                                videoPlayerViewModel.draggingPurpose = -2;
+                                videoPlayerViewModel.draggingPurpose = -2
                             }
                         },
                         onDragEnd = {
                             if (videoPlayerViewModel.isPlaying && videoPlayerViewModel.draggingPurpose == 0)
                                 exoPlayer.play()
 
-                            videoPlayerViewModel.draggingPurpose = -1;
+                            videoPlayerViewModel.draggingPurpose = -1
                         },
                         onDrag = { change, dragAmount ->
                             if (videoPlayerViewModel.locked) return@detectDragGestures
@@ -412,15 +399,15 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                                 volFactor = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                                     .toFloat() / maxVolume.toFloat()
                                 if (dragAmount.y < 0)
-                                    setVolume(cu + 1);
+                                    setVolume(cu + 1)
                                 else if (dragAmount.y > 0)
-                                    setVolume(cu - 1);
+                                    setVolume(cu - 1)
                             } else if (videoPlayerViewModel.draggingPurpose == 1) {
                                 videoPlayerViewModel.brit =
                                     (videoPlayerViewModel.brit - dragAmount.y * 0.002f).coerceIn(
                                         0f,
                                         1f
-                                    );
+                                    )
 
                                 activity?.window?.attributes = activity.window.attributes.apply {
                                     screenBrightness = videoPlayerViewModel.brit.coerceIn(0f, 1f)
@@ -514,7 +501,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
             Text(
                 text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
                     formatTime(
-                        (exoPlayer.duration).toLong()
+                        (exoPlayer.duration)
                     )
                 }",
                 fontWeight = FontWeight.Bold,
@@ -719,7 +706,7 @@ fun VideoPlayerPortal(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp;
+    val screenHeight = configuration.screenHeightDp.dp
 
     val minHeight = 42.dp
     var coverAlpha by remember { mutableFloatStateOf(0.0f) }
@@ -752,7 +739,7 @@ fun VideoPlayerPortal(
                     Offset.Zero
                 }
 
-                val dh = playerHeight - minHeight;
+                val dh = playerHeight - minHeight
                 coverAlpha = (if (dh > 10.dp)
                     0f
                 else
@@ -762,6 +749,11 @@ fun VideoPlayerPortal(
             }
         }
     }
+
+    val klass by videoPlayerViewModel.currentKlass
+    val id by videoPlayerViewModel.currentId
+    val name by videoPlayerViewModel.currentName
+    val duration by videoPlayerViewModel.currentDuration
 
     ToggleFullScreen(false)
     Column(Modifier
@@ -844,7 +836,7 @@ fun VideoPlayerPortal(
                         .align(Alignment.Start)
                         .padding(horizontal = 12.dp)
                         .padding(top = 12.dp),
-                    text = videoPlayerViewModel.video?.video?.name ?: "",
+                    text = name,
                     fontSize = 16.sp,
                     maxLines = 2,
                     fontWeight = FontWeight.Bold,
@@ -856,7 +848,7 @@ fun VideoPlayerPortal(
                     .alpha(0.5f)) {
                     Text(
                         modifier = Modifier.padding(horizontal = 8.dp),
-                        text = videoPlayerViewModel.video?.klass ?: "",
+                        text = klass,
                         fontSize = 14.sp,
                         maxLines = 1,
                         fontWeight = FontWeight.Bold,
@@ -864,7 +856,7 @@ fun VideoPlayerPortal(
 
                     Text(
                         modifier = Modifier.padding(horizontal = 8.dp),
-                        text = formatTime(videoPlayerViewModel.video?.video?.duration ?: 0),
+                        text = formatTime(duration),
                         fontSize = 14.sp,
                         maxLines = 1,
                         fontWeight = FontWeight.Bold,
@@ -873,10 +865,8 @@ fun VideoPlayerPortal(
 
                 HorizontalDivider(Modifier.padding(vertical = 8.dp), 1.dp, DividerDefaults.color)
 
-                SocialPanel(
-                    Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .fillMaxWidth(),
+                PlaylistPanel(
+                    Modifier,
                     videoPlayerViewModel = videoPlayerViewModel
                 )
 
@@ -886,7 +876,7 @@ fun VideoPlayerPortal(
                 HorizontalDivider(Modifier.padding(vertical = 8.dp), 1.dp, DividerDefaults.color)
 
                 for (i in Global.sameClassVideos ?: listOf()) {
-                    if (i.id == videoPlayerViewModel.video?.id) continue
+                    if (i.id == id) continue
 
                     MiniVideoCard(
                         modifier = Modifier
@@ -894,7 +884,7 @@ fun VideoPlayerPortal(
                         i,
                         {
                             videoPlayerViewModel.isPlaying = false
-                            videoPlayerViewModel._player?.pause()
+                            videoPlayerViewModel.player?.pause()
                             val route = "video_player_route/${"${i.klass}/${i.id}".toHex()}"
                             navController.navigate(route)
                         }, videoPlayerViewModel.imageLoader!!
@@ -1024,7 +1014,42 @@ fun SocialPanel(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel) 
 }
 
 @Composable
+fun PlaylistPanel(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel)
+{
+    val name by videoPlayerViewModel.currentName
+
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(80.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp)
+    ) {
+        items(videoPlayerViewModel.videos) { it ->
+            // SingleImageItem(img = it, videoPlayerViewModel.imageLoader!!)
+            Card(
+                modifier = Modifier.fillMaxHeight().width(140.dp),
+                onClick = {
+                    if(name == it.video.name)
+                        return@Card
+
+                    videoPlayerViewModel.viewModelScope.launch {
+                        videoPlayerViewModel.startPlay(it)
+                    }
+                }
+            ) {
+                Box(Modifier.padding(8.dp).fillMaxSize())
+                {
+                    Text(modifier = Modifier.align(Alignment.Center), text = it.video.name, maxLines = 4, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 13.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun HorizontalGallery(videoPlayerViewModel: VideoPlayerViewModel) {
+    val gallery by videoPlayerViewModel.currentGallery
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -1032,7 +1057,7 @@ fun HorizontalGallery(videoPlayerViewModel: VideoPlayerViewModel) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(horizontal = 24.dp)
     ) {
-        items(videoPlayerViewModel.video?.getGallery() ?: listOf()) { it ->
+        items(gallery) { it ->
             SingleImageItem(img = it, videoPlayerViewModel.imageLoader!!)
         }
     }
@@ -1060,7 +1085,7 @@ fun SingleImageItem(img: KeyImage, imageLoader: ImageLoader) {
 fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
     val context = LocalContext.current
     val activity = context as? Activity
-    val exoPlayer: ExoPlayer = videoPlayerViewModel._player!!;
+    val exoPlayer: ExoPlayer = videoPlayerViewModel.player!!;
 
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
@@ -1069,6 +1094,8 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
             audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / maxVolume.toFloat()
         )
     }
+
+    val name by videoPlayerViewModel.currentName
 
     fun setVolume(value: Int) {
         audioManager.setStreamVolume(
@@ -1349,7 +1376,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                 )
                 {
                     Text(
-                        text = "${videoPlayerViewModel.video?.video?.name}",
+                        text = name,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .padding(horizontal = 46.dp).padding(top = 12.dp)
@@ -1437,7 +1464,6 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
 
 @Composable
 fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit, imageLoader: ImageLoader) {
-    var isImageLoaded by remember { mutableStateOf(false) }
     Card(
         modifier = modifier
             .height(80.dp)
@@ -1460,7 +1486,6 @@ fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit, imageLo
                     .diskCacheKey("${video.klass}/${video.id}/cover")
                     .listener(
                         onStart = { },
-                        onSuccess = { _, _ -> isImageLoaded = true },
                         onError = { _, _ -> }
                     )
                     .build(),

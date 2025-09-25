@@ -4,14 +4,13 @@ import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.annotation.OptIn
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -19,7 +18,6 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.STATE_READY
 import androidx.media3.common.text.Cue
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -46,9 +44,9 @@ import okhttp3.Request
 import java.io.File
 import javax.inject.Inject
 import androidx.core.net.toUri
-import androidx.media3.common.C
 import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import com.acitelight.aether.model.KeyImage
 
 @HiltViewModel
 class VideoPlayerViewModel @Inject constructor(
@@ -67,26 +65,34 @@ class VideoPlayerViewModel @Inject constructor(
     // 1  : Volume
     // 2  : Brightness
     var draggingPurpose by mutableIntStateOf(-1)
-
     var thumbUp by mutableIntStateOf(0)
     var thumbDown by mutableIntStateOf(0)
     var star by mutableStateOf(false)
     var locked by mutableStateOf(false)
-    private var _init: Boolean = false;
+    private var _init: Boolean = false
     var startPlaying by mutableStateOf(false)
     var renderedFirst = false
-    var video: Video? = null
+    var videos: List<Video> = listOf()
 
     val dataSourceFactory = OkHttpDataSource.Factory(createOkHttp())
-    var imageLoader: ImageLoader? = null;
+    var imageLoader: ImageLoader? = null
     var brit by mutableFloatStateOf(0.5f)
     val database: VideoRecordDatabase = VideoRecordDatabase.getDatabase(context)
     var cues by mutableStateOf(listOf<Cue>())
 
+    var currentKlass = mutableStateOf("")
+    var currentId = mutableStateOf("")
+    var currentName = mutableStateOf("")
+    var currentDuration = mutableLongStateOf(0)
+    var currentGallery = mutableStateOf(listOf<KeyImage>())
+
     @OptIn(UnstableApi::class)
     fun init(videoId: String) {
-        if (_init) return;
-        val v = videoId.hexToString()
+        if (_init)
+            return
+        _init = true
+
+        val vs = videoId.hexToString().split(",").map { it.split("/") }
         imageLoader = ImageLoader.Builder(context)
             .components {
                 add(OkHttpNetworkFetcherFactory(createOkHttp()))
@@ -94,94 +100,10 @@ class VideoPlayerViewModel @Inject constructor(
             .build()
 
         viewModelScope.launch {
-            video = mediaManager.queryVideo(v.split("/")[0], v.split("/")[1])!!
-            recentManager.pushVideo(context, VideoQueryIndex(v.split("/")[0], v.split("/")[1]))
-
-            val subtitleCandidate = video?.getSubtitle()?.trim()
-            val subtitleUri = tryResolveSubtitleUri(subtitleCandidate)
-
-            // decide whether we need network-capable media source factory:
-            val subtitleIsRemote = subtitleUri?.scheme?.startsWith("http", ignoreCase = true) == true
-            val videoIsRemote = !video!!.isLocal
-            val needNetworkFactory = videoIsRemote || subtitleIsRemote
-            val trackSelector = DefaultTrackSelector(context)
-
-            // build ExoPlayer with or without custom DefaultMediaSourceFactory
-            val builder = if (needNetworkFactory)
-                ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
-            else
-                ExoPlayer.Builder(context)
-
-            _player = builder.setTrackSelector(trackSelector).build().apply {
-                val url = video?.getVideo() ?: ""
-                val videoUri = if (video!!.isLocal) Uri.fromFile(File(url)) else url.toUri()
-
-                val mediaItem: MediaItem = if (subtitleUri != null) {
-                    // prepare subtitle configuration with guessed mime type
-                    val subConfig = MediaItem.SubtitleConfiguration.Builder(subtitleUri)
-                        .setMimeType("text/vtt")
-                        .build()
-
-                    MediaItem.Builder()
-                        .setUri(videoUri)
-                        .setSubtitleConfigurations(listOf(subConfig))
-                        .build()
-                } else {
-                    MediaItem.fromUri(videoUri)
-                }
-
-                setMediaItem(mediaItem)
-                prepare()
-                playWhenReady = true
-
-                addListener(object : Player.Listener {
-                    override fun onTracksChanged(tracks: Tracks) {
-                        super.onTracksChanged(tracks)
-
-                        val trackSelector = _player?.trackSelector
-                        if (trackSelector is DefaultTrackSelector) {
-                            val parameters = trackSelector.buildUponParameters()
-                                .setSelectUndeterminedTextLanguage(true)
-                                .build()
-                            trackSelector.parameters = parameters
-                        }
-                    }
-
-                    override fun onPlaybackStateChanged(playbackState: Int) {
-                        if (playbackState == STATE_READY) {
-                            startPlaying = true
-                        }
-                    }
-
-                    override fun onRenderedFirstFrame() {
-                        super.onRenderedFirstFrame()
-                        if(!renderedFirst)
-                        {
-                            viewModelScope.launch {
-                                val ii = database.userDao().get(video!!.id, video!!.klass)
-                                if(ii != null)
-                                {
-                                    _player!!.seekTo(ii.position)
-                                    Toast.makeText(context, "Recover from ${formatTime(ii.position)} ", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                        renderedFirst = true
-                    }
-
-                    override fun onPlayerError(error: PlaybackException)
-                    {
-                        print(error.message)
-                    }
-
-                    override fun onCues(lcues: MutableList<Cue>) {
-                        cues = lcues
-                    }
-                })
-            }
+            videos = mediaManager.queryVideoBulk(vs.first()[0], vs.map { it[1] })!!
+            startPlay(videos.first())
             startListen()
         }
-        _init = true;
     }
 
     /**
@@ -199,8 +121,8 @@ class VideoPlayerViewModel @Inject constructor(
             try {
                 val client = createOkHttp()
 
-                var headReq = Request.Builder().url(trimmed).head().build()
-                var headResp = try { client.newCall(headReq).execute() } catch (e: Exception) { null }
+                val headReq = Request.Builder().url(trimmed).head().build()
+                val headResp = try { client.newCall(headReq).execute() } catch (_: Exception) { null }
 
                 headResp?.use { resp ->
                     val code = resp.code
@@ -217,7 +139,7 @@ class VideoPlayerViewModel @Inject constructor(
                     .get()
                     .build()
 
-                var rangeResp = try { client.newCall(rangeReq).execute() } catch (e: Exception) { null }
+                val rangeResp = try { client.newCall(rangeReq).execute() } catch (_: Exception) { null }
 
                 rangeResp?.use { resp ->
                     val code = resp.code
@@ -233,7 +155,7 @@ class VideoPlayerViewModel @Inject constructor(
                         return@withContext null
                     }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 return@withContext null
             }
             return@withContext null
@@ -247,22 +169,114 @@ class VideoPlayerViewModel @Inject constructor(
     @OptIn(UnstableApi::class)
     fun startListen() {
         CoroutineScope(Dispatchers.Main).launch {
-            while (_player?.isReleased != true) {
-                val __player = _player!!;
-                playProcess = __player.currentPosition.toFloat() / __player.duration.toFloat()
+            while (_init) {
+                player?.let { playProcess = it.currentPosition.toFloat() / it.duration.toFloat() }
                 delay(100)
             }
         }
     }
 
-    var _player: ExoPlayer? = null;
+    @OptIn(UnstableApi::class)
+    suspend fun startPlay(video: Video) {
+        currentId.value = video.id
+        currentKlass.value = video.klass
+        currentName.value = video.video.name
+        currentDuration.longValue = video.video.duration
+        currentGallery.value = video.getGallery()
+
+        player?.apply {
+            stop()
+            clearMediaItems()
+        }
+
+        recentManager.pushVideo(context, VideoQueryIndex(video.klass, video.id))
+
+        val subtitleCandidate = video.getSubtitle().trim()
+        val subtitleUri = tryResolveSubtitleUri(subtitleCandidate)
+
+        if (player == null) {
+            val trackSelector = DefaultTrackSelector(context)
+            val builder = ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+
+            player = builder.setTrackSelector(trackSelector).build().apply {
+                addListener(object : Player.Listener {
+                    override fun onTracksChanged(tracks: Tracks) {
+                        val trackSelector = player?.trackSelector
+                        if (trackSelector is DefaultTrackSelector) {
+                            val parameters = trackSelector.buildUponParameters()
+                                .setSelectUndeterminedTextLanguage(true)
+                                .build()
+                            trackSelector.parameters = parameters
+                        }
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == STATE_READY) {
+                            startPlaying = true
+                        }
+                    }
+
+                    override fun onRenderedFirstFrame() {
+                        if (!renderedFirst) {
+                            viewModelScope.launch {
+                                val ii = database.userDao().get(video.id, video.klass)
+                                if (ii != null) {
+                                    player?.seekTo(ii.position)
+                                    Toast.makeText(
+                                        context,
+                                        "Recover from ${formatTime(ii.position)} ",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                        renderedFirst = true
+                    }
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        print(error.message)
+                    }
+
+                    override fun onCues(lcues: MutableList<Cue>) {
+                        cues = lcues
+                    }
+                })
+            }
+        }
+
+        val url = video.getVideo()
+        val videoUri = if (video.isLocal) Uri.fromFile(File(url)) else url.toUri()
+
+        val mediaItem: MediaItem = if (subtitleUri != null) {
+            val subConfig = MediaItem.SubtitleConfiguration.Builder(subtitleUri)
+                .setMimeType("text/vtt")
+                .build()
+
+            MediaItem.Builder()
+                .setUri(videoUri)
+                .setSubtitleConfigurations(listOf(subConfig))
+                .build()
+        } else {
+            MediaItem.fromUri(videoUri)
+        }
+
+        player?.apply {
+            setMediaItem(mediaItem)
+            prepare()
+            playWhenReady = true
+        }
+    }
+
+    var player: ExoPlayer? = null
 
     override fun onCleared() {
         super.onCleared()
-        val p = _player!!.currentPosition
-        _player?.release()
+        _init = false
+        val p = player!!.currentPosition
+        player?.release()
         CoroutineScope(Dispatchers.IO).launch {
-            database.userDao().insert(VideoRecord(video!!.id, video!!.klass, p))
+            if(currentId.value.isNotEmpty() && currentKlass.value.isNotEmpty())
+                database.userDao().insert(VideoRecord(currentId.value, currentKlass.value, p))
         }
     }
 }

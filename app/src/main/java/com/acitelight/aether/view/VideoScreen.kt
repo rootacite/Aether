@@ -92,6 +92,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.charset.Charset
 import java.security.KeyPair
+import kotlin.collections.sortedWith
+
+fun videoTOView(v: List<Video>): Map<String?, List<Video>>
+{
+    return v.map { if(it.video.group != null) it else Video(id=it.id, isLocal = it.isLocal, localBase = it.localBase,
+        klass = it.klass, token = it.token, video = it.video.copy(group = it.video.name)) }.groupBy { it.video.group }
+}
 
 fun String.toHex(): String {
     return this.toByteArray().joinToString("") { "%02x".format(it) }
@@ -119,6 +126,13 @@ fun VideoScreen(
     var menuVisibility by videoScreenViewModel.menuVisibility
     var searchFilter by videoScreenViewModel.searchFilter
     var doneInit by videoScreenViewModel.doneInit
+    val vb = videoTOView(videoScreenViewModel.videoLibrary.classesMap.getOrDefault(
+        videoScreenViewModel.videoLibrary.classes.getOrNull(
+            tabIndex
+        ), listOf()
+    ).filter { it.video.name.contains(searchFilter) }).filter { it.key != null }
+        .map{ i -> Pair(i.key!!, i.value.sortedWith(compareBy(naturalOrder()) { it.video.name }) ) }
+        .toList()
 
     if (doneInit)
         CardPage(title = "Videos") {
@@ -225,19 +239,16 @@ fun VideoScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(
-                            items = videoScreenViewModel.videoLibrary.classesMap.getOrDefault(
-                                videoScreenViewModel.videoLibrary.classes.getOrNull(
-                                    tabIndex
-                                ), listOf()
-                            ).filter { it.video.name.contains(searchFilter) },
-                            key = { "${it.klass}/${it.id}" }
+                            items = vb,
+                            key = { "${it.first}/${it.second}" }
                         ) { video ->
                             androidx.compose.foundation.layout.Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .wrapContentHeight()
                             ) {
-                                VideoCard(video, navController, videoScreenViewModel)
+                                if(video.second.isNotEmpty())
+                                    VideoCard(video.second, navController, videoScreenViewModel)
                             }
                         }
                     }
@@ -312,11 +323,12 @@ fun CatalogueItemRow(
 
 @Composable
 fun VideoCard(
-    video: Video,
+    videos: List<Video>,
     navController: NavHostController,
     videoScreenViewModel: VideoScreenViewModel
 ) {
     val tabIndex by videoScreenViewModel.tabIndex;
+    val video = videos.first()
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -327,7 +339,8 @@ fun VideoCard(
                         videoScreenViewModel.videoLibrary.classesMap[videoScreenViewModel.videoLibrary.classes[tabIndex]]
                             ?: mutableStateListOf(), video
                     )
-                    val route = "video_player_route/${"${video.klass}/${video.id}".toHex()}"
+                    val vg = videos.joinToString(",") { "${it.klass}/${it.id}" }.toHex()
+                    val route = "video_player_route/$vg"
                     navController.navigate(route)
                 },
                 onLongClick = {
@@ -362,14 +375,6 @@ fun VideoCard(
                     imageLoader = videoScreenViewModel.imageLoader!!
                 )
 
-                Text(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(2.dp),
-                    text = formatTime(video.video.duration),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
 
                 Box(
                     Modifier
@@ -379,11 +384,33 @@ fun VideoCard(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = 0.45f)
+                                    Color.Black.copy(alpha = 0.6f)
                                 )
                             )
                         )
                         .align(Alignment.BottomCenter)
+                )
+
+                Text(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(horizontal =  2.dp),
+                    text = "${videos.size} Videos",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 13.sp,
+                    color = Color.White
+                )
+
+                Text(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(horizontal =  2.dp),
+                    text = formatTime(video.video.duration),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 13.sp,
+                    color = Color.White
                 )
 
                 if (video.isLocal)
@@ -405,7 +432,7 @@ fun VideoCard(
                     }
             }
             Text(
-                text = video.video.name,
+                text = video.video.group ?: video.video.name,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 4,
@@ -422,14 +449,6 @@ fun VideoCard(
             ) {
                 Text("Class: ", fontSize = 10.sp, maxLines = 1)
                 Text(video.klass, fontSize = 10.sp, maxLines = 1)
-            }
-
-            Row(
-                modifier = Modifier.padding(horizontal = 8.dp).padding(bottom = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("Id: ", fontSize = 10.sp, maxLines = 1, lineHeight = 10.sp)
-                Text(video.id, fontSize = 10.sp, maxLines = 1, lineHeight = 10.sp)
             }
         }
     }

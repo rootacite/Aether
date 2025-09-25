@@ -3,7 +3,6 @@ package com.acitelight.aether.service
 import android.content.Context
 import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.Comic
-import com.acitelight.aether.model.ComicResponse
 import com.acitelight.aether.model.Video
 import com.tonyodev.fetch2.Status
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -27,7 +26,7 @@ class MediaManager @Inject constructor(
         {
             val j = ApiClient.api!!.getVideoClasses(token)
             return j.toList()
-        }catch(e: Exception)
+        }catch(_: Exception)
         {
             return listOf()
         }
@@ -39,7 +38,7 @@ class MediaManager @Inject constructor(
         {
             val j = ApiClient.api!!.queryVideoClasses(klass, token)
             return j.toList()
-        }catch(e: Exception)
+        }catch(_: Exception)
         {
             return listOf()
         }
@@ -65,7 +64,7 @@ class MediaManager @Inject constructor(
         try {
             val j = ApiClient.api!!.queryVideo(klass, id, token)
             return Video(klass = klass, id = id, token=token, isLocal = false, localBase = "", video = j)
-        }catch (e: Exception)
+        }catch (_: Exception)
         {
             return null
         }
@@ -100,7 +99,7 @@ class MediaManager @Inject constructor(
                         Json.decodeFromString<Video>(jsonString).toLocal(
                             context.getExternalFilesDir(null)?.path ?: ""
                         )
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         null
                     }
                 } else {
@@ -125,7 +124,7 @@ class MediaManager @Inject constructor(
             }
 
             localVideos + remoteVideos
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -135,7 +134,7 @@ class MediaManager @Inject constructor(
         try{
             val j = ApiClient.api!!.getComics(token)
             return j
-        }catch (e: Exception)
+        }catch (_: Exception)
         {
             return listOf()
         }
@@ -146,7 +145,7 @@ class MediaManager @Inject constructor(
         try{
             val j = ApiClient.api!!.queryComicInfo(id, token)
             return Comic(id = id, comic = j, token = token)
-        }catch (e: Exception)
+        }catch (_: Exception)
         {
             return null
         }
@@ -157,7 +156,7 @@ class MediaManager @Inject constructor(
         try{
             val j = ApiClient.api!!.queryComicInfoBulk(id, token)
             return j.zip(id).map { Comic(id = it.second, comic = it.first, token = token) }
-        }catch (e: Exception)
+        }catch (_: Exception)
         {
             return null
         }
@@ -166,9 +165,9 @@ class MediaManager @Inject constructor(
     suspend fun postBookmark(id: String, bookMark: BookMark): Boolean
     {
         try{
-            val j = ApiClient.api!!.postBookmark(id, token, bookMark)
+            ApiClient.api!!.postBookmark(id, token, bookMark)
             return true
-        }catch (e: Exception)
+        }catch (_: Exception)
         {
             return false
         }
