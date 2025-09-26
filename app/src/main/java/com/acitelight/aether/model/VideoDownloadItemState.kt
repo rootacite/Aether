@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.tonyodev.fetch2.Status
 
-class DownloadItemState(
+class VideoDownloadItemState(
     val id: Int,
     fileName: String,
     filePath: String,
@@ -15,7 +15,8 @@ class DownloadItemState(
     downloadedBytes: Long,
     totalBytes: Long,
     klass: String,
-    vid: String
+    vid: String,
+    val type: String
 ) {
     var fileName by mutableStateOf(fileName)
     var filePath by mutableStateOf(filePath)

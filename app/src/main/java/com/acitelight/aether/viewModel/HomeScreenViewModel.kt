@@ -7,6 +7,7 @@ import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.RecentManager
+import com.acitelight.aether.service.VideoLibrary
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +17,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     val recentManager: RecentManager,
-    @ApplicationContext val context: Context
+    @ApplicationContext val context: Context,
+    val videoLibrary: VideoLibrary,
 ) : ViewModel()
 {
     var imageLoader: ImageLoader? = null

@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,24 +16,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.*
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
-import androidx.compose.material3.DividerDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,17 +38,13 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import androidx.navigation.Navigator
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global.updateRelate
-import com.acitelight.aether.model.DownloadItemState
+import com.acitelight.aether.model.VideoDownloadItemState
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.viewModel.TransmissionScreenViewModel
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.FetchListener
 import com.tonyodev.fetch2.Status
-import com.tonyodev.fetch2core.DownloadBlock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,21 +52,45 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 @Composable
-fun TransmissionScreen(navigator: NavHostController, transmissionScreenViewModel: TransmissionScreenViewModel = hiltViewModel<TransmissionScreenViewModel>()) {
+fun TransmissionScreen(
+    navigator: NavHostController,
+    transmissionScreenViewModel: TransmissionScreenViewModel = hiltViewModel<TransmissionScreenViewModel>()
+) {
     val downloads = transmissionScreenViewModel.downloads
+
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(downloads, key = { it.id }) { item ->
-            DownloadCard(
+        items(downloads.filter { it.type == "main" }, key = { it.id }) { item ->
+            VideoDownloadCard(
                 navigator = navigator,
                 viewModel = transmissionScreenViewModel,
                 model = item,
-                onPause = { transmissionScreenViewModel.pause(item.id) },
-                onResume = { transmissionScreenViewModel.resume(item.id) },
-                onCancel = { transmissionScreenViewModel.cancel(item.id) },
-                onDelete = { transmissionScreenViewModel.delete(item.id, true) }
+                onPause = {
+                    for (i in downloadToGroup(
+                        item,
+                        downloads
+                    )) transmissionScreenViewModel.pause(i.id)
+                },
+                onResume = {
+                    for (i in downloadToGroup(
+                        item,
+                        downloads
+                    )) transmissionScreenViewModel.resume(i.id)
+                },
+                onCancel = {
+                    for (i in downloadToGroup(
+                        item,
+                        downloads
+                    )) transmissionScreenViewModel.cancel(i.id)
+                },
+                onDelete = {
+                    for (i in downloadToGroup(
+                        item,
+                        downloads
+                    )) transmissionScreenViewModel.delete(i.id, true)
+                }
             )
         }
     }
@@ -85,10 +98,10 @@ fun TransmissionScreen(navigator: NavHostController, transmissionScreenViewModel
 
 
 @Composable
-private fun DownloadCard(
+private fun VideoDownloadCard(
     navigator: NavHostController,
     viewModel: TransmissionScreenViewModel,
-    model: DownloadItemState,
+    model: VideoDownloadItemState,
     onPause: () -> Unit,
     onResume: () -> Unit,
     onCancel: () -> Unit,
@@ -102,24 +115,50 @@ private fun DownloadCard(
             .padding(8.dp)
             .background(Color.Transparent)
             .clickable(onClick = {
-                if(model.status == Status.COMPLETED)
-                {
+                if (model.status == Status.COMPLETED) {
                     viewModel.viewModelScope.launch(Dispatchers.IO)
                     {
                         val downloaded = viewModel.fetchManager.getAllDownloadsAsync().filter {
-                            it.status == Status.COMPLETED && it.extras.getString("isComic", "") != "true"
+                            it.status == Status.COMPLETED && it.extras.getString(
+                                "isComic",
+                                ""
+                            ) != "true"
                         }
 
-                        val jsonQuery = downloaded.map{ File(
-                            viewModel.context.getExternalFilesDir(null),
-                            "videos/${it.extras.getString("class", "")}/${it.extras.getString("id", "")}/summary.json").readText() }
-                            .map {  Json.decodeFromString<Video>(it).toLocal(viewModel.context.getExternalFilesDir(null)!!.path) }
+                        val jsonQuery = downloaded.map {
+                            File(
+                                viewModel.context.getExternalFilesDir(null),
+                                "videos/${
+                                    it.extras.getString(
+                                        "class",
+                                        ""
+                                    )
+                                }/${it.extras.getString("id", "")}/summary.json"
+                            ).readText()
+                        }
+                            .map {
+                                Json.decodeFromString<Video>(it)
+                                    .toLocal(viewModel.context.getExternalFilesDir(null)!!.path)
+                            }
 
                         updateRelate(
-                            jsonQuery, jsonQuery.first { it.id == model.vid && it.klass == model.klass }
+                            jsonQuery,
+                            jsonQuery.first { it.id == model.vid && it.klass == model.klass }
                         )
-                        val route = "video_player_route/${"${model.klass}/${model.vid}".toHex()}"
-                        withContext(Dispatchers.Main){
+
+                        val playList = mutableListOf("${model.klass}/${model.vid}")
+                        val fv = viewModel.videoLibrary.classesMap.map { it.value }.flatten()
+                        val video = fv.firstOrNull { it.klass == model.klass && it.id == model.vid }
+
+                        if (video != null) {
+                            val group = fv.filter { it.klass == video.klass && it.video.group == video.video.group }
+                            for (i in group) {
+                                playList.add("${i.klass}/${i.id}")
+                            }
+                        }
+
+                        val route = "video_player_route/${playList.joinToString(",").toHex()}"
+                        withContext(Dispatchers.Main) {
                             navigator.navigate(route)
                         }
                     }
@@ -137,32 +176,52 @@ private fun DownloadCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = model.fileName, style = MaterialTheme.typography.titleMedium)
+                    // Text(text = model.filePath, style = MaterialTheme.typography.titleSmall)
                 }
 
             }
 
-            Box(Modifier
-                .fillMaxWidth()
-                .padding(top = 5.dp))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 5.dp)
+            )
             {
                 Card(
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.align(Alignment.CenterStart)
                 ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(
-                                File(
-                                    viewModel.context.getExternalFilesDir(null),
-                                    "videos/${model.klass}/${model.vid}/cover.jpg"
+                    val video = viewModel.modelToVideo(model)
+
+                    if (video == null)
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(
+                                    File(
+                                        viewModel.context.getExternalFilesDir(null),
+                                        "videos/${model.klass}/${model.vid}/cover.jpg"
+                                    )
                                 )
-                            )
-                            .diskCacheKey("${model.klass}/${model.vid}/cover")
-                            .build(),
-                        contentDescription = null,
-                        modifier = Modifier.heightIn(max = 100.dp),
-                        contentScale = ContentScale.Fit
-                    )
+                                .memoryCacheKey("${model.klass}/${model.vid}/cover")
+                                .diskCacheKey("${model.klass}/${model.vid}/cover")
+                                .build(),
+                            contentDescription = null,
+                            modifier = Modifier.height(100.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    else {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(video.getCover())
+                                .memoryCacheKey("${model.klass}/${model.vid}/cover")
+                                .diskCacheKey("${model.klass}/${model.vid}/cover")
+                                .build(),
+                            contentDescription = null,
+                            modifier = Modifier.height(100.dp),
+                            contentScale = ContentScale.Fit,
+                            imageLoader = viewModel.imageLoader!!
+                        )
+                    }
                 }
 
                 Column(Modifier.align(Alignment.BottomEnd)) {
@@ -257,4 +316,11 @@ private fun DownloadCard(
             }
         }
     }
+}
+
+fun downloadToGroup(
+    i: VideoDownloadItemState,
+    downloads: List<VideoDownloadItemState>
+): List<VideoDownloadItemState> {
+    return downloads.filter { it.vid == i.vid && it.klass == i.klass }
 }

@@ -47,6 +47,7 @@ import androidx.core.net.toUri
 import androidx.media3.common.Tracks
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import com.acitelight.aether.Global
 import com.acitelight.aether.model.KeyImage
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -99,7 +100,7 @@ class VideoPlayerViewModel @Inject constructor(
             return
         _init = true
 
-        val vs = videoId.hexToString().split(",").map { it.split("/") }
+        val vs = videoId.hexToString().split(",").map { it.split("/") }.toMutableList()
         imageLoader = ImageLoader.Builder(context)
             .components {
                 add(OkHttpNetworkFetcherFactory(createOkHttp()))
@@ -107,10 +108,10 @@ class VideoPlayerViewModel @Inject constructor(
             .build()
 
         viewModelScope.launch {
-            videos = mediaManager.queryVideoBulk(vs.first()[0], vs.map { it[1] })!!
-
             val ii = database.userDao().getAll().first()
             val ix = ii.filter { it.id in videos.map{ m -> m.id } }.maxByOrNull { it.time }
+
+            videos = mediaManager.queryVideoBulk(vs.first()[0], vs.map { it[1] })!!
 
             startPlay(
                 if (ix != null)

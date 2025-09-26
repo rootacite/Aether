@@ -5,7 +5,11 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.acitelight.aether.model.DownloadItemState
+import coil3.ImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.acitelight.aether.model.Video
+import com.acitelight.aether.model.VideoDownloadItemState
+import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.VideoLibrary
 import com.tonyodev.fetch2.Download
@@ -22,36 +26,82 @@ import javax.inject.Inject
 class TransmissionScreenViewModel @Inject constructor(
     val fetchManager: FetchManager,
     @ApplicationContext val context: Context,
-    private val videoLibrary: VideoLibrary
+    val videoLibrary: VideoLibrary,
 ) : ViewModel() {
-    private val _downloads: SnapshotStateList<DownloadItemState> = mutableStateListOf()
-    val downloads: SnapshotStateList<DownloadItemState> = _downloads
+    var imageLoader: ImageLoader? = null
+    val downloads: SnapshotStateList<VideoDownloadItemState> = mutableStateListOf()
 
     // map id -> state object reference (no index bookkeeping)
-    private val idToState: MutableMap<Int, DownloadItemState> = mutableMapOf()
+    private val idToState: MutableMap<Int, VideoDownloadItemState> = mutableMapOf()
+
+    fun modelToVideo(model: VideoDownloadItemState): Video?
+    {
+        val fv = videoLibrary.classesMap.map { it.value }.flatten()
+        return fv.firstOrNull { it.klass == model.klass && it.id == model.vid }
+    }
 
     private val fetchListener = object : FetchListener {
-        override fun onAdded(download: Download) { handleUpsert(download) }
-        override fun onQueued(download: Download, waitingOnNetwork: Boolean) { handleUpsert(download) }
+        override fun onAdded(download: Download) {
+            handleUpsert(download)
+        }
+
+        override fun onQueued(download: Download, waitingOnNetwork: Boolean) {
+            handleUpsert(download)
+        }
+
         override fun onWaitingNetwork(download: Download) {
 
         }
 
-        override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) { handleUpsert(download) }
-        override fun onPaused(download: Download) { handleUpsert(download) }
-        override fun onResumed(download: Download) { handleUpsert(download) }
-        override fun onCompleted(download: Download) {
-            val ii = videoLibrary.classesMap[download.extras.getString("class", "")]
-                ?.indexOfFirst { it.id == download.extras.getString("id", "") }!!
-
-            val newi = videoLibrary.classesMap[download.extras.getString("class", "")]!![ii]
-            videoLibrary.classesMap[download.extras.getString("class", "")]!![ii] = newi.toLocal(context.getExternalFilesDir(null)!!.path)
+        override fun onProgress(
+            download: Download,
+            etaInMilliSeconds: Long,
+            downloadedBytesPerSecond: Long
+        ) {
             handleUpsert(download)
         }
-        override fun onCancelled(download: Download) { handleUpsert(download) }
-        override fun onRemoved(download: Download) { handleRemove(download.id) }
-        override fun onDeleted(download: Download) { handleRemove(download.id) }
-        override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) { handleUpsert(download) }
+
+        override fun onPaused(download: Download) {
+            handleUpsert(download)
+        }
+
+        override fun onResumed(download: Download) {
+            handleUpsert(download)
+        }
+
+        override fun onCompleted(download: Download) {
+            handleUpsert(download)
+
+            if (download.extras.getString("type", "") == "main") {
+                val ii = videoLibrary.classesMap[download.extras.getString("class", "")]
+                    ?.indexOfFirst { it.id == download.extras.getString("id", "") }!!
+
+                val newi = videoLibrary.classesMap[download.extras.getString("class", "")]!![ii]
+                videoLibrary.classesMap[download.extras.getString("class", "")]!![ii] =
+                    newi.toLocal(context.getExternalFilesDir(null)!!.path)
+            }
+        }
+
+        override fun onCancelled(download: Download) {
+            handleUpsert(download)
+        }
+
+        override fun onRemoved(download: Download) {
+            handleRemove(download.id)
+        }
+
+        override fun onDeleted(download: Download) {
+            handleRemove(download.id)
+        }
+
+        override fun onDownloadBlockUpdated(
+            download: Download,
+            downloadBlock: DownloadBlock,
+            totalBlocks: Int
+        ) {
+            handleUpsert(download)
+        }
+
         override fun onStarted(
             download: Download,
             downloadBlocks: List<DownloadBlock>,
@@ -60,7 +110,13 @@ class TransmissionScreenViewModel @Inject constructor(
             handleUpsert(download)
         }
 
-        override fun onError(download: Download, error: com.tonyodev.fetch2.Error, throwable: Throwable?) { handleUpsert(download) }
+        override fun onError(
+            download: Download,
+            error: com.tonyodev.fetch2.Error,
+            throwable: Throwable?
+        ) {
+            handleUpsert(download)
+        }
     }
 
     private fun handleUpsert(download: Download) {
@@ -89,7 +145,7 @@ class TransmissionScreenViewModel @Inject constructor(
         } else {
             // new item: add to head (or tail depending on preference)
             val newState = downloadToState(download)
-            _downloads.add(0, newState)
+            downloads.add(0, newState)
             idToState[newState.id] = newState
         }
     }
@@ -97,19 +153,20 @@ class TransmissionScreenViewModel @Inject constructor(
     private fun removeOnMain(id: Int) {
         val state = idToState.remove(id)
         if (state != null) {
-            _downloads.remove(state)
+            downloads.remove(state)
         } else {
-            val idx = _downloads.indexOfFirst { it.id == id }
+            val idx = downloads.indexOfFirst { it.id == id }
             if (idx >= 0) {
-                val removed = _downloads.removeAt(idx)
+                val removed = downloads.removeAt(idx)
                 idToState.remove(removed.id)
             }
         }
     }
-    private fun downloadToState(download: Download): DownloadItemState {
+
+    private fun downloadToState(download: Download): VideoDownloadItemState {
         val filePath = download.file
 
-        return DownloadItemState(
+        return VideoDownloadItemState(
             id = download.id,
             fileName = download.request.extras.getString("name", ""),
             filePath = filePath,
@@ -119,7 +176,8 @@ class TransmissionScreenViewModel @Inject constructor(
             downloadedBytes = download.downloaded,
             totalBytes = download.total,
             klass = download.extras.getString("class", ""),
-            vid = download.extras.getString("id", "")
+            vid = download.extras.getString("id", ""),
+            type = download.extras.getString("type", "")
         )
     }
 
@@ -140,15 +198,21 @@ class TransmissionScreenViewModel @Inject constructor(
     }
 
     init {
+        imageLoader = ImageLoader.Builder(context)
+            .components {
+                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+            }
+            .build()
+
         viewModelScope.launch {
             fetchManager.setListener(fetchListener)
             withContext(Dispatchers.Main) {
                 fetchManager.getAllDownloads { list ->
-                    _downloads.clear()
+                    downloads.clear()
                     idToState.clear()
                     list.sortedBy { it.extras.getString("name", "") }.forEach { d ->
                         val s = downloadToState(d)
-                        _downloads.add(s)
+                        downloads.add(s)
                         idToState[s.id] = s
                     }
                 }

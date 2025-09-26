@@ -38,8 +38,7 @@ class FetchManager @Inject constructor(
     private var client: OkHttpClient? = null
     val configured = MutableStateFlow(false)
 
-    fun init()
-    {
+    fun init() {
         client = createOkHttp()
         val fetchConfiguration = FetchConfiguration.Builder(context)
             .setDownloadConcurrentLimit(8)
@@ -72,8 +71,7 @@ class FetchManager @Inject constructor(
         fetch?.getDownloads { list -> callback(list) } ?: callback(emptyList())
     }
 
-    suspend fun getAllDownloadsAsync(): List<Download>
-    {
+    suspend fun getAllDownloadsAsync(): List<Download> {
         configured.filter { it }.first()
         val completed = MutableStateFlow(false)
         var r = listOf<Download>()
@@ -106,71 +104,88 @@ class FetchManager @Inject constructor(
         } ?: callback?.invoke()
     }
 
-    private suspend fun enqueue(request: Request, onEnqueued: ((Request) -> Unit)? = null, onError: ((com.tonyodev.fetch2.Error) -> Unit)? = null) {
+    private suspend fun enqueue(
+        request: Request,
+        onEnqueued: ((Request) -> Unit)? = null,
+        onError: ((com.tonyodev.fetch2.Error) -> Unit)? = null
+    ) {
         configured.filter { it }.first()
         fetch?.enqueue(request, { r -> onEnqueued?.invoke(r) }, { e -> onError?.invoke(e) })
     }
 
-    private fun getVideosDirectory() {
+    private fun makeFolder(video: Video) {
         val appFilesDir = context.getExternalFilesDir(null)
-        val videosDir = File(appFilesDir, "videos")
-
-        if (!videosDir.exists()) {
-            val created = videosDir.mkdirs()
-        }
+        val videosDir = File(appFilesDir, "videos/${video.klass}/${video.id}/gallery")
+        videosDir.mkdirs()
     }
 
-    suspend fun downloadFile(
-        client: OkHttpClient,
-        url: String,
-        destFile: File
-    ): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val request = okhttp3.Request.Builder().url(url).build()
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    return@withContext Result.failure(IOException("Unexpected code $response"))
+    suspend fun startVideoDownload(video: Video) {
+        makeFolder(video)
+        File(
+            context.getExternalFilesDir(null),
+            "videos/${video.klass}/${video.id}/summary.json"
+        ).writeText(Json.encodeToString(video))
+
+        val videoPath =
+            File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/video.mp4")
+        val coverPath =
+            File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/cover.jpg")
+        val subtitlePath = File(
+            context.getExternalFilesDir(null),
+            "videos/${video.klass}/${video.id}/subtitle.vtt"
+        )
+
+        val requests = mutableListOf(
+            Request(video.getVideo(), videoPath.path).apply {
+                extras = Extras(
+                    mapOf(
+                        "name" to video.video.name,
+                        "id" to video.id,
+                        "class" to video.klass,
+                        "type" to "main"
+                    )
+                )
+            },
+            Request(video.getCover(), coverPath.path).apply {
+                extras = Extras(
+                    mapOf(
+                        "name" to video.video.name,
+                        "id" to video.id,
+                        "class" to video.klass,
+                        "type" to "cover"
+                    )
+                )
+            },
+            Request(video.getSubtitle(), subtitlePath.path).apply {
+                extras = Extras(
+                    mapOf(
+                        "name" to video.video.name,
+                        "id" to video.id,
+                        "class" to video.klass,
+                        "type" to "subtitle"
+                    )
+                )
+            },
+        )
+        for (p in video.getGallery()) {
+            requests.add(
+                Request(p.url, File(
+                    context.getExternalFilesDir(null),
+                    "videos/${video.klass}/${video.id}/gallery/${p.name}"
+                ).path).apply {
+                    extras = Extras(
+                        mapOf(
+                            "name" to video.video.name,
+                            "id" to video.id,
+                            "class" to video.klass,
+                            "type" to "gallery"
+                        )
+                    )
                 }
-
-                destFile.parentFile?.mkdirs()
-                response.body.byteStream().use { input ->
-                    destFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun startVideoDownload(video: Video)
-    {
-        val path = File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/video.mp4")
-        val request = Request(video.getVideo(), path.path).apply {
-            extras = Extras(mapOf("name" to video.video.name, "id" to video.id, "class" to video.klass))
+            )
         }
 
-        downloadFile(
-            client!!,
-            video.getCover(),
-            File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/cover.jpg"))
-
-        downloadFile(
-            client!!,
-            video.getSubtitle(),
-            File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/subtitle.vtt"))
-
-        enqueue(request)
-        File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/summary.json").writeText(Json.encodeToString(video))
-
-        for(p in video.getGallery())
-        {
-            downloadFile(
-                client!!,
-                p.url,
-                File(context.getExternalFilesDir(null), "videos/${video.klass}/${video.id}/gallery/${p.name}"))
-        }
+        for (i in requests)
+            enqueue(i)
     }
 }
