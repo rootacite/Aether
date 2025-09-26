@@ -8,5 +8,7 @@ import androidx.room.PrimaryKey
 data class VideoRecord (
     @PrimaryKey(autoGenerate = false) val id: String = "",
     @ColumnInfo(name = "name") val klass: String = "",
-    @ColumnInfo(name = "position") val position: Long
+    @ColumnInfo(name = "position") val position: Long,
+    @ColumnInfo(name = "time") val time: Long,
+    @ColumnInfo(name = "group") val group: String
 )

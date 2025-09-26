@@ -345,11 +345,14 @@ fun VideoCard(
                 },
                 onLongClick = {
                     videoScreenViewModel.viewModelScope.launch {
-                        videoScreenViewModel.download(video)
+                        for(i in videos)
+                        {
+                            videoScreenViewModel.download(i)
+                        }
                     }
                     Toast.makeText(
                         videoScreenViewModel.context,
-                        "Start downloading ${video.video.name}",
+                        "Start downloading ${video.video.group}",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -413,7 +416,7 @@ fun VideoCard(
                     color = Color.White
                 )
 
-                if (video.isLocal)
+                if (videos.all{ it.isLocal })
                     Card(
                         Modifier
                             .align(Alignment.TopStart)

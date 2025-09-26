@@ -1,0 +1,60 @@
+package com.acitelight.aether.view
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
+import com.acitelight.aether.viewModel.VideoPlayerViewModel
+import kotlinx.coroutines.launch
+
+
+@Composable
+fun PlaylistPanel(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel)
+{
+    val name by videoPlayerViewModel.currentName
+
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(80.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp)
+    ) {
+        items(videoPlayerViewModel.videos) { it ->
+            // SingleImageItem(img = it, videoPlayerViewModel.imageLoader!!)
+            Card(
+                modifier = Modifier.fillMaxHeight().width(140.dp),
+                onClick = {
+                    if(name == it.video.name)
+                        return@Card
+
+                    videoPlayerViewModel.viewModelScope.launch {
+                        videoPlayerViewModel.startPlay(it)
+                    }
+                }
+            ) {
+                Box(Modifier.padding(8.dp).fillMaxSize())
+                {
+                    Text(modifier = Modifier.align(Alignment.Center), text = it.video.name, maxLines = 4, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 13.sp)
+                }
+            }
+        }
+    }
+}

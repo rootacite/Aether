@@ -29,9 +29,9 @@ class RecentManager @Inject constructor(
                 val file = File(context.filesDir, filename)
                 val content = file.readText()
                 content
-            } catch (e: FileNotFoundException) {
+            } catch (_: FileNotFoundException) {
                 "[]"
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 "[]"
             }
         }
@@ -69,12 +69,12 @@ class RecentManager @Inject constructor(
                         if (c != null) recentComic.add(recentComic.size, c)
                     }
                 }
-            } catch (e: NoSuchMethodError) {
+            } catch (_: NoSuchMethodError) {
                 for (id in ids) {
                     val c = mediaManager.queryComicInfoSingle(id)
                     if (c != null) recentComic.add(recentComic.size, c)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 for (id in ids) {
                     val c = mediaManager.queryComicInfoSingle(id)
                     if (c != null) recentComic.add(recentComic.size, c)
@@ -93,9 +93,6 @@ class RecentManager @Inject constructor(
 
     suspend fun pushComic(context: Context, comicId: String) {
         mutex.withLock {
-            val c = readFile(context, "recent_comic.json")
-
-
             val o = recentComic.map { it.id }.toMutableList()
 
 
@@ -152,14 +149,11 @@ class RecentManager @Inject constructor(
     suspend fun pushVideo(context: Context, video: VideoQueryIndex)
     {
         mutex.withLock{
-            val content = readFile(context, "recent.json")
             val o = recentVideo.map{ VideoQueryIndex(it.klass, it.id) }.toMutableList()
 
             if(o.contains(video))
             {
                 val index = o.indexOf(video)
-                val temp = recentVideo[index]
-
                 recentVideo.removeAt(index)
             }
             recentVideo.add(0, mediaManager.queryVideo(video.klass, video.id)!!)

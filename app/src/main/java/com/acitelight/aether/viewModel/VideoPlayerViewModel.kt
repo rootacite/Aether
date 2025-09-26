@@ -45,8 +45,11 @@ import java.io.File
 import javax.inject.Inject
 import androidx.core.net.toUri
 import androidx.media3.common.Tracks
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import com.acitelight.aether.model.KeyImage
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 
 @HiltViewModel
 class VideoPlayerViewModel @Inject constructor(
@@ -65,18 +68,22 @@ class VideoPlayerViewModel @Inject constructor(
     // 1  : Volume
     // 2  : Brightness
     var draggingPurpose by mutableIntStateOf(-1)
-    var thumbUp by mutableIntStateOf(0)
-    var thumbDown by mutableIntStateOf(0)
-    var star by mutableStateOf(false)
     var locked by mutableStateOf(false)
     private var _init: Boolean = false
     var startPlaying by mutableStateOf(false)
     var renderedFirst = false
     var videos: List<Video> = listOf()
 
-    val dataSourceFactory = OkHttpDataSource.Factory(createOkHttp())
+    private val httpDataSourceFactory = OkHttpDataSource.Factory(createOkHttp())
+    private val defaultDataSourceFactory by lazy {
+        DefaultDataSource.Factory(
+            context,
+            httpDataSourceFactory
+        )
+    }
+
     var imageLoader: ImageLoader? = null
-    var brit by mutableFloatStateOf(0.5f)
+    var brit by mutableFloatStateOf(0.0f)
     val database: VideoRecordDatabase = VideoRecordDatabase.getDatabase(context)
     var cues by mutableStateOf(listOf<Cue>())
 
@@ -101,7 +108,15 @@ class VideoPlayerViewModel @Inject constructor(
 
         viewModelScope.launch {
             videos = mediaManager.queryVideoBulk(vs.first()[0], vs.map { it[1] })!!
-            startPlay(videos.first())
+
+            val ii = database.userDao().getAll().first()
+            val ix = ii.filter { it.id in videos.map{ m -> m.id } }.maxByOrNull { it.time }
+
+            startPlay(
+                if (ix != null)
+                    videos.first { it.id == ix.id }
+                else videos.first()
+            )
             startListen()
         }
     }
@@ -112,59 +127,72 @@ class VideoPlayerViewModel @Inject constructor(
      * - If it's a http(s) URL -> try HEAD; if HEAD unsupported, try GET with Range: bytes=0-1
      * - Return null when unreachable / 404 / not exist
      */
-    private suspend fun tryResolveSubtitleUri(pathOrUrl: String?): Uri? = withContext(Dispatchers.IO) {
-        if (pathOrUrl.isNullOrBlank()) return@withContext null
-        val trimmed = pathOrUrl.trim()
+    private suspend fun tryResolveSubtitleUri(pathOrUrl: String?): Uri? =
+        withContext(Dispatchers.IO) {
+            if (pathOrUrl.isNullOrBlank()) return@withContext null
+            val trimmed = pathOrUrl.trim()
 
-        // Remote URL case (http/https)
-        if (trimmed.startsWith("http://", ignoreCase = true) || trimmed.startsWith("https://", ignoreCase = true)) {
-            try {
-                val client = createOkHttp()
+            // Remote URL case (http/https)
+            if (trimmed.startsWith("http://", ignoreCase = true) || trimmed.startsWith(
+                    "https://",
+                    ignoreCase = true
+                )
+            ) {
+                try {
+                    val client = createOkHttp()
 
-                val headReq = Request.Builder().url(trimmed).head().build()
-                val headResp = try { client.newCall(headReq).execute() } catch (_: Exception) { null }
-
-                headResp?.use { resp ->
-                    val code = resp.code
-                    if (code == 200 || code == 206) {
-                        return@withContext trimmed.toUri()
+                    val headReq = Request.Builder().url(trimmed).head().build()
+                    val headResp = try {
+                        client.newCall(headReq).execute()
+                    } catch (_: Exception) {
+                        null
                     }
-                    if (code == 404) {
-                        return@withContext null
+
+                    headResp?.use { resp ->
+                        val code = resp.code
+                        if (code == 200 || code == 206) {
+                            return@withContext trimmed.toUri()
+                        }
+                        if (code == 404) {
+                            return@withContext null
+                        }
                     }
+                    val rangeReq = Request.Builder()
+                        .url(trimmed)
+                        .addHeader("Range", "bytes=0-1")
+                        .get()
+                        .build()
+
+                    val rangeResp = try {
+                        client.newCall(rangeReq).execute()
+                    } catch (_: Exception) {
+                        null
+                    }
+
+                    rangeResp?.use { resp ->
+                        val code = resp.code
+                        if (code == 206) {
+                            return@withContext trimmed.toUri()
+                        }
+
+                        if (code == 200) {
+                            return@withContext trimmed.toUri()
+                        }
+
+                        if (code == 404) {
+                            return@withContext null
+                        }
+                    }
+                } catch (_: Exception) {
+                    return@withContext null
                 }
-                val rangeReq = Request.Builder()
-                    .url(trimmed)
-                    .addHeader("Range", "bytes=0-1")
-                    .get()
-                    .build()
-
-                val rangeResp = try { client.newCall(rangeReq).execute() } catch (_: Exception) { null }
-
-                rangeResp?.use { resp ->
-                    val code = resp.code
-                    if (code == 206) {
-                        return@withContext trimmed.toUri()
-                    }
-
-                    if (code == 200) {
-                        return@withContext trimmed.toUri()
-                    }
-
-                    if (code == 404) {
-                        return@withContext null
-                    }
-                }
-            } catch (_: Exception) {
                 return@withContext null
+            } else {
+                // Local path
+                val f = File(trimmed)
+                return@withContext if (f.exists() && f.isFile) Uri.fromFile(f) else null
             }
-            return@withContext null
-        } else {
-            // Local path
-            val f = File(trimmed)
-            return@withContext if (f.exists() && f.isFile) Uri.fromFile(f) else null
         }
-    }
 
     @OptIn(UnstableApi::class)
     fun startListen() {
@@ -178,6 +206,19 @@ class VideoPlayerViewModel @Inject constructor(
 
     @OptIn(UnstableApi::class)
     suspend fun startPlay(video: Video) {
+        if (currentId.value.isNotEmpty() && currentKlass.value.isNotEmpty()) {
+            val pos = player?.currentPosition ?: 0L
+            database.userDao().insert(
+                VideoRecord(
+                    currentId.value,
+                    currentKlass.value,
+                    pos,
+                    System.currentTimeMillis(),
+                    videos.joinToString(",") { it.id })
+            )
+        }
+
+        renderedFirst = false
         currentId.value = video.id
         currentKlass.value = video.klass
         currentName.value = video.video.name
@@ -196,7 +237,8 @@ class VideoPlayerViewModel @Inject constructor(
 
         if (player == null) {
             val trackSelector = DefaultTrackSelector(context)
-            val builder = ExoPlayer.Builder(context).setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            val builder = ExoPlayer.Builder(context)
+                .setMediaSourceFactory(DefaultMediaSourceFactory(defaultDataSourceFactory))
 
             player = builder.setTrackSelector(trackSelector).build().apply {
                 addListener(object : Player.Listener {
@@ -219,7 +261,7 @@ class VideoPlayerViewModel @Inject constructor(
                     override fun onRenderedFirstFrame() {
                         if (!renderedFirst) {
                             viewModelScope.launch {
-                                val ii = database.userDao().get(video.id, video.klass)
+                                val ii = database.userDao().get(currentId.value, currentKlass.value)
                                 if (ii != null) {
                                     player?.seekTo(ii.position)
                                     Toast.makeText(
@@ -271,12 +313,22 @@ class VideoPlayerViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+
         _init = false
-        val p = player!!.currentPosition
+        val pos = player?.currentPosition ?: 0L
         player?.release()
+        player = null
+
         CoroutineScope(Dispatchers.IO).launch {
-            if(currentId.value.isNotEmpty() && currentKlass.value.isNotEmpty())
-                database.userDao().insert(VideoRecord(currentId.value, currentKlass.value, p))
+            if (currentId.value.isNotEmpty() && currentKlass.value.isNotEmpty())
+                database.userDao().insert(
+                    VideoRecord(
+                        currentId.value,
+                        currentKlass.value,
+                        pos,
+                        System.currentTimeMillis(),
+                        videos.joinToString(",") { it.id })
+                )
         }
     }
 }
