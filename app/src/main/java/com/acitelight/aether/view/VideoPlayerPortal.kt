@@ -108,9 +108,11 @@ fun VideoPlayerPortal(
     val duration by videoPlayerViewModel.currentDuration
 
     ToggleFullScreen(false)
-    Column(Modifier
-        .nestedScroll(nestedScrollConnection)
-        .fillMaxHeight())
+    Column(
+        Modifier
+            .nestedScroll(nestedScrollConnection)
+            .fillMaxHeight()
+    )
     {
         Box {
             PortalCorePlayer(
@@ -194,13 +196,15 @@ fun VideoPlayerPortal(
                     fontWeight = FontWeight.Bold,
                 )
 
-                Row(Modifier
-                    .align(Alignment.Start)
-                    .padding(horizontal = 4.dp)
-                    .alpha(0.5f)) {
+                Row(
+                    Modifier
+                        .align(Alignment.Start)
+                        .padding(horizontal = 4.dp)
+                        .alpha(0.5f)
+                ) {
                     Text(
                         modifier = Modifier.padding(horizontal = 8.dp),
-                        text = klass,
+                        text = "$klass.$id",
                         fontSize = 14.sp,
                         maxLines = 1,
                         fontWeight = FontWeight.Bold,
@@ -217,12 +221,18 @@ fun VideoPlayerPortal(
 
                 HorizontalDivider(Modifier.padding(vertical = 8.dp), 1.dp, DividerDefaults.color)
 
-                PlaylistPanel(
-                    Modifier,
-                    videoPlayerViewModel = videoPlayerViewModel
-                )
+                if (videoPlayerViewModel.videos.size > 1) {
+                    PlaylistPanel(
+                        Modifier,
+                        videoPlayerViewModel = videoPlayerViewModel
+                    )
 
-                HorizontalDivider(Modifier.padding(vertical = 8.dp), 1.dp, DividerDefaults.color)
+                    HorizontalDivider(
+                        Modifier.padding(vertical = 8.dp),
+                        1.dp,
+                        DividerDefaults.color
+                    )
+                }
 
                 HorizontalGallery(videoPlayerViewModel)
                 HorizontalDivider(Modifier.padding(vertical = 8.dp), 1.dp, DividerDefaults.color)

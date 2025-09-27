@@ -11,6 +11,7 @@ import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoDownloadItemState
 import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.acitelight.aether.service.FetchManager
+import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.VideoLibrary
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchListener
@@ -27,6 +28,7 @@ class TransmissionScreenViewModel @Inject constructor(
     val fetchManager: FetchManager,
     @ApplicationContext val context: Context,
     val videoLibrary: VideoLibrary,
+    val mediaManager: MediaManager,
 ) : ViewModel() {
     var imageLoader: ImageLoader? = null
     val downloads: SnapshotStateList<VideoDownloadItemState> = mutableStateListOf()
@@ -34,8 +36,7 @@ class TransmissionScreenViewModel @Inject constructor(
     // map id -> state object reference (no index bookkeeping)
     private val idToState: MutableMap<Int, VideoDownloadItemState> = mutableMapOf()
 
-    fun modelToVideo(model: VideoDownloadItemState): Video?
-    {
+    fun modelToVideo(model: VideoDownloadItemState): Video? {
         val fv = videoLibrary.classesMap.map { it.value }.flatten()
         return fv.firstOrNull { it.klass == model.klass && it.id == model.vid }
     }
@@ -54,9 +55,7 @@ class TransmissionScreenViewModel @Inject constructor(
         }
 
         override fun onProgress(
-            download: Download,
-            etaInMilliSeconds: Long,
-            downloadedBytesPerSecond: Long
+            download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long
         ) {
             handleUpsert(download)
         }
@@ -73,12 +72,21 @@ class TransmissionScreenViewModel @Inject constructor(
             handleUpsert(download)
 
             if (download.extras.getString("type", "") == "main") {
-                val ii = videoLibrary.classesMap[download.extras.getString("class", "")]
-                    ?.indexOfFirst { it.id == download.extras.getString("id", "") }!!
+                val ii = videoLibrary.classesMap[download.extras.getString(
+                    "class",
+                    ""
+                )]?.indexOfFirst { it.id == download.extras.getString("id", "") }
 
-                val newi = videoLibrary.classesMap[download.extras.getString("class", "")]!![ii]
-                videoLibrary.classesMap[download.extras.getString("class", "")]!![ii] =
-                    newi.toLocal(context.getExternalFilesDir(null)!!.path)
+                if (ii != null) {
+                    val newi =
+                        videoLibrary.classesMap[download.extras.getString("class", "")]?.get(ii)
+                    if (newi != null) videoLibrary.classesMap[download.extras.getString(
+                        "class",
+                        ""
+                    )]?.set(
+                        ii, newi.toLocal(context.getExternalFilesDir(null)!!.path)
+                    )
+                }
             }
         }
 
@@ -95,25 +103,19 @@ class TransmissionScreenViewModel @Inject constructor(
         }
 
         override fun onDownloadBlockUpdated(
-            download: Download,
-            downloadBlock: DownloadBlock,
-            totalBlocks: Int
+            download: Download, downloadBlock: DownloadBlock, totalBlocks: Int
         ) {
             handleUpsert(download)
         }
 
         override fun onStarted(
-            download: Download,
-            downloadBlocks: List<DownloadBlock>,
-            totalBlocks: Int
+            download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int
         ) {
             handleUpsert(download)
         }
 
         override fun onError(
-            download: Download,
-            error: com.tonyodev.fetch2.Error,
-            throwable: Throwable?
+            download: Download, error: com.tonyodev.fetch2.Error, throwable: Throwable?
         ) {
             handleUpsert(download)
         }
@@ -122,6 +124,23 @@ class TransmissionScreenViewModel @Inject constructor(
     private fun handleUpsert(download: Download) {
         viewModelScope.launch(Dispatchers.Main) {
             upsertOnMain(download)
+        }
+
+        val state = downloadToState(download)
+
+        if (videoLibrary.classes.contains(state.klass)) videoLibrary.classes.add(state.klass)
+
+        if (!videoLibrary.classesMap.containsKey(state.klass)) videoLibrary.classesMap[state.klass] =
+            mutableStateListOf()
+
+        if (videoLibrary.classesMap[state.klass]?.any { it.id == state.vid } != true) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val v = mediaManager.queryVideo(state.klass, state.vid, state)
+                if (v != null) {
+                    videoLibrary.classesMap[state.klass]?.add(v)
+                }
+            }
+
         }
     }
 
@@ -198,25 +217,34 @@ class TransmissionScreenViewModel @Inject constructor(
     }
 
     init {
-        imageLoader = ImageLoader.Builder(context)
-            .components {
-                add(OkHttpNetworkFetcherFactory(createOkHttp()))
-            }
-            .build()
+        imageLoader = ImageLoader.Builder(context).components {
+            add(OkHttpNetworkFetcherFactory(createOkHttp()))
+        }.build()
 
         viewModelScope.launch {
             fetchManager.setListener(fetchListener)
-            withContext(Dispatchers.Main) {
-                fetchManager.getAllDownloads { list ->
-                    downloads.clear()
-                    idToState.clear()
-                    list.sortedBy { it.extras.getString("name", "") }.forEach { d ->
-                        val s = downloadToState(d)
-                        downloads.add(s)
-                        idToState[s.id] = s
+            val downloaded = fetchManager.getAllDownloadsAsync()
+
+            downloads.clear()
+            idToState.clear()
+            downloaded.sortedWith(compareBy(naturalOrder()) { it.extras.getString("name", "") })
+                .forEach { d ->
+                    val s = downloadToState(d)
+                    downloads.add(s)
+                    idToState[s.id] = s
+
+                    if (videoLibrary.classes.contains(s.klass)) videoLibrary.classes.add(s.klass)
+
+                    if (!videoLibrary.classesMap.containsKey(s.klass)) videoLibrary.classesMap[s.klass] =
+                        mutableStateListOf()
+
+                    if (videoLibrary.classesMap[s.klass]?.any { it.id == s.vid } != true) {
+                        val v = mediaManager.queryVideo(s.klass, s.vid, s)
+                        if (v != null) {
+                            videoLibrary.classesMap[s.klass]?.add(v)
+                        }
                     }
                 }
-            }
         }
     }
 }

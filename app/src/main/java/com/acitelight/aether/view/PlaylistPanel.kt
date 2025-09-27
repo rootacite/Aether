@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,7 +30,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun PlaylistPanel(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel)
 {
+    val colorScheme = MaterialTheme.colorScheme
     val name by videoPlayerViewModel.currentName
+    val id by videoPlayerViewModel.currentId
 
     LazyRow(
         modifier = modifier
@@ -48,7 +52,13 @@ fun PlaylistPanel(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel
                     videoPlayerViewModel.viewModelScope.launch {
                         videoPlayerViewModel.startPlay(it)
                     }
-                }
+                },
+                colors =
+                    if (it.id == id)
+                        CardDefaults.cardColors(containerColor = colorScheme.primary)
+                    else
+                        CardDefaults.cardColors()
+
             ) {
                 Box(Modifier.padding(8.dp).fillMaxSize())
                 {

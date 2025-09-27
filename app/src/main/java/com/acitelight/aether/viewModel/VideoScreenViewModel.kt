@@ -54,13 +54,16 @@ class VideoScreenViewModel @Inject constructor(
 
         if (Global.loggedIn) {
             videoLibrary.classes.addAll(mediaManager.listVideoKlasses())
+            videoLibrary.classes.distinct()
+
             if(videoLibrary.classes.isEmpty())
                 return
 
             var i = 0
             for (it in videoLibrary.classes) {
                 videoLibrary.updatingMap[i++] = false
-                videoLibrary.classesMap[it] = mutableStateListOf<Video>()
+                if(!videoLibrary.classesMap.containsKey(it))
+                    videoLibrary.classesMap[it] = mutableStateListOf()
             }
             videoLibrary.updatingMap[0] = true
             val vl =
@@ -69,6 +72,7 @@ class VideoScreenViewModel @Inject constructor(
             if (vl != null) {
                 val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
                 videoLibrary.classesMap[videoLibrary.classes[0]]?.addAll(r)
+                videoLibrary.classesMap[videoLibrary.classes[0]]?.distinctBy { it.id }
             }
         }
         else {
@@ -77,7 +81,7 @@ class VideoScreenViewModel @Inject constructor(
             videoLibrary.classesMap["Offline"] = mutableStateListOf<Video>()
 
             val downloaded = fetchManager.getAllDownloadsAsync().filter {
-                it.status == Status.COMPLETED && it.extras.getString("isComic", "") != "true"
+                it.status == Status.COMPLETED && it.extras.getString("class", "") != "comic"
             }
 
             val jsonQuery = downloaded.map{ File(
@@ -107,6 +111,7 @@ class VideoScreenViewModel @Inject constructor(
             if (vl != null) {
                 val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
                 videoLibrary.classesMap[videoLibrary.classes[index]]?.addAll(r)
+                videoLibrary.classesMap[videoLibrary.classes[index]]?.distinctBy { it.id }
             }
         }
     }

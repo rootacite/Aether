@@ -50,6 +50,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.File
+import kotlin.collections.sortedWith
 
 @Composable
 fun TransmissionScreen(
@@ -120,9 +121,12 @@ private fun VideoDownloadCard(
                     {
                         val downloaded = viewModel.fetchManager.getAllDownloadsAsync().filter {
                             it.status == Status.COMPLETED && it.extras.getString(
-                                "isComic",
+                                "class",
                                 ""
-                            ) != "true"
+                            ) != "comic" && it.extras.getString(
+                                "type",
+                                ""
+                            ) == "main"
                         }
 
                         val jsonQuery = downloaded.map {
@@ -152,7 +156,7 @@ private fun VideoDownloadCard(
 
                         if (video != null) {
                             val group = fv.filter { it.klass == video.klass && it.video.group == video.video.group }
-                            for (i in group) {
+                            for (i in group.sortedWith(compareBy(naturalOrder()) { it.video.name })) {
                                 playList.add("${i.klass}/${i.id}")
                             }
                         }

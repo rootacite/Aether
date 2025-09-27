@@ -4,6 +4,7 @@ import android.content.Context
 import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.Comic
 import com.acitelight.aether.model.Video
+import com.acitelight.aether.model.VideoDownloadItemState
 import com.tonyodev.fetch2.Status
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
@@ -44,15 +45,34 @@ class MediaManager @Inject constructor(
         }
     }
 
+    suspend fun queryVideo(klass: String, id: String, model: VideoDownloadItemState): Video?
+    {
+        if(model.status == Status.COMPLETED)
+        {
+            val jsonString = File(
+                context.getExternalFilesDir(null),
+                "videos/$klass/$id/summary.json"
+            ).readText()
+            return Json.decodeFromString<Video>(jsonString).toLocal(context.getExternalFilesDir(null)?.path!!)
+        }
+
+        try {
+            val j = ApiClient.api!!.queryVideo(klass, id, token)
+            return Video(klass = klass, id = id, token=token, isLocal = false, localBase = "", video = j)
+        }catch (_: Exception)
+        {
+            return null
+        }
+    }
+
     suspend fun queryVideo(klass: String, id: String): Video?
     {
         val downloaded = fetchManager.getAllDownloadsAsync().filter {
-            it.status == Status.COMPLETED &&
             it.extras.getString("id", "") == id &&
             it.extras.getString("class", "") == klass
         }
 
-        if(!downloaded.isEmpty())
+        if(downloaded.all{ it.status == Status.COMPLETED })
         {
             val jsonString = File(
                 context.getExternalFilesDir(null),
@@ -72,16 +92,16 @@ class MediaManager @Inject constructor(
 
     suspend fun queryVideoBulk(klass: String, id: List<String>): List<Video>? {
         return try {
-            val completedDownloads = fetchManager.getAllDownloadsAsync()
-                .filter { it.status == Status.COMPLETED }
+            val downloads = fetchManager.getAllDownloadsAsync()
+
             val localIds = mutableSetOf<String>()
             val remoteIds = mutableListOf<String>()
 
             for (videoId in id) {
-                if (completedDownloads.any {
+                if (downloads.filter {
                         it.extras.getString("id", "") == videoId &&
                                 it.extras.getString("class", "") == klass
-                    }) {
+                    }.all{ it.status == Status.COMPLETED} ) {
                     localIds.add(videoId)
                 } else {
                     remoteIds.add(videoId)
