@@ -89,7 +89,6 @@ class VideoPlayerViewModel @Inject constructor(
     var brit by mutableFloatStateOf(0.0f)
     val database: VideoRecordDatabase = VideoRecordDatabase.getDatabase(context)
     var cues by mutableStateOf(listOf<Cue>())
-
     var currentKlass = mutableStateOf("")
     var currentId = mutableStateOf("")
     var currentName = mutableStateOf("")
@@ -104,7 +103,7 @@ class VideoPlayerViewModel @Inject constructor(
 
         val oId = videoId.hexToString()
         var spec = "-1"
-        var vs = mutableListOf<List<String>>()
+        var vs: MutableList<List<String>>
 
         if(oId.contains("|"))
         {
@@ -125,7 +124,6 @@ class VideoPlayerViewModel @Inject constructor(
 
             val ii = database.userDao().getAll().first()
             val ix = ii.filter { it.id in videos.map{ m -> m.id } }.maxByOrNull { it.time }
-
 
             startPlay(
                 if(spec != "-1")

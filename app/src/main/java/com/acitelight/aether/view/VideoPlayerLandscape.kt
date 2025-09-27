@@ -107,17 +107,21 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                         detectDragGestures(
                             onDragStart = { offset ->
                                 if (videoPlayerViewModel.locked) return@detectDragGestures
-                                if (offset.x < size.width / 2) {
-                                    videoPlayerViewModel.draggingPurpose = -1;
+                                if(offset.y > size.height * 0.8 || offset.y < size.height * 0.2)
+                                    videoPlayerViewModel.draggingPurpose = -3
+                                // Set gesture protection for the bottom of the screen
+                                // (Prevent conflicts with system gestures, such as dropdown status bar, bottom swipe up menu)
+                                else if (offset.x < size.width / 2) {
+                                    videoPlayerViewModel.draggingPurpose = -1
                                 } else {
-                                    videoPlayerViewModel.draggingPurpose = -2;
+                                    videoPlayerViewModel.draggingPurpose = -2
                                 }
                             },
                             onDragEnd = {
                                 if (videoPlayerViewModel.isPlaying && videoPlayerViewModel.draggingPurpose == 0)
                                     exoPlayer.play()
 
-                                videoPlayerViewModel.draggingPurpose = -1;
+                                videoPlayerViewModel.draggingPurpose = -1
                             },
                             onDrag = { change, dragAmount ->
                                 if (videoPlayerViewModel.locked) return@detectDragGestures
