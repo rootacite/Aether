@@ -153,7 +153,6 @@ fun VideoPlayer(
         }
     }
 
-    val colorScheme = MaterialTheme.colorScheme
     videoPlayerViewModel.init(videoId)
 
     activity.requestedOrientation =
@@ -164,39 +163,7 @@ fun VideoPlayer(
 
     if (videoPlayerViewModel.startPlaying) {
         if (videoPlayerViewModel.isLandscape) {
-            Box {
-                VideoPlayerLandscape(videoPlayerViewModel)
-                AnimatedVisibility(
-                    visible = videoPlayerViewModel.locked || videoPlayerViewModel.planeVisibility,
-                    enter = fadeIn(
-                        initialAlpha = 0f,
-                    ),
-                    exit = fadeOut(
-                        targetAlpha = 0f
-                    ),
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                ) {
-                    Card(
-                        modifier = Modifier.padding(4.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = colorScheme.primary.copy(
-                                if (videoPlayerViewModel.locked) 0.2f else 1f
-                            )
-                        ),
-                        onClick = {
-                            videoPlayerViewModel.locked = !videoPlayerViewModel.locked
-                        }) {
-                        Icon(
-                            imageVector = if (videoPlayerViewModel.locked) Icons.Default.LockOpen else Icons.Default.Lock,
-                            contentDescription = "Lock",
-                            tint = Color.White.copy(if (videoPlayerViewModel.locked) 0.2f else 1f),
-                            modifier = Modifier
-                                .size(36.dp)
-                                .padding(6.dp)
-                        )
-                    }
-                }
-            }
+            VideoPlayerLandscape(videoPlayerViewModel)
         } else {
             VideoPlayerPortal(videoPlayerViewModel, navController)
         }

@@ -60,6 +60,7 @@ class VideoPlayerViewModel @Inject constructor(
     val recentManager: RecentManager,
     val videoLibrary: VideoLibrary,
 ) : ViewModel() {
+    var showPlaylist by mutableStateOf(false)
     var isLandscape by mutableStateOf(false)
     var tabIndex by mutableIntStateOf(0)
     var isPlaying by mutableStateOf(true)

@@ -8,7 +8,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -16,28 +18,35 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -54,20 +63,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.acitelight.aether.ToggleFullScreen
 import com.acitelight.aether.viewModel.VideoPlayerViewModel
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
+    val colorScheme = MaterialTheme.colorScheme
     val context = LocalContext.current
     val activity = (context as? Activity)!!
-    val exoPlayer: ExoPlayer = videoPlayerViewModel.player!!;
+    val exoPlayer: ExoPlayer = videoPlayerViewModel.player!!
 
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
@@ -78,6 +90,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
     }
 
     val name by videoPlayerViewModel.currentName
+    val id by videoPlayerViewModel.currentId
 
     fun setVolume(value: Int) {
         audioManager.setStreamVolume(
@@ -100,25 +113,14 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                 .align(Alignment.Center)
         )
         {
-            AndroidView(
-                factory = {
-                    PlayerView(
-                        it
-                    ).apply {
-                        player = exoPlayer
-                        useController = false
-                        subtitleView?.let { sv ->
-                            sv.visibility = View.GONE
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .pointerInput(Unit) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .pointerInput(videoPlayerViewModel) {
                         detectDragGestures(
                             onDragStart = { offset ->
                                 if (videoPlayerViewModel.locked) return@detectDragGestures
-                                if(offset.y > size.height * 0.9 || offset.y < size.height * 0.1)
+                                if (offset.y > size.height * 0.9 || offset.y < size.height * 0.1)
                                     videoPlayerViewModel.draggingPurpose = -3
                                 // Set gesture protection for the bottom of the screen
                                 // (Prevent conflicts with system gestures, such as dropdown status bar, bottom swipe up menu)
@@ -157,9 +159,9 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                                         audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                                             .toFloat() / maxVolume.toFloat()
                                     if (dragAmount.y < 0)
-                                        setVolume(cu + 1);
+                                        setVolume(cu + 1)
                                     else if (dragAmount.y > 0)
-                                        setVolume(cu - 1);
+                                        setVolume(cu - 1)
                                 } else if (videoPlayerViewModel.draggingPurpose == 1) {
                                     moveBrit(dragAmount.y, activity, videoPlayerViewModel)
                                 }
@@ -167,7 +169,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                             }
                         )
                     }
-                    .pointerInput(Unit) {
+                    .pointerInput(videoPlayerViewModel) {
                         detectTapGestures(
                             onDoubleTap = {
                                 if (videoPlayerViewModel.locked) return@detectTapGestures
@@ -177,6 +179,10 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                             },
                             onTap = {
                                 if (videoPlayerViewModel.locked) return@detectTapGestures
+                                if (videoPlayerViewModel.showPlaylist) {
+                                    videoPlayerViewModel.showPlaylist = false
+                                    return@detectTapGestures
+                                }
 
                                 videoPlayerViewModel.planeVisibility =
                                     !videoPlayerViewModel.planeVisibility
@@ -197,8 +203,23 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                                 }
                             },
                         )
-                    }
-            )
+                    }) {
+                AndroidView(
+                    factory = {
+                        PlayerView(
+                            it
+                        ).apply {
+                            player = exoPlayer
+                            useController = false
+                            subtitleView?.let { sv ->
+                                sv.visibility = View.GONE
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
 
             androidx.compose.animation.AnimatedVisibility(
                 visible = videoPlayerViewModel.draggingPurpose == 0,
@@ -213,9 +234,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
             {
                 Text(
                     text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
-                        formatTime(
-                            (exoPlayer.duration).toLong()
-                        )
+                        formatTime(exoPlayer.duration)
                     }",
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 12.dp),
@@ -234,9 +253,11 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                 modifier = Modifier.align(Alignment.Center)
             )
             {
-                Row(Modifier
-                    .background(Color(0x88000000), RoundedCornerShape(18))
-                    .width(200.dp))
+                Row(
+                    Modifier
+                        .background(Color(0x88000000), RoundedCornerShape(18))
+                        .width(200.dp)
+                )
                 {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.VolumeUp,
@@ -269,9 +290,11 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                 modifier = Modifier.align(Alignment.Center)
             )
             {
-                Row(Modifier
-                    .background(Color(0x88000000), RoundedCornerShape(18))
-                    .width(200.dp))
+                Row(
+                    Modifier
+                        .background(Color(0x88000000), RoundedCornerShape(18))
+                        .width(200.dp)
+                )
                 {
                     Icon(
                         imageVector = Icons.Default.Brightness4,
@@ -375,7 +398,8 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                     Text(
                         text = name,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 12.dp)
+                        modifier = Modifier
+                            .padding(top = 12.dp)
                             .align(Alignment.CenterVertically),
                         fontSize = 18.sp
                     )
@@ -407,9 +431,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                 ) {
                     Text(
                         text = "${formatTime((exoPlayer.duration * videoPlayerViewModel.playProcess).toLong())}/${
-                            formatTime(
-                                (exoPlayer.duration).toLong()
-                            )
+                            formatTime(exoPlayer.duration)
                         }",
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 12.dp),
@@ -463,6 +485,87 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                                 tint = Color.White,
                                 modifier = Modifier.size(32.dp)
                             )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                videoPlayerViewModel.showPlaylist = true
+                            },
+                            Modifier
+                                .size(36.dp)
+                                .align(Alignment.CenterVertically)
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.List,
+                                contentDescription = "Playlist",
+                                tint = Color.White,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = videoPlayerViewModel.locked || videoPlayerViewModel.planeVisibility,
+                enter = fadeIn(
+                    initialAlpha = 0f,
+                ),
+                exit = fadeOut(
+                    targetAlpha = 0f
+                ),
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
+            {
+                Card(
+                    modifier = Modifier.padding(4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = colorScheme.primary.copy(
+                            if (videoPlayerViewModel.locked) 0.2f else 1f
+                        )
+                    ),
+                    onClick = {
+                        videoPlayerViewModel.locked = !videoPlayerViewModel.locked
+                    }) {
+                    Icon(
+                        imageVector = if (videoPlayerViewModel.locked) Icons.Default.LockOpen else Icons.Default.Lock,
+                        contentDescription = "Lock",
+                        tint = Color.White.copy(if (videoPlayerViewModel.locked) 0.2f else 1f),
+                        modifier = Modifier
+                            .size(36.dp)
+                            .padding(6.dp)
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = videoPlayerViewModel.showPlaylist,
+                enter = slideInHorizontally(initialOffsetX = { full -> full }),
+                exit = slideOutHorizontally(targetOffsetX = { full -> full }),
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
+            {
+                Card(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(320.dp)
+                        .align(Alignment.CenterEnd),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = colorScheme.surface.copy(0.75f))
+                )
+                {
+                    LazyColumn(contentPadding = PaddingValues(vertical = 4.dp)) {
+                        items(videoPlayerViewModel.videos) { item ->
+                            MiniPlaylistCard(Modifier.padding(4.dp), video = item, imageLoader = videoPlayerViewModel.imageLoader!!,
+                                selected = id == item.id)
+                            {
+                                if (name == item.video.name)
+                                    return@MiniPlaylistCard
+
+                                videoPlayerViewModel.viewModelScope.launch {
+                                    videoPlayerViewModel.startPlay(item)
+                                }
+                            }
                         }
                     }
                 }
