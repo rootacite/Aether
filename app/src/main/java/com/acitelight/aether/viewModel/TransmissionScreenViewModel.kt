@@ -233,7 +233,8 @@ class TransmissionScreenViewModel @Inject constructor(
                     downloads.add(s)
                     idToState[s.id] = s
 
-                    if (videoLibrary.classes.contains(s.klass)) videoLibrary.classes.add(s.klass)
+                    if (!videoLibrary.classes.contains(s.klass))
+                        videoLibrary.classes.add(s.klass)
 
                     if (!videoLibrary.classesMap.containsKey(s.klass)) videoLibrary.classesMap[s.klass] =
                         mutableStateListOf()
