@@ -110,6 +110,8 @@ class VideoPlayerViewModel @Inject constructor(
         {
             vs = oId.split("|")[0].split(",").map { it.split("/") }.toMutableList()
             spec = oId.split("|")[1]
+        }else{
+            vs = oId.split(",").map { it.split("/") }.toMutableList()
         }
 
         imageLoader = ImageLoader.Builder(context)

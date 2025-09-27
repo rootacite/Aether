@@ -227,7 +227,7 @@ class TransmissionScreenViewModel @Inject constructor(
 
             downloads.clear()
             idToState.clear()
-            downloaded.sortedWith(compareBy(naturalOrder()) { it.extras.getString("name", "") })
+            downloaded.filter { it.extras.getString("type", "") == "main" }.sortedWith(compareBy(naturalOrder()) { it.extras.getString("name", "") })
                 .forEach { d ->
                     val s = downloadToState(d)
                     downloads.add(s)

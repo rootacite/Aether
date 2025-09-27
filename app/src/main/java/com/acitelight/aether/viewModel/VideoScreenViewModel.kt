@@ -71,8 +71,9 @@ class VideoScreenViewModel @Inject constructor(
 
             if (vl != null) {
                 val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
-                videoLibrary.classesMap[videoLibrary.classes[0]]?.addAll(r)
-                videoLibrary.classesMap[videoLibrary.classes[0]]?.distinctBy { it.id }
+                val existsId = videoLibrary.classesMap[videoLibrary.classes[0]]?.map { it.id }
+
+                videoLibrary.classesMap[videoLibrary.classes[0]]?.addAll(r.filter { existsId == null || it.id !in existsId })
             }
         }
         else {
@@ -110,8 +111,8 @@ class VideoScreenViewModel @Inject constructor(
 
             if (vl != null) {
                 val r = vl.sortedWith(compareBy(naturalOrder()) { it.video.name })
-                videoLibrary.classesMap[videoLibrary.classes[index]]?.addAll(r)
-                videoLibrary.classesMap[videoLibrary.classes[index]]?.distinctBy { it.id }
+                val existsId = videoLibrary.classesMap[videoLibrary.classes[index]]?.map { it.id }
+                videoLibrary.classesMap[videoLibrary.classes[index]]?.addAll(r.filter { existsId == null || it.id !in existsId })
             }
         }
     }

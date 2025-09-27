@@ -72,7 +72,8 @@ class MediaManager @Inject constructor(
             it.extras.getString("class", "") == klass
         }
 
-        if(downloaded.all{ it.status == Status.COMPLETED })
+        if(downloaded.any{ it.status == Status.COMPLETED }
+            && downloaded.all{ it.status == Status.COMPLETED || it.extras.getString("type", "") == "subtitle" })
         {
             val jsonString = File(
                 context.getExternalFilesDir(null),
@@ -98,10 +99,14 @@ class MediaManager @Inject constructor(
             val remoteIds = mutableListOf<String>()
 
             for (videoId in id) {
-                if (downloads.filter {
-                        it.extras.getString("id", "") == videoId &&
-                                it.extras.getString("class", "") == klass
-                    }.all{ it.status == Status.COMPLETED} ) {
+                val o = downloads.filter {
+                    it.extras.getString("id", "") == videoId &&
+                            it.extras.getString("class", "") == klass
+                }
+
+                if (o.any{ it.status == Status.COMPLETED }
+                    && o.all{ it.status == Status.COMPLETED || it.extras.getString("type", "") == "subtitle" })
+                {
                     localIds.add(videoId)
                 } else {
                     remoteIds.add(videoId)
