@@ -121,10 +121,11 @@ class VideoPlayerViewModel @Inject constructor(
             .build()
 
         viewModelScope.launch {
+            videos = mediaManager.queryVideoBulk(vs.first()[0], vs.map { it[1] })!!
+
             val ii = database.userDao().getAll().first()
             val ix = ii.filter { it.id in videos.map{ m -> m.id } }.maxByOrNull { it.time }
 
-            videos = mediaManager.queryVideoBulk(vs.first()[0], vs.map { it[1] })!!
 
             startPlay(
                 if(spec != "-1")
