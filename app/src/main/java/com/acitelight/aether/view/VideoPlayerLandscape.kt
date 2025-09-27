@@ -107,7 +107,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                         detectDragGestures(
                             onDragStart = { offset ->
                                 if (videoPlayerViewModel.locked) return@detectDragGestures
-                                if(offset.y > size.height * 0.8 || offset.y < size.height * 0.2)
+                                if(offset.y > size.height * 0.9 || offset.y < size.height * 0.1)
                                     videoPlayerViewModel.draggingPurpose = -3
                                 // Set gesture protection for the bottom of the screen
                                 // (Prevent conflicts with system gestures, such as dropdown status bar, bottom swipe up menu)
