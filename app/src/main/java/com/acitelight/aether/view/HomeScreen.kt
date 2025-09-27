@@ -82,7 +82,7 @@ fun HomeScreen(
                             {
                                 updateRelate(homeScreenViewModel.recentManager.recentVideo, i)
 
-                                val playList = mutableListOf("${i.klass}/${i.id}")
+                                val playList = mutableListOf<String>()
                                 val fv = homeScreenViewModel.videoLibrary.classesMap.map { it.value }.flatten()
 
                                 val group = fv.filter { it.klass == i.klass && it.video.group == i.video.group }
@@ -90,7 +90,7 @@ fun HomeScreen(
                                     playList.add("${i.klass}/${i.id}")
                                 }
 
-                                val route = "video_player_route/${playList.joinToString(",").toHex()}"
+                                val route = "video_player_route/${(playList.joinToString(",") + "|${i.id}").toHex()}"
                                 navController.navigate(route)
                             }, homeScreenViewModel.imageLoader!!)
                         HorizontalDivider(Modifier.padding(vertical = 8.dp).alpha(0.4f), 1.dp, DividerDefaults.color)

@@ -49,6 +49,7 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import com.acitelight.aether.Global
 import com.acitelight.aether.model.KeyImage
+import com.acitelight.aether.service.VideoLibrary
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 
@@ -56,7 +57,8 @@ import kotlinx.coroutines.flow.first
 class VideoPlayerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     val mediaManager: MediaManager,
-    val recentManager: RecentManager
+    val recentManager: RecentManager,
+    val videoLibrary: VideoLibrary,
 ) : ViewModel() {
     var tabIndex by mutableIntStateOf(0)
     var isPlaying by mutableStateOf(true)
@@ -100,7 +102,16 @@ class VideoPlayerViewModel @Inject constructor(
             return
         _init = true
 
-        val vs = videoId.hexToString().split(",").map { it.split("/") }.toMutableList()
+        val oId = videoId.hexToString()
+        var spec = "-1"
+        var vs = mutableListOf<List<String>>()
+
+        if(oId.contains("|"))
+        {
+            vs = oId.split("|")[0].split(",").map { it.split("/") }.toMutableList()
+            spec = oId.split("|")[1]
+        }
+
         imageLoader = ImageLoader.Builder(context)
             .components {
                 add(OkHttpNetworkFetcherFactory(createOkHttp()))
@@ -114,7 +125,9 @@ class VideoPlayerViewModel @Inject constructor(
             videos = mediaManager.queryVideoBulk(vs.first()[0], vs.map { it[1] })!!
 
             startPlay(
-                if (ix != null)
+                if(spec != "-1")
+                    videos.first { it.id == spec}
+                else if (ix != null)
                     videos.first { it.id == ix.id }
                 else videos.first()
             )

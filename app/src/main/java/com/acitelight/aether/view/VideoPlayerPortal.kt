@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.acitelight.aether.Global
+import com.acitelight.aether.Global.updateRelate
 import com.acitelight.aether.ToggleFullScreen
 import com.acitelight.aether.viewModel.VideoPlayerViewModel
 
@@ -247,7 +248,16 @@ fun VideoPlayerPortal(
                         {
                             videoPlayerViewModel.isPlaying = false
                             videoPlayerViewModel.player?.pause()
-                            val route = "video_player_route/${"${i.klass}/${i.id}".toHex()}"
+
+                            val playList = mutableListOf<String>()
+                            val fv = videoPlayerViewModel.videoLibrary.classesMap.map { it.value }.flatten()
+
+                            val group = fv.filter { it.klass == i.klass && it.video.group == i.video.group }
+                            for (i in group) {
+                                playList.add("${i.klass}/${i.id}")
+                            }
+
+                            val route = "video_player_route/${playList.joinToString(",").toHex()}"
                             navController.navigate(route)
                         }, videoPlayerViewModel.imageLoader!!
                     )

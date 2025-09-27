@@ -150,7 +150,7 @@ private fun VideoDownloadCard(
                             jsonQuery.first { it.id == model.vid && it.klass == model.klass }
                         )
 
-                        val playList = mutableListOf("${model.klass}/${model.vid}")
+                        val playList = mutableListOf<String>()
                         val fv = viewModel.videoLibrary.classesMap.map { it.value }.flatten()
                         val video = fv.firstOrNull { it.klass == model.klass && it.id == model.vid }
 
@@ -161,7 +161,7 @@ private fun VideoDownloadCard(
                             }
                         }
 
-                        val route = "video_player_route/${playList.joinToString(",").toHex()}"
+                        val route = "video_player_route/${(playList.joinToString(",") + "|${model.vid}").toHex()}"
                         withContext(Dispatchers.Main) {
                             navigator.navigate(route)
                         }
