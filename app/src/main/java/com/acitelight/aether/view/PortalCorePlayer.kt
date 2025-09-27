@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -397,6 +398,22 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                         .align(Alignment.CenterVertically)
                         .padding(start = 12.dp)
                 )
+
+                IconButton(
+                    onClick = {
+                        videoPlayerViewModel.isLandscape = true
+                    },
+                    Modifier
+                        .size(36.dp)
+                        .align(Alignment.CenterVertically)
+                ) {
+                    Icon(
+                        Icons.Default.Fullscreen,
+                        contentDescription = "FullScreen",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
         }
 

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.media.AudioManager
 import android.view.View
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,9 +26,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -78,6 +85,10 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
             value.coerceIn(0, maxVolume),
             AudioManager.FLAG_PLAY_SOUND
         )
+    }
+
+    BackHandler {
+        videoPlayerViewModel.isLandscape = false
     }
 
     ToggleFullScreen(true)
@@ -343,11 +354,28 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                         )
                 )
                 {
+                    IconButton(
+                        onClick = {
+                            videoPlayerViewModel.isLandscape = false
+                        },
+                        Modifier
+                            .padding(top = 12.dp)
+                            .padding(start = 46.dp)
+                            .size(36.dp)
+                            .align(Alignment.CenterVertically)
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
                     Text(
                         text = name,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .padding(horizontal = 46.dp).padding(top = 12.dp)
+                        modifier = Modifier.padding(top = 12.dp)
                             .align(Alignment.CenterVertically),
                         fontSize = 18.sp
                     )
@@ -416,6 +444,24 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                                 contentDescription = "Play/Pause",
                                 tint = Color.White,
                                 modifier = Modifier.size(42.dp)
+                            )
+                        }
+
+                        Spacer(Modifier.weight(1f))
+
+                        IconButton(
+                            onClick = {
+                                videoPlayerViewModel.isLandscape = false
+                            },
+                            Modifier
+                                .size(36.dp)
+                                .align(Alignment.CenterVertically)
+                        ) {
+                            Icon(
+                                Icons.Default.FullscreenExit,
+                                contentDescription = "Exit FullScreen",
+                                tint = Color.White,
+                                modifier = Modifier.size(32.dp)
                             )
                         }
                     }

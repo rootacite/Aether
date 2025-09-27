@@ -2,6 +2,7 @@ package com.acitelight.aether.view
 
 import android.app.Activity
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.view.View
@@ -71,6 +72,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -137,22 +139,31 @@ fun moveBrit(db: Float, activity: Activity, videoPlayerViewModel: VideoPlayerVie
 }
 
 @Composable
-fun isLandscape(): Boolean {
-    val configuration = LocalConfiguration.current
-    return configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-}
-
-@Composable
 fun VideoPlayer(
     videoPlayerViewModel: VideoPlayerViewModel = hiltViewModel<VideoPlayerViewModel>(),
     videoId: String,
     navController: NavHostController
 ) {
+    val context = LocalContext.current
+    val activity = (context as? Activity)!!
+
+    DisposableEffect(Unit) {
+        onDispose {
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
     val colorScheme = MaterialTheme.colorScheme
     videoPlayerViewModel.init(videoId)
 
+    activity.requestedOrientation =
+        if(videoPlayerViewModel.isLandscape)
+            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        else
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
     if (videoPlayerViewModel.startPlaying) {
-        if (isLandscape()) {
+        if (videoPlayerViewModel.isLandscape) {
             Box {
                 VideoPlayerLandscape(videoPlayerViewModel)
                 AnimatedVisibility(
