@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import androidx.room.util.TableInfo
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global.updateRelate
@@ -59,41 +62,68 @@ fun TransmissionScreen(
     transmissionScreenViewModel: TransmissionScreenViewModel = hiltViewModel<TransmissionScreenViewModel>()
 ) {
     val downloads = transmissionScreenViewModel.downloads
+    Column()
+    {
+        Text(
+            text = "Video Tasks",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(8.dp).align(Alignment.Start)
+        )
 
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(downloads.filter { it.type == "main" }, key = { it.id }) { item ->
-            VideoDownloadCard(
-                navigator = navigator,
-                viewModel = transmissionScreenViewModel,
-                model = item,
-                onPause = {
-                    for (i in downloadToGroup(
-                        item,
-                        downloads
-                    )) transmissionScreenViewModel.pause(i.id)
-                },
-                onResume = {
-                    for (i in downloadToGroup(
-                        item,
-                        downloads
-                    )) transmissionScreenViewModel.resume(i.id)
-                },
-                onCancel = {
-                    for (i in downloadToGroup(
-                        item,
-                        downloads
-                    )) transmissionScreenViewModel.cancel(i.id)
-                },
-                onDelete = {
-                    for (i in downloadToGroup(
-                        item,
-                        downloads
-                    )) transmissionScreenViewModel.delete(i.id, true)
-                }
-            )
+        Text(
+            text = "All: ${downloads.count { it.type == "main" }}",
+            modifier = Modifier.padding(horizontal = 8.dp).align(Alignment.Start),
+            fontSize = 12.sp,
+            lineHeight = 13.sp,
+            maxLines = 1
+        )
+
+        Text(
+            text = "Completed: ${downloads.count { it.type == "main" && it.status == Status.COMPLETED }}",
+            modifier = Modifier.padding(horizontal = 8.dp).align(Alignment.Start),
+            fontSize = 12.sp,
+            lineHeight = 13.sp,
+            maxLines = 1
+        )
+
+        HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
+
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        )
+        {
+            items(downloads.filter { it.type == "main" }, key = { it.id }) { item ->
+                VideoDownloadCard(
+                    navigator = navigator,
+                    viewModel = transmissionScreenViewModel,
+                    model = item,
+                    onPause = {
+                        for (i in downloadToGroup(
+                            item,
+                            downloads
+                        )) transmissionScreenViewModel.pause(i.id)
+                    },
+                    onResume = {
+                        for (i in downloadToGroup(
+                            item,
+                            downloads
+                        )) transmissionScreenViewModel.resume(i.id)
+                    },
+                    onCancel = {
+                        for (i in downloadToGroup(
+                            item,
+                            downloads
+                        )) transmissionScreenViewModel.cancel(i.id)
+                    },
+                    onDelete = {
+                        for (i in downloadToGroup(
+                            item,
+                            downloads
+                        )) transmissionScreenViewModel.delete(i.id, true)
+                    }
+                )
+            }
         }
     }
 }
