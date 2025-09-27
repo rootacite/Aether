@@ -120,6 +120,10 @@ class FetchManager @Inject constructor(
     }
 
     suspend fun startVideoDownload(video: Video) {
+        if(getAllDownloadsAsync().any{
+            it.extras.getString("class", "") == video.klass && it.extras.getString("id", "") == video.id })
+            return
+
         makeFolder(video)
         File(
             context.getExternalFilesDir(null),

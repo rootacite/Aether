@@ -51,6 +51,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.collections.sortedWith
+import kotlin.math.abs
 
 @Composable
 fun TransmissionScreen(
@@ -254,7 +255,7 @@ private fun VideoDownloadCard(
 
             // progress bar
             LinearProgressIndicator(
-                progress = { model.progress.coerceIn(0, 100) / 100f },
+                progress = { abs(model.progress).coerceIn(0, 100) / 100f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp, bottom = 8.dp),

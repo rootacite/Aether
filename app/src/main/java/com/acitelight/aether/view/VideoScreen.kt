@@ -349,12 +349,13 @@ fun VideoCard(
                         {
                             videoScreenViewModel.download(i)
                         }
+                        Toast.makeText(
+                            videoScreenViewModel.context,
+                            "Start downloading ${video.video.group}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                    Toast.makeText(
-                        videoScreenViewModel.context,
-                        "Start downloading ${video.video.group}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+
                 }
             ),
         shape = RoundedCornerShape(6.dp),

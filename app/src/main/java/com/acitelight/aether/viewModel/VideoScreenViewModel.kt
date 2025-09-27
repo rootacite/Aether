@@ -36,7 +36,7 @@ import javax.inject.Singleton
 
 @HiltViewModel
 class VideoScreenViewModel @Inject constructor(
-    private val fetchManager: FetchManager,
+    val fetchManager: FetchManager,
     @ApplicationContext val context: Context,
     val mediaManager: MediaManager,
     val recentManager: RecentManager,
@@ -82,7 +82,9 @@ class VideoScreenViewModel @Inject constructor(
             videoLibrary.classesMap["Offline"] = mutableStateListOf<Video>()
 
             val downloaded = fetchManager.getAllDownloadsAsync().filter {
-                it.status == Status.COMPLETED && it.extras.getString("class", "") != "comic"
+                it.status == Status.COMPLETED &&
+                it.extras.getString("class", "") != "comic" &&
+                it.extras.getString("type", "") == "main"
             }
 
             val jsonQuery = downloaded.map{ File(
