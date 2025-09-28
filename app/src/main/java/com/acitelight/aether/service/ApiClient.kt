@@ -5,7 +5,11 @@ import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
 import com.acitelight.aether.AetherApp
+import com.franmontiel.persistentcookiejar.PersistentCookieJar
+import com.franmontiel.persistentcookiejar.cache.SetCookieCache
+import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -15,11 +19,13 @@ import okhttp3.CookieJar
 import okhttp3.EventListener
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.JavaNetCookieJar
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayInputStream
+import java.net.CookieManager
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -35,7 +41,7 @@ import javax.net.ssl.X509TrustManager
 
 @Singleton
 class ApiClient @Inject constructor(
-
+    @ApplicationContext private val context: Context,
 ) {
     fun getBase(): String{
         return replaceAbyssProtocol(base)
@@ -46,11 +52,9 @@ class ApiClient @Inject constructor(
     private val json = Json {
         ignoreUnknownKeys = true
     }
-
     private fun replaceAbyssProtocol(uri: String): String {
         return uri.replaceFirst("^abyss://".toRegex(), "https://")
     }
-
     private val dnsEventListener = object : EventListener() {
         override fun dnsEnd(call: okhttp3.Call, domainName: String, inetAddressList: List<InetAddress>) {
             super.dnsEnd(call, domainName, inetAddressList)
@@ -58,7 +62,6 @@ class ApiClient @Inject constructor(
             Log.d("OkHttp_DNS", "Domain '$domainName' resolved to IPs: [$ipAddresses]")
         }
     }
-
     private fun loadCertificateFromString(pemString: String): X509Certificate {
         val certificateFactory = CertificateFactory.getInstance("X.509")
         val decodedPem = pemString
@@ -72,7 +75,6 @@ class ApiClient @Inject constructor(
             return certificateFactory.generateCertificate(inputStream) as X509Certificate
         }
     }
-
     private fun createOkHttpClientWithDynamicCert(trustedCert: X509Certificate?): OkHttpClient {
         try {
             val defaultTmFactory = TrustManagerFactory.getInstance(
@@ -163,23 +165,17 @@ class ApiClient @Inject constructor(
             throw RuntimeException("Failed to create OkHttpClient with dynamic certificate", e)
         }
     }
-
     private fun createOkHttp(): OkHttpClient {
         return if (cert == "")
             if (base.startsWith("abyss://"))
                 OkHttpClient
                     .Builder()
-                    .cookieJar(object : CookieJar {
-                        private val cookieStore = mutableMapOf<HttpUrl, List<Cookie>>()
-
-                        override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-                            cookieStore[url] = cookies
-                        }
-
-                        override fun loadForRequest(url: HttpUrl): List<Cookie> {
-                            return cookieStore[url] ?: emptyList()
-                        }
-                    })
+                    .cookieJar(
+                        PersistentCookieJar(
+                            SetCookieCache(),
+                            SharedPrefsCookiePersistor(context)
+                        )
+                    )
                     .proxy(
                         Proxy(
                             Proxy.Type.HTTP,
@@ -192,17 +188,12 @@ class ApiClient @Inject constructor(
             else
                 OkHttpClient
                     .Builder()
-                    .cookieJar(object : CookieJar {
-                        private val cookieStore = mutableMapOf<HttpUrl, List<Cookie>>()
-
-                        override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-                            cookieStore[url] = cookies
-                        }
-
-                        override fun loadForRequest(url: HttpUrl): List<Cookie> {
-                            return cookieStore[url] ?: emptyList()
-                        }
-                    })
+                    .cookieJar(
+                        PersistentCookieJar(
+                            SetCookieCache(),
+                            SharedPrefsCookiePersistor(context)
+                        )
+                    )
                     .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
                     .eventListener(dnsEventListener)
                     .build()
@@ -210,7 +201,6 @@ class ApiClient @Inject constructor(
             createOkHttpClientWithDynamicCert(loadCertificateFromString(cert))
 
     }
-
     private fun createRetrofit(): Retrofit {
         client = createOkHttp()
         val b = replaceAbyssProtocol(base)
@@ -222,7 +212,6 @@ class ApiClient @Inject constructor(
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
     }
-
     private var client: OkHttpClient? = null
     var api: ApiInterface? = null
 

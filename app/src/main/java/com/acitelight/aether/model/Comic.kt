@@ -4,13 +4,12 @@ import com.acitelight.aether.service.ApiClient
 
 class Comic(
     val comic: ComicResponse,
-    val id: String,
-    val token: String
+    val id: String
 )
 {
     fun getPage(pageNumber: Int, api: ApiClient): String
     {
-        return "${api.getBase()}api/image/$id/${comic.list[pageNumber]}?token=$token"
+        return "${api.getBase()}api/image/$id/${comic.list[pageNumber]}"
     }
 
     fun getPage(pageName: String, api: ApiClient): String?

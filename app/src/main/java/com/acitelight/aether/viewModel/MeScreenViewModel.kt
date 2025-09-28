@@ -48,11 +48,10 @@ class MeScreenViewModel @Inject constructor(
             try{
                 apiClient.apply(context, url.value, if(uss.first()) cert.value else "")
 
-                if (mediaManager.token == "null")
-                    mediaManager.token = authManager.fetchToken(
-                        username.value,
-                        settingsDataStoreManager.privateKeyFlow.first()
-                    )!!
+                authManager.fetchToken(
+                    username.value,
+                    settingsDataStoreManager.privateKeyFlow.first()
+                )!!
 
                 Global.loggedIn = true
                 withContext(Dispatchers.IO)
@@ -95,7 +94,7 @@ class MeScreenViewModel @Inject constructor(
                 val usedUrl = apiClient.apply(context, u, if(uss.first()) c else "")
                 (context as AetherApp).abyssService?.proxy?.config(apiClient.getBase().toUri().host!!, 4096)
                 context.abyssService?.downloader?.init()
-                mediaManager.token = authManager.fetchToken(
+                authManager.fetchToken(
                     us,
                     p
                 )!!
@@ -125,7 +124,7 @@ class MeScreenViewModel @Inject constructor(
             if (u == "" || p == "" || ur == "") return@launch
 
             try {
-                mediaManager.token = authManager.fetchToken(
+                authManager.fetchToken(
                     u,
                     p
                 )!!

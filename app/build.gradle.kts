@@ -46,6 +46,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.persistentcookiejar)
+
     implementation(libs.fetch2)
     implementation(libs.fetch2okhttp)
 

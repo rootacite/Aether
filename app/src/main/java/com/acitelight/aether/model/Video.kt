@@ -11,28 +11,27 @@ class Video(
     val localBase: String,
     val klass: String,
     val id: String,
-    val token: String,
     val video: VideoResponse
 ) {
     fun getCover(api: ApiClient): String {
         return if (isLocal)
             "$localBase/videos/$klass/$id/cover.jpg"
         else
-            "${api.getBase()}api/video/$klass/$id/cover?token=$token"
+            "${api.getBase()}api/video/$klass/$id/cover"
     }
 
     fun getVideo(api: ApiClient): String {
         return if (isLocal)
             "$localBase/videos/$klass/$id/video.mp4"
         else
-            "${api.getBase()}api/video/$klass/$id/av?token=$token"
+            "${api.getBase()}api/video/$klass/$id/av"
     }
 
     fun getSubtitle(api: ApiClient): String {
         return if (isLocal)
             "$localBase/videos/$klass/$id/subtitle.vtt"
         else
-            "${api.getBase()}api/video/$klass/$id/subtitle?token=$token"
+            "${api.getBase()}api/video/$klass/$id/subtitle"
     }
 
     fun getGallery(api: ApiClient): List<KeyImage> {
@@ -46,7 +45,7 @@ class Video(
             } else video.gallery.map {
             KeyImage(
                 name = it,
-                url = "${api.getBase()}api/video/$klass/$id/gallery/$it?token=$token",
+                url = "${api.getBase()}api/video/$klass/$id/gallery/$it",
                 key = "$klass/$id/gallery/$it"
             )
         }
@@ -59,7 +58,6 @@ class Video(
             localBase = localBase,
             klass = klass,
             id = id,
-            token = "",
             video = video
         )
     }
