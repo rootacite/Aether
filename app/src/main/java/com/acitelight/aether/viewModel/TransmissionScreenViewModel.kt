@@ -227,12 +227,12 @@ class TransmissionScreenViewModel @Inject constructor(
 
             downloads.clear()
             idToState.clear()
-            downloaded.filter { it.extras.getString("type", "") == "main" }.sortedWith(compareBy(naturalOrder()) { it.extras.getString("name", "") })
-                .forEach { d ->
-                    val s = downloadToState(d)
-                    downloads.add(s)
-                    idToState[s.id] = s
+            downloaded.forEach { d ->
+                val s = downloadToState(d)
+                downloads.add(s)
+                idToState[s.id] = s
 
+                if (d.extras.getString("type", "") == "main") {
                     if (!videoLibrary.classes.contains(s.klass))
                         videoLibrary.classes.add(s.klass)
 
@@ -246,6 +246,7 @@ class TransmissionScreenViewModel @Inject constructor(
                         }
                     }
                 }
+            }
         }
     }
 }
