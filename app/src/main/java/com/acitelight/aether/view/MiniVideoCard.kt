@@ -28,10 +28,11 @@ import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.model.Video
+import com.acitelight.aether.service.ApiClient
 
 
 @Composable
-fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit, imageLoader: ImageLoader) {
+fun MiniVideoCard(modifier: Modifier, video: Video, imageLoader: ImageLoader, apiClient: ApiClient, onClick: () -> Unit) {
     Card(
         modifier = modifier
             .height(80.dp)
@@ -49,7 +50,7 @@ fun MiniVideoCard(modifier: Modifier, video: Video, onClick: () -> Unit, imageLo
         {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(video.getCover())
+                    .data(video.getCover(apiClient))
                     .memoryCacheKey("${video.klass}/${video.id}/cover")
                     .diskCacheKey("${video.klass}/${video.id}/cover")
                     .listener(

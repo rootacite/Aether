@@ -17,7 +17,7 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.model.Comic
 import com.acitelight.aether.model.ComicRecord
 import com.acitelight.aether.model.ComicRecordDatabase
-import com.acitelight.aether.service.ApiClient.createOkHttp
+import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.MediaManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -28,7 +28,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ComicPageViewModel @Inject constructor(
     val mediaManager: MediaManager,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    val apiClient: ApiClient
 ) : ViewModel()
 {
     var imageLoader: ImageLoader? = null
@@ -43,7 +44,7 @@ class ComicPageViewModel @Inject constructor(
     init{
         imageLoader =  ImageLoader.Builder(context)
             .components {
-                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
             }
             .build()
         listState = LazyListState(0, 0)

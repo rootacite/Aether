@@ -35,12 +35,12 @@ import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.model.Video
+import com.acitelight.aether.service.ApiClient
 
 
 @Composable
-fun MiniPlaylistCard(modifier: Modifier, video: Video, imageLoader: ImageLoader, selected: Boolean, onClick: () -> Unit) {
+fun MiniPlaylistCard(modifier: Modifier, video: Video, imageLoader: ImageLoader, selected: Boolean, apiClient: ApiClient, onClick: () -> Unit) {
     val colorScheme = MaterialTheme.colorScheme
-
     Card(
         modifier = modifier
             .height(80.dp)
@@ -58,7 +58,7 @@ fun MiniPlaylistCard(modifier: Modifier, video: Video, imageLoader: ImageLoader,
         {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(video.getCover())
+                    .data(video.getCover(apiClient))
                     .memoryCacheKey("${video.klass}/${video.id}/cover")
                     .diskCacheKey("${video.klass}/${video.id}/cover")
                     .listener(

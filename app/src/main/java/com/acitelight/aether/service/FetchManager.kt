@@ -1,48 +1,37 @@
 package com.acitelight.aether.service
 
 import android.content.Context
-import androidx.compose.runtime.mutableStateOf
-import com.acitelight.aether.Screen
 import com.acitelight.aether.model.Video
-import com.acitelight.aether.service.ApiClient.createOkHttp
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Fetch
 import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.FetchListener
 import com.tonyodev.fetch2.Request
-import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2okhttp.OkHttpDownloader
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import java.io.File
-import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class FetchManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val apiClient: ApiClient
 ) {
     private var fetch: Fetch? = null
     private var listener: FetchListener? = null
-    private var client: OkHttpClient? = null
     val configured = MutableStateFlow(false)
 
     fun init() {
-        client = createOkHttp()
         val fetchConfiguration = FetchConfiguration.Builder(context)
             .setDownloadConcurrentLimit(8)
-            .setHttpDownloader(OkHttpDownloader(client))
+            .setHttpDownloader(OkHttpDownloader(apiClient.getClient()))
             .build()
 
         fetch = Fetch.Impl.getInstance(fetchConfiguration)
@@ -63,12 +52,6 @@ class FetchManager @Inject constructor(
             fetch?.removeListener(it)
         }
         listener = null
-    }
-
-    // query downloads
-    suspend fun getAllDownloads(callback: (List<Download>) -> Unit) {
-        configured.filter { it }.first()
-        fetch?.getDownloads { list -> callback(list) } ?: callback(emptyList())
     }
 
     suspend fun getAllDownloadsAsync(): List<Download> {
@@ -140,7 +123,7 @@ class FetchManager @Inject constructor(
         )
 
         val requests = mutableListOf(
-            Request(video.getVideo(), videoPath.path).apply {
+            Request(video.getVideo(apiClient), videoPath.path).apply {
                 extras = Extras(
                     mapOf(
                         "name" to video.video.name,
@@ -150,7 +133,7 @@ class FetchManager @Inject constructor(
                     )
                 )
             },
-            Request(video.getCover(), coverPath.path).apply {
+            Request(video.getCover(apiClient), coverPath.path).apply {
                 extras = Extras(
                     mapOf(
                         "name" to video.video.name,
@@ -160,7 +143,7 @@ class FetchManager @Inject constructor(
                     )
                 )
             },
-            Request(video.getSubtitle(), subtitlePath.path).apply {
+            Request(video.getSubtitle(apiClient), subtitlePath.path).apply {
                 extras = Extras(
                     mapOf(
                         "name" to video.video.name,
@@ -171,7 +154,7 @@ class FetchManager @Inject constructor(
                 )
             },
         )
-        for (p in video.getGallery()) {
+        for (p in video.getGallery(apiClient)) {
             requests.add(
                 Request(p.url, File(
                     context.getExternalFilesDir(null),

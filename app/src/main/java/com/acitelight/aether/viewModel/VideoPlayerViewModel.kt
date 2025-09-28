@@ -8,29 +8,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.STATE_READY
+import androidx.media3.common.Tracks
 import androidx.media3.common.text.Cue
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.acitelight.aether.model.KeyImage
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoQueryIndex
 import com.acitelight.aether.model.VideoRecord
 import com.acitelight.aether.model.VideoRecordDatabase
-import com.acitelight.aether.service.ApiClient.createOkHttp
+import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
+import com.acitelight.aether.service.VideoLibrary
 import com.acitelight.aether.view.formatTime
 import com.acitelight.aether.view.hexToString
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,20 +43,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.File
 import javax.inject.Inject
-import androidx.core.net.toUri
-import androidx.media3.common.Tracks
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import com.acitelight.aether.Global
-import com.acitelight.aether.model.KeyImage
-import com.acitelight.aether.service.VideoLibrary
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 
 @HiltViewModel
 class VideoPlayerViewModel @Inject constructor(
@@ -59,6 +56,7 @@ class VideoPlayerViewModel @Inject constructor(
     val mediaManager: MediaManager,
     val recentManager: RecentManager,
     val videoLibrary: VideoLibrary,
+    val apiClient: ApiClient
 ) : ViewModel() {
     var showPlaylist by mutableStateOf(false)
     var isLandscape by mutableStateOf(false)
@@ -79,7 +77,7 @@ class VideoPlayerViewModel @Inject constructor(
     var renderedFirst = false
     var videos: List<Video> = listOf()
 
-    private val httpDataSourceFactory = OkHttpDataSource.Factory(createOkHttp())
+    private val httpDataSourceFactory = OkHttpDataSource.Factory(apiClient.getClient())
     private val defaultDataSourceFactory by lazy {
         DefaultDataSource.Factory(
             context,
@@ -117,7 +115,7 @@ class VideoPlayerViewModel @Inject constructor(
 
         imageLoader = ImageLoader.Builder(context)
             .components {
-                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
             }
             .build()
 
@@ -156,7 +154,7 @@ class VideoPlayerViewModel @Inject constructor(
                 )
             ) {
                 try {
-                    val client = createOkHttp()
+                    val client = apiClient.getClient()
 
                     val headReq = Request.Builder().url(trimmed).head().build()
                     val headResp = try {
@@ -240,7 +238,7 @@ class VideoPlayerViewModel @Inject constructor(
         currentKlass.value = video.klass
         currentName.value = video.video.name
         currentDuration.longValue = video.video.duration
-        currentGallery.value = video.getGallery()
+        currentGallery.value = video.getGallery(apiClient)
 
         player?.apply {
             stop()
@@ -249,7 +247,7 @@ class VideoPlayerViewModel @Inject constructor(
 
         recentManager.pushVideo(context, VideoQueryIndex(video.klass, video.id))
 
-        val subtitleCandidate = video.getSubtitle().trim()
+        val subtitleCandidate = video.getSubtitle(apiClient).trim()
         val subtitleUri = tryResolveSubtitleUri(subtitleCandidate)
 
         if (player == null) {
@@ -303,7 +301,7 @@ class VideoPlayerViewModel @Inject constructor(
             }
         }
 
-        val url = video.getVideo()
+        val url = video.getVideo(apiClient)
         val videoUri = if (video.isLocal) Uri.fromFile(File(url)) else url.toUri()
 
         val mediaItem: MediaItem = if (subtitleUri != null) {

@@ -14,28 +14,28 @@ class Video(
     val token: String,
     val video: VideoResponse
 ) {
-    fun getCover(): String {
+    fun getCover(api: ApiClient): String {
         return if (isLocal)
             "$localBase/videos/$klass/$id/cover.jpg"
         else
-            "${ApiClient.getBase()}api/video/$klass/$id/cover?token=$token"
+            "${api.getBase()}api/video/$klass/$id/cover?token=$token"
     }
 
-    fun getVideo(): String {
+    fun getVideo(api: ApiClient): String {
         return if (isLocal)
             "$localBase/videos/$klass/$id/video.mp4"
         else
-            "${ApiClient.getBase()}api/video/$klass/$id/av?token=$token"
+            "${api.getBase()}api/video/$klass/$id/av?token=$token"
     }
 
-    fun getSubtitle(): String {
+    fun getSubtitle(api: ApiClient): String {
         return if (isLocal)
             "$localBase/videos/$klass/$id/subtitle.vtt"
         else
-            "${ApiClient.getBase()}api/video/$klass/$id/subtitle?token=$token"
+            "${api.getBase()}api/video/$klass/$id/subtitle?token=$token"
     }
 
-    fun getGallery(): List<KeyImage> {
+    fun getGallery(api: ApiClient): List<KeyImage> {
         return if (isLocal)
             video.gallery.map {
                 KeyImage(
@@ -46,7 +46,7 @@ class Video(
             } else video.gallery.map {
             KeyImage(
                 name = it,
-                url = "${ApiClient.getBase()}api/video/$klass/$id/gallery/$it?token=$token",
+                url = "${api.getBase()}api/video/$klass/$id/gallery/$it?token=$token",
                 key = "$klass/$id/gallery/$it"
             )
         }

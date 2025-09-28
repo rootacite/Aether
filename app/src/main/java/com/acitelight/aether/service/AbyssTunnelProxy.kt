@@ -1,8 +1,5 @@
 package com.acitelight.aether.service
 
-
-import android.util.Log
-import com.acitelight.aether.service.AuthManager.db64
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.selects.select
@@ -17,7 +14,8 @@ import kotlin.coroutines.CoroutineContext
 
 @Singleton
 class AbyssTunnelProxy @Inject constructor(
-    private val settingsDataStoreManager: SettingsDataStoreManager
+    private val settingsDataStoreManager: SettingsDataStoreManager,
+    private val authManager: AuthManager
 ) {
     private val coroutineContext: CoroutineContext = Dispatchers.IO
     private var serverHost: String = ""
@@ -48,7 +46,7 @@ class AbyssTunnelProxy @Inject constructor(
 
                     launch {
                         try { handleLocalConnection(client) }
-                        catch (ex: Exception) { /* ignore */ }
+                        catch (_: Exception) { /* ignore */ }
                     }
                 }
             } catch (ex: Exception) {
@@ -72,14 +70,14 @@ class AbyssTunnelProxy @Inject constructor(
         var abyssStream: AbyssStream? = null
         try {
             abyssSocket = Socket(serverHost, serverPort)
-            abyssStream = AbyssStream.create(abyssSocket, db64(settingsDataStoreManager.privateKeyFlow.first()))
+            abyssStream = AbyssStream.create(authManager, abyssSocket, authManager.db64(settingsDataStoreManager.privateKeyFlow.first()))
 
             // concurrently copy in both directions
             val job1 = launch { copyExactSuspend(localIn, abyssStream) }   // local -> abyss
             val job2 = launch { copyFromAbyssToLocal(abyssStream, localOut) } // abyss -> local
 
             // wait for either direction to finish
-            select<Unit> {
+            select {
                 job1.onJoin { /* completed */ }
                 job2.onJoin { /* completed */ }
             }

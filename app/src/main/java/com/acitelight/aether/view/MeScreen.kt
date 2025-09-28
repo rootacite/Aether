@@ -1,7 +1,5 @@
 package com.acitelight.aether.view
 
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -31,25 +28,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.acitelight.aether.service.ApiClient.api
 import com.acitelight.aether.viewModel.MeScreenViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun MeScreen(meScreenViewModel: MeScreenViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<MeScreenViewModel>()) {
-    val context = LocalContext.current
-    var username by meScreenViewModel.username;
-    var privateKey by meScreenViewModel.privateKey;
+    var username by meScreenViewModel.username
+    var privateKey by meScreenViewModel.privateKey
     var url by meScreenViewModel.url
     var cert by meScreenViewModel.cert
 
@@ -203,19 +191,6 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = androidx.hilt.lifecycle.view
                             modifier = Modifier.weight(0.5f).padding(8.dp)
                         ) {
                             Text("Save")
-                        }
-
-                        Button(
-                            onClick = {
-                                meScreenViewModel.viewModelScope.launch {
-                                    Log.i("Delay Analyze", "Start Abyss Hello")
-                                    val h = api!!.hello()
-                                    Log.i("Delay Analyze", "Abyss Hello: ${h.string()}")
-                                }
-                            },
-                            modifier = Modifier.weight(0.5f).padding(8.dp)
-                        ) {
-                            Text("Ping")
                         }
                     }
                 }

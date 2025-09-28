@@ -10,7 +10,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionSpec
+import okhttp3.Cookie
+import okhttp3.CookieJar
 import okhttp3.EventListener
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -24,23 +27,27 @@ import java.security.KeyStore
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import javax.inject.Inject
+import javax.inject.Singleton
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
+@Singleton
+class ApiClient @Inject constructor(
 
-object ApiClient {
+) {
     fun getBase(): String{
         return replaceAbyssProtocol(base)
     }
     private var base: String = ""
-    var domain: String = ""
-    var cert: String = ""
+    private var domain: String = ""
+    private var cert: String = ""
     private val json = Json {
         ignoreUnknownKeys = true
     }
 
-    fun replaceAbyssProtocol(uri: String): String {
+    private fun replaceAbyssProtocol(uri: String): String {
         return uri.replaceFirst("^abyss://".toRegex(), "https://")
     }
 
@@ -52,7 +59,7 @@ object ApiClient {
         }
     }
 
-    fun loadCertificateFromString(pemString: String): X509Certificate {
+    private fun loadCertificateFromString(pemString: String): X509Certificate {
         val certificateFactory = CertificateFactory.getInstance("X.509")
         val decodedPem = pemString
             .replace("-----BEGIN CERTIFICATE-----", "")
@@ -66,7 +73,7 @@ object ApiClient {
         }
     }
 
-    fun createOkHttpClientWithDynamicCert(trustedCert: X509Certificate?): OkHttpClient {
+    private fun createOkHttpClientWithDynamicCert(trustedCert: X509Certificate?): OkHttpClient {
         try {
             val defaultTmFactory = TrustManagerFactory.getInstance(
                 TrustManagerFactory.getDefaultAlgorithm()
@@ -86,7 +93,7 @@ object ApiClient {
                 ).apply {
                     init(keyStore)
                 }
-                tmf.trustManagers.first { it is X509TrustManager } as X509TrustManager
+                tmf.trustManagers.first { i -> i is X509TrustManager } as X509TrustManager
             }
 
             val combinedTm = object : X509TrustManager {
@@ -157,11 +164,22 @@ object ApiClient {
         }
     }
 
-    fun createOkHttp(): OkHttpClient {
+    private fun createOkHttp(): OkHttpClient {
         return if (cert == "")
             if (base.startsWith("abyss://"))
                 OkHttpClient
                     .Builder()
+                    .cookieJar(object : CookieJar {
+                        private val cookieStore = mutableMapOf<HttpUrl, List<Cookie>>()
+
+                        override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+                            cookieStore[url] = cookies
+                        }
+
+                        override fun loadForRequest(url: HttpUrl): List<Cookie> {
+                            return cookieStore[url] ?: emptyList()
+                        }
+                    })
                     .proxy(
                         Proxy(
                             Proxy.Type.HTTP,
@@ -174,6 +192,17 @@ object ApiClient {
             else
                 OkHttpClient
                     .Builder()
+                    .cookieJar(object : CookieJar {
+                        private val cookieStore = mutableMapOf<HttpUrl, List<Cookie>>()
+
+                        override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+                            cookieStore[url] = cookies
+                        }
+
+                        override fun loadForRequest(url: HttpUrl): List<Cookie> {
+                            return cookieStore[url] ?: emptyList()
+                        }
+                    })
                     .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
                     .eventListener(dnsEventListener)
                     .build()
@@ -183,19 +212,21 @@ object ApiClient {
     }
 
     private fun createRetrofit(): Retrofit {
-        val okHttpClient = createOkHttp()
+        client = createOkHttp()
         val b = replaceAbyssProtocol(base)
 
         return Retrofit.Builder()
             .baseUrl(b)
-            .client(okHttpClient)
+            .client(client!!)
             .addConverterFactory(GsonConverterFactory.create())
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
     }
 
-
+    private var client: OkHttpClient? = null
     var api: ApiInterface? = null
+
+    fun getClient() = client!!
 
     suspend fun apply(context: Context, urls: String, crt: String): String? {
         try {
@@ -219,7 +250,7 @@ object ApiClient {
             base = selectedUrl
             withContext(Dispatchers.IO)
             {
-                (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
+                (context as AetherApp).abyssService?.proxy?.config(getBase().toUri().host!!, 4096)
             }
             api = createRetrofit().create(ApiInterface::class.java)
 
@@ -228,7 +259,7 @@ object ApiClient {
             Log.i("Delay Analyze", "Abyss Hello: ${h.string()}")
 
             return base
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             api = null
             base = ""
             domain = ""
@@ -241,7 +272,7 @@ object ApiClient {
         return@withContext try {
             val address = InetAddress.getByName(host)
             address.isReachable(200)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

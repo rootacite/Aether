@@ -1,11 +1,8 @@
 package com.acitelight.aether.viewModel
 
 import android.content.Context
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
@@ -14,7 +11,7 @@ import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.model.Comic
 import com.acitelight.aether.model.ComicRecord
 import com.acitelight.aether.model.ComicRecordDatabase
-import com.acitelight.aether.service.ApiClient.createOkHttp
+import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +23,8 @@ import javax.inject.Inject
 class ComicGridViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val mediaManager: MediaManager,
-    val recentManager: RecentManager
+    val recentManager: RecentManager,
+    val apiClient: ApiClient
 )  : ViewModel()
 {
     var imageLoader: ImageLoader? = null
@@ -38,7 +36,7 @@ class ComicGridViewModel @Inject constructor(
     init {
         imageLoader =  ImageLoader.Builder(context)
             .components {
-                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
             }
             .build()
         db = try{

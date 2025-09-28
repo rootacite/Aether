@@ -1,7 +1,6 @@
 package com.acitelight.aether.view
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,35 +36,34 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global.updateRelate
 import com.acitelight.aether.model.Comic
-import com.acitelight.aether.viewModel.ComicScreenViewModel
 import com.acitelight.aether.viewModel.HomeScreenViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
     homeScreenViewModel: HomeScreenViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<HomeScreenViewModel>(),
-    navController: NavHostController)
-{
+    navController: NavHostController
+) {
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
 
     HorizontalPager(
         state = pagerState,
-        modifier = Modifier.fillMaxSize().background(Color.Black)
-    ){
-        p ->
-        if(p == 0)
-        {
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) { p ->
+        if (p == 0) {
             Column(Modifier.fillMaxHeight()) {
                 Text(
                     text = "Videos",
                     style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(8.dp).align(Alignment.Start)
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(Alignment.Start)
                 )
 
                 HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
@@ -73,27 +71,38 @@ fun HomeScreen(
                 LazyColumn(modifier = Modifier.fillMaxWidth())
                 {
                     items(homeScreenViewModel.recentManager.recentVideo)
-                    {
-                            i ->
+                    { i ->
                         MiniVideoCard(
                             modifier = Modifier
                                 .padding(horizontal = 12.dp),
                             i,
-                            {
-                                updateRelate(homeScreenViewModel.recentManager.recentVideo, i)
+                            apiClient = homeScreenViewModel.apiClient,
+                            imageLoader = homeScreenViewModel.imageLoader!!
+                        )
+                        {
+                            updateRelate(homeScreenViewModel.recentManager.recentVideo, i)
 
-                                val playList = mutableListOf<String>()
-                                val fv = homeScreenViewModel.videoLibrary.classesMap.map { it.value }.flatten()
+                            val playList = mutableListOf<String>()
+                            val fv = homeScreenViewModel.videoLibrary.classesMap.map { it.value }
+                                .flatten()
 
-                                val group = fv.filter { it.klass == i.klass && it.video.group == i.video.group }
-                                for (i in group) {
-                                    playList.add("${i.klass}/${i.id}")
-                                }
+                            val group =
+                                fv.filter { it.klass == i.klass && it.video.group == i.video.group }
+                            for (i in group) {
+                                playList.add("${i.klass}/${i.id}")
+                            }
 
-                                val route = "video_player_route/${(playList.joinToString(",") + "|${i.id}").toHex()}"
-                                navController.navigate(route)
-                            }, homeScreenViewModel.imageLoader!!)
-                        HorizontalDivider(Modifier.padding(vertical = 8.dp).alpha(0.4f), 1.dp, DividerDefaults.color)
+                            val route =
+                                "video_player_route/${(playList.joinToString(",") + "|${i.id}").toHex()}"
+                            navController.navigate(route)
+                        }
+                        HorizontalDivider(
+                            Modifier
+                                .padding(vertical = 8.dp)
+                                .alpha(0.4f),
+                            1.dp,
+                            DividerDefaults.color
+                        )
                     }
                 }
             }
@@ -102,7 +111,9 @@ fun HomeScreen(
                 Text(
                     text = "Comics",
                     style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(8.dp).align(Alignment.Start)
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(Alignment.Start)
                 )
 
                 HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
@@ -115,8 +126,7 @@ fun HomeScreen(
                 )
                 {
                     items(homeScreenViewModel.recentManager.recentComic)
-                    {
-                            comic ->
+                    { comic ->
                         ComicCardRecent(comic, navController, homeScreenViewModel)
                     }
                 }
@@ -138,7 +148,7 @@ fun ComicCardRecent(
             .fillMaxWidth()
             .wrapContentHeight(),
         onClick = {
-            val route = "comic_grid_route/${"${comic.id}".toHex()}"
+            val route = "comic_grid_route/${comic.id.toHex()}"
             navController.navigate(route)
         }
     ) {
@@ -149,7 +159,7 @@ fun ComicCardRecent(
             Box(modifier = Modifier.fillMaxSize()) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(comic.getPage(0))
+                        .data(comic.getPage(0, homeScreenViewModel.apiClient))
                         .memoryCacheKey("${comic.id}/${0}")
                         .diskCacheKey("${comic.id}/${0}")
                         .build(),

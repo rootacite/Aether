@@ -1,28 +1,24 @@
 package com.acitelight.aether.viewModel
 
 import android.content.Context
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.model.Comic
-import com.acitelight.aether.model.ComicResponse
-import com.acitelight.aether.service.ApiClient.createOkHttp
+import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.MediaManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ComicScreenViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    val mediaManager: MediaManager
+    val mediaManager: MediaManager,
+    val apiClient: ApiClient
 ) : ViewModel() {
 
     var imageLoader: ImageLoader? = null;
@@ -54,7 +50,7 @@ class ComicScreenViewModel @Inject constructor(
     init {
         imageLoader =  ImageLoader.Builder(context)
             .components {
-                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
             }
             .build()
 

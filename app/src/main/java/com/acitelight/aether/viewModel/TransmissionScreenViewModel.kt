@@ -9,7 +9,7 @@ import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoDownloadItemState
-import com.acitelight.aether.service.ApiClient.createOkHttp
+import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.VideoLibrary
@@ -20,7 +20,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -29,6 +28,7 @@ class TransmissionScreenViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val videoLibrary: VideoLibrary,
     val mediaManager: MediaManager,
+    val apiClient: ApiClient
 ) : ViewModel() {
     var imageLoader: ImageLoader? = null
     val downloads: SnapshotStateList<VideoDownloadItemState> = mutableStateListOf()
@@ -205,7 +205,7 @@ class TransmissionScreenViewModel @Inject constructor(
     fun pause(id: Int) = fetchManager.pause(id)
     fun resume(id: Int) = fetchManager.resume(id)
     fun cancel(id: Int) = fetchManager.cancel(id)
-    fun delete(id: Int, deleteFile: Boolean = true) {
+    fun delete(id: Int) {
         fetchManager.delete(id) {
             viewModelScope.launch(Dispatchers.Main) { removeOnMain(id) }
         }
@@ -218,7 +218,7 @@ class TransmissionScreenViewModel @Inject constructor(
 
     init {
         imageLoader = ImageLoader.Builder(context).components {
-            add(OkHttpNetworkFetcherFactory(createOkHttp()))
+            add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
         }.build()
 
         viewModelScope.launch {

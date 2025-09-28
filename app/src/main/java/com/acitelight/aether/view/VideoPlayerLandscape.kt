@@ -557,7 +557,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                     LazyColumn(contentPadding = PaddingValues(vertical = 4.dp)) {
                         items(videoPlayerViewModel.videos) { item ->
                             MiniPlaylistCard(Modifier.padding(4.dp), video = item, imageLoader = videoPlayerViewModel.imageLoader!!,
-                                selected = id == item.id)
+                                selected = id == item.id, apiClient = videoPlayerViewModel.apiClient)
                             {
                                 if (name == item.video.name)
                                     return@MiniPlaylistCard

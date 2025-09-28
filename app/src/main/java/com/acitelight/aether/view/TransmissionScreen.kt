@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -40,7 +39,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import androidx.room.util.TableInfo
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global.updateRelate
@@ -120,7 +118,7 @@ fun TransmissionScreen(
                         for (i in downloadToGroup(
                             item,
                             downloads
-                        )) transmissionScreenViewModel.delete(i.id, true)
+                        )) transmissionScreenViewModel.delete(i.id)
                     }
                 )
             }
@@ -247,7 +245,7 @@ private fun VideoDownloadCard(
                     else {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
-                                .data(video.getCover())
+                                .data(video.getCover(viewModel.apiClient))
                                 .memoryCacheKey("${model.klass}/${model.vid}/cover")
                                 .diskCacheKey("${model.klass}/${model.vid}/cover")
                                 .build(),

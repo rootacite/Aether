@@ -245,22 +245,25 @@ fun VideoPlayerPortal(
                         modifier = Modifier
                             .padding(horizontal = 12.dp),
                         i,
-                        {
-                            videoPlayerViewModel.isPlaying = false
-                            videoPlayerViewModel.player?.pause()
+                        apiClient = videoPlayerViewModel.apiClient,
+                        imageLoader = videoPlayerViewModel.imageLoader!!
+                    ) {
+                        videoPlayerViewModel.isPlaying = false
+                        videoPlayerViewModel.player?.pause()
 
-                            val playList = mutableListOf<String>()
-                            val fv = videoPlayerViewModel.videoLibrary.classesMap.map { it.value }.flatten()
+                        val playList = mutableListOf<String>()
+                        val fv =
+                            videoPlayerViewModel.videoLibrary.classesMap.map { it.value }.flatten()
 
-                            val group = fv.filter { it.klass == i.klass && it.video.group == i.video.group }
-                            for (i in group) {
-                                playList.add("${i.klass}/${i.id}")
-                            }
+                        val group =
+                            fv.filter { it.klass == i.klass && it.video.group == i.video.group }
+                        for (i in group) {
+                            playList.add("${i.klass}/${i.id}")
+                        }
 
-                            val route = "video_player_route/${playList.joinToString(",").toHex()}"
-                            navController.navigate(route)
-                        }, videoPlayerViewModel.imageLoader!!
-                    )
+                        val route = "video_player_route/${playList.joinToString(",").toHex()}"
+                        navController.navigate(route)
+                    }
                     HorizontalDivider(
                         Modifier
                             .padding(vertical = 8.dp)

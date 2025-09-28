@@ -18,10 +18,15 @@ import java.lang.reflect.Proxy
 import java.net.InetSocketAddress
 import java.security.PrivateKey
 import java.security.Signature
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object AuthManager {
+@Singleton
+class AuthManager @Inject constructor(
+    private val apiClient: ApiClient
+) {
     suspend fun fetchToken(username: String, privateKey: String): String? {
-        val api = ApiClient.api
+        val api = apiClient.api
         var challengeBase64 = ""
 
         try{

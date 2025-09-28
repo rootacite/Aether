@@ -89,7 +89,7 @@ fun ComicPageView(
             ) { page ->
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(it.getPage(page))
+                        .data(it.getPage(page, comicPageViewModel.apiClient))
                         .memoryCacheKey("${it.id}/${page}")
                         .diskCacheKey("${it.id}/${page}")
                         .build(),
@@ -252,7 +252,7 @@ fun ComicPageView(
                                 {
                                     AsyncImage(
                                         model = ImageRequest.Builder(LocalContext.current)
-                                            .data(it.getPage(r))
+                                            .data(it.getPage(r, comicPageViewModel.apiClient))
                                             .memoryCacheKey("${it.id}/${r}")
                                             .diskCacheKey("${it.id}/${r}")
                                             .build(),

@@ -1,25 +1,19 @@
 package com.acitelight.aether.viewModel
 
-import android.app.Application
 import android.content.Context
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.Global
 import com.acitelight.aether.model.Video
-import com.acitelight.aether.service.ApiClient.createOkHttp
+import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.MediaManager
-import com.acitelight.aether.service.RecentManager
 import com.acitelight.aether.service.VideoLibrary
 import com.tonyodev.fetch2.Status
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +25,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.File
 import javax.inject.Inject
-import javax.inject.Singleton
 
 
 @HiltViewModel
@@ -39,12 +32,12 @@ class VideoScreenViewModel @Inject constructor(
     val fetchManager: FetchManager,
     @ApplicationContext val context: Context,
     val mediaManager: MediaManager,
-    val recentManager: RecentManager,
-    val videoLibrary: VideoLibrary
+    val videoLibrary: VideoLibrary,
+    val apiClient: ApiClient
 ) : ViewModel() {
     private val _tabIndex = mutableIntStateOf(0)
     val tabIndex: State<Int> = _tabIndex
-    var imageLoader: ImageLoader? = null;
+    var imageLoader: ImageLoader? = null
     var menuVisibility = mutableStateOf(false)
     var searchFilter = mutableStateOf("")
     var doneInit = mutableStateOf(false)
@@ -79,7 +72,7 @@ class VideoScreenViewModel @Inject constructor(
         else {
             videoLibrary.classes.add("Offline")
             videoLibrary.updatingMap[0] = true
-            videoLibrary.classesMap["Offline"] = mutableStateListOf<Video>()
+            videoLibrary.classesMap["Offline"] = mutableStateListOf()
 
             val downloaded = fetchManager.getAllDownloadsAsync().filter {
                 it.status == Status.COMPLETED &&
@@ -101,7 +94,7 @@ class VideoScreenViewModel @Inject constructor(
     fun setTabIndex(index: Int) {
         viewModelScope.launch()
         {
-            _tabIndex.intValue = index;
+            _tabIndex.intValue = index
             if (videoLibrary.updatingMap[index] == true) return@launch
 
             videoLibrary.updatingMap[index] = true
@@ -126,7 +119,7 @@ class VideoScreenViewModel @Inject constructor(
     init {
         imageLoader = ImageLoader.Builder(context)
             .components {
-                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
             }
             .build()
 

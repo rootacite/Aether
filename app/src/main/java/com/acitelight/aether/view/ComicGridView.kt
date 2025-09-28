@@ -32,7 +32,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -157,7 +156,6 @@ fun ComicGridView(
                         comicGridViewModel.updateProcess(comicId.hexToString())
                         {
                             if (record != null) {
-                                val k = comic!!.getPageChapterIndex(record!!.position)
                                 val route = "comic_page_route/${comic!!.id.toHex()}/${
                                     record!!.position
                                 }"
@@ -248,7 +246,7 @@ fun ChapterCard(
                 {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data(comic.getPage(c.page))
+                            .data(comic.getPage(c.page, comicGridViewModel.apiClient))
                             .memoryCacheKey("${comic.id}/${c.page}")
                             .diskCacheKey("${comic.id}/${c.page}")
                             .build(),
@@ -300,13 +298,13 @@ fun ChapterCard(
                             .padding(horizontal = 6.dp),
                         onClick = {
                             val route =
-                                "comic_page_route/${"${comic.id}".toHex()}/${comic.getPageIndex(r)}"
+                                "comic_page_route/${comic.id.toHex()}/${comic.getPageIndex(r)}"
                             navController.navigate(route)
                         }
                     ) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
-                                .data(comic.getPage(r))
+                                .data(comic.getPage(r, comicGridViewModel.apiClient))
                                 .memoryCacheKey("${comic.id}/${r}")
                                 .diskCacheKey("${comic.id}/${r}")
                                 .build(),

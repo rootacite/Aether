@@ -1,45 +1,37 @@
 package com.acitelight.aether.viewModel
 
-import android.app.Application
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.acitelight.aether.AetherApp
 import com.acitelight.aether.Global
-import com.acitelight.aether.dataStore
-import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.AuthManager
 import com.acitelight.aether.service.MediaManager
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import javax.inject.Inject
-import com.acitelight.aether.service.*
+import com.acitelight.aether.service.SettingsDataStoreManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 @HiltViewModel
 class MeScreenViewModel @Inject constructor(
     private val settingsDataStoreManager: SettingsDataStoreManager,
     @ApplicationContext private val context: Context,
-    val mediaManager: MediaManager
+    val mediaManager: MediaManager,
+    private val apiClient: ApiClient,
+    private val authManager: AuthManager
 ) : ViewModel() {
 
-    val username = mutableStateOf("");
+    val username = mutableStateOf("")
     val privateKey = mutableStateOf("")
-    val url = mutableStateOf("");
+    val url = mutableStateOf("")
     val cert = mutableStateOf("")
 
     val uss = settingsDataStoreManager.useSelfSignedFlow
@@ -54,10 +46,10 @@ class MeScreenViewModel @Inject constructor(
             if(username.value=="" || privateKey.value=="" || url.value=="") return@launch
 
             try{
-                val usedUrl = ApiClient.apply(context, url.value, if(uss.first()) cert.value else "")
+                apiClient.apply(context, url.value, if(uss.first()) cert.value else "")
 
                 if (mediaManager.token == "null")
-                    mediaManager.token = AuthManager.fetchToken(
+                    mediaManager.token = authManager.fetchToken(
                         username.value,
                         settingsDataStoreManager.privateKeyFlow.first()
                     )!!
@@ -65,7 +57,7 @@ class MeScreenViewModel @Inject constructor(
                 Global.loggedIn = true
                 withContext(Dispatchers.IO)
                 {
-                    (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
+                    (context as AetherApp).abyssService?.proxy?.config(apiClient.getBase().toUri().host!!, 4096)
                     context.abyssService?.downloader?.init()
                 }
             }catch(e: Exception)
@@ -100,10 +92,10 @@ class MeScreenViewModel @Inject constructor(
             if (u == "" || p == "" || us == "") return@launch
 
             try {
-                val usedUrl = ApiClient.apply(context, u, if(uss.first()) c else "")
-                (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
+                val usedUrl = apiClient.apply(context, u, if(uss.first()) c else "")
+                (context as AetherApp).abyssService?.proxy?.config(apiClient.getBase().toUri().host!!, 4096)
                 context.abyssService?.downloader?.init()
-                mediaManager.token = AuthManager.fetchToken(
+                mediaManager.token = authManager.fetchToken(
                     us,
                     p
                 )!!
@@ -133,7 +125,7 @@ class MeScreenViewModel @Inject constructor(
             if (u == "" || p == "" || ur == "") return@launch
 
             try {
-                mediaManager.token = AuthManager.fetchToken(
+                mediaManager.token = authManager.fetchToken(
                     u,
                     p
                 )!!
@@ -141,7 +133,7 @@ class MeScreenViewModel @Inject constructor(
                 Global.loggedIn = true
                 withContext(Dispatchers.IO)
                 {
-                    (context as AetherApp).abyssService?.proxy?.config(ApiClient.getBase().toUri().host!!, 4096)
+                    (context as AetherApp).abyssService?.proxy?.config(apiClient.getBase().toUri().host!!, 4096)
                     context.abyssService?.downloader?.init()
                 }
                 Toast.makeText(context, "Account Updated", Toast.LENGTH_SHORT).show()

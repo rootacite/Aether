@@ -1,8 +1,5 @@
 package com.acitelight.aether.service
 
-import com.acitelight.aether.service.AuthManager.db64
-import com.acitelight.aether.service.AuthManager.signChallenge
-import com.acitelight.aether.service.AuthManager.signChallengeByte
 import kotlinx.coroutines.*
 import java.io.InputStream
 import java.io.OutputStream
@@ -44,7 +41,7 @@ class AbyssStream private constructor(
          * Create and perform handshake on an already-connected socket.
          * If privateKeyRaw is provided, it must be 32 bytes.
          */
-        suspend fun create(socket: Socket, privateKeyRaw: ByteArray? = null): AbyssStream = withContext(Dispatchers.IO) {
+        suspend fun create(authManager: AuthManager, socket: Socket, privateKeyRaw: ByteArray? = null): AbyssStream = withContext(Dispatchers.IO) {
             if (!socket.isConnected) throw IllegalArgumentException("socket is not connected")
             val inStream = socket.getInputStream()
             val outStream = socket.getOutputStream()
@@ -69,7 +66,7 @@ class AbyssStream private constructor(
 
             val ch = ByteArray(32)
             readExact(inStream, ch, 0, 32)
-            val signed = signChallengeByte(localPriv, ch)
+            val signed = authManager.signChallengeByte(localPriv, ch)
             writeExact(outStream, signed, 0, signed.size)
             readExact(inStream, ch, 0, 16)
 
@@ -222,7 +219,7 @@ class AbyssStream private constructor(
         val header = ByteArray(4)
         try {
             readExact(input, header, 0, 4)
-        } catch (e: EOFException) {
+        } catch (_: EOFException) {
             return null
         }
         val payloadLen = ByteBuffer.wrap(header).int and 0xffffffff.toInt()

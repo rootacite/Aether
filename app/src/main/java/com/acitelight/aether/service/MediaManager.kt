@@ -16,7 +16,8 @@ import javax.inject.Singleton
 @Singleton
 class MediaManager @Inject constructor(
     val fetchManager: FetchManager,
-    @ApplicationContext val context: Context
+    @ApplicationContext val context: Context,
+    private val apiClient: ApiClient
 )
 {
     var token: String = "null"
@@ -25,7 +26,7 @@ class MediaManager @Inject constructor(
     {
         try
         {
-            val j = ApiClient.api!!.getVideoClasses(token)
+            val j = apiClient.api!!.getVideoClasses(token)
             return j.toList()
         }catch(_: Exception)
         {
@@ -37,7 +38,7 @@ class MediaManager @Inject constructor(
     {
         try
         {
-            val j = ApiClient.api!!.queryVideoClasses(klass, token)
+            val j = apiClient.api!!.queryVideoClasses(klass, token)
             return j.toList()
         }catch(_: Exception)
         {
@@ -57,7 +58,7 @@ class MediaManager @Inject constructor(
         }
 
         try {
-            val j = ApiClient.api!!.queryVideo(klass, id, token)
+            val j = apiClient.api!!.queryVideo(klass, id, token)
             return Video(klass = klass, id = id, token=token, isLocal = false, localBase = "", video = j)
         }catch (_: Exception)
         {
@@ -83,7 +84,7 @@ class MediaManager @Inject constructor(
         }
 
         try {
-            val j = ApiClient.api!!.queryVideo(klass, id, token)
+            val j = apiClient.api!!.queryVideo(klass, id, token)
             return Video(klass = klass, id = id, token=token, isLocal = false, localBase = "", video = j)
         }catch (_: Exception)
         {
@@ -133,7 +134,7 @@ class MediaManager @Inject constructor(
             }
 
             val remoteVideos = if (remoteIds.isNotEmpty()) {
-                val j = ApiClient.api!!.queryVideoBulk(klass, remoteIds, token)
+                val j = apiClient.api!!.queryVideoBulk(klass, remoteIds, token)
                 j.zip(remoteIds).map {
                     Video(
                         klass = klass,
@@ -157,7 +158,7 @@ class MediaManager @Inject constructor(
     suspend fun listComics() : List<String>
     {
         try{
-            val j = ApiClient.api!!.getComics(token)
+            val j = apiClient.api!!.getComics(token)
             return j
         }catch (_: Exception)
         {
@@ -168,7 +169,7 @@ class MediaManager @Inject constructor(
     suspend fun queryComicInfoSingle(id: String) : Comic?
     {
         try{
-            val j = ApiClient.api!!.queryComicInfo(id, token)
+            val j = apiClient.api!!.queryComicInfo(id, token)
             return Comic(id = id, comic = j, token = token)
         }catch (_: Exception)
         {
@@ -179,7 +180,7 @@ class MediaManager @Inject constructor(
     suspend fun queryComicInfoBulk(id: List<String>) : List<Comic>?
     {
         try{
-            val j = ApiClient.api!!.queryComicInfoBulk(id, token)
+            val j = apiClient.api!!.queryComicInfoBulk(id, token)
             return j.zip(id).map { Comic(id = it.second, comic = it.first, token = token) }
         }catch (_: Exception)
         {
@@ -190,7 +191,7 @@ class MediaManager @Inject constructor(
     suspend fun postBookmark(id: String, bookMark: BookMark): Boolean
     {
         try{
-            ApiClient.api!!.postBookmark(id, token, bookMark)
+            apiClient.api!!.postBookmark(id, token, bookMark)
             return true
         }catch (_: Exception)
         {

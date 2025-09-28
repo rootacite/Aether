@@ -8,17 +8,17 @@ class Comic(
     val token: String
 )
 {
-    fun getPage(pageNumber: Int): String
+    fun getPage(pageNumber: Int, api: ApiClient): String
     {
-        return "${ApiClient.getBase()}api/image/$id/${comic.list[pageNumber]}?token=$token"
+        return "${api.getBase()}api/image/$id/${comic.list[pageNumber]}?token=$token"
     }
 
-    fun getPage(pageName: String): String?
+    fun getPage(pageName: String, api: ApiClient): String?
     {
         val v = comic.list.indexOf(pageName)
         if(v >= 0)
         {
-            return getPage(v)
+            return getPage(v, api)
         }
         return null
     }
@@ -33,7 +33,7 @@ class Comic(
         var v = comic.list.indexOf(pageName)
         if(v >= 0)
         {
-            var r: Int = 1
+            var r = 1
             v+=1
             while(v < comic.list.size && !comic.bookmarks.any{
                 x -> x.page == comic.list[v]

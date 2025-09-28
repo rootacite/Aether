@@ -368,7 +368,7 @@ fun VideoCard(
 
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(video.getCover())
+                        .data(video.getCover(videoScreenViewModel.apiClient))
                         .memoryCacheKey("${video.klass}/${video.id}/cover")
                         .diskCacheKey("${video.klass}/${video.id}/cover")
                         .build(),

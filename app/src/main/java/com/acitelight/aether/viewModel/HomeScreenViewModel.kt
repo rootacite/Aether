@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import com.acitelight.aether.service.ApiClient.createOkHttp
+import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.RecentManager
 import com.acitelight.aether.service.VideoLibrary
 import kotlinx.coroutines.launch
@@ -19,6 +19,7 @@ class HomeScreenViewModel @Inject constructor(
     val recentManager: RecentManager,
     @ApplicationContext val context: Context,
     val videoLibrary: VideoLibrary,
+    val apiClient: ApiClient
 ) : ViewModel()
 {
     var imageLoader: ImageLoader? = null
@@ -26,7 +27,7 @@ class HomeScreenViewModel @Inject constructor(
     init{
         imageLoader =  ImageLoader.Builder(context)
             .components {
-                add(OkHttpNetworkFetcherFactory(createOkHttp()))
+                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
             }
             .build()
         viewModelScope.launch {
