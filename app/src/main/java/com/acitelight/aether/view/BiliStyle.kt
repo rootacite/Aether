@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -63,9 +64,13 @@ fun BiliMiniSlider(
     modifier: Modifier = Modifier,
     value: Float,
     onValueChange: (Float) -> Unit,
-    valueRange: ClosedFloatingPointRange<Float> = 0f..1f
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    colors: SliderColors = SliderDefaults.colors(
+        thumbColor = Color(0xFFFFFFFF),
+        activeTrackColor = MaterialTheme.colorScheme.primary,
+        inactiveTrackColor = Color.LightGray.copy(alpha = 0.4f)
+    )
 ) {
-    val colorScheme = MaterialTheme.colorScheme
     val trackHeight = 3.dp
 
     Slider(
@@ -73,11 +78,8 @@ fun BiliMiniSlider(
         onValueChange = onValueChange,
         valueRange = valueRange,
         modifier = modifier,
-        colors = SliderDefaults.colors(
-            thumbColor = Color(0xFFFFFFFF),
-            activeTrackColor = colorScheme.primary,
-            inactiveTrackColor = Color.LightGray.copy(alpha = 0.4f)
-        ),
+        colors = colors,
+        enabled = false,
         thumb = {
 
         },
@@ -86,14 +88,14 @@ fun BiliMiniSlider(
                 Modifier
                     .height(trackHeight)
                     .fillMaxWidth()
-                    .background(Color.LightGray.copy(alpha = 0.3f), RoundedCornerShape(50))
+                    .background(colors.inactiveTrackColor, RoundedCornerShape(50))
             ) {
                 Box(
                     Modifier
                         .align(Alignment.CenterStart)
                         .fillMaxWidth(value)
                         .fillMaxHeight()
-                        .background(colorScheme.primary, RoundedCornerShape(50))
+                        .background(colors.activeTrackColor, RoundedCornerShape(50))
                 )
             }
         }

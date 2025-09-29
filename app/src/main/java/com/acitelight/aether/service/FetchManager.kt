@@ -77,6 +77,10 @@ class FetchManager @Inject constructor(
         fetch?.resume(id)
     }
 
+    fun retry(id: Int) {
+        fetch?.retry(id)
+    }
+
     fun cancel(id: Int) {
         fetch?.cancel(id)
     }

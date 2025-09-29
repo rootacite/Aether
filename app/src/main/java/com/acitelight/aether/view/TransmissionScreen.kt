@@ -84,15 +84,27 @@ fun TransmissionScreen(
             maxLines = 1
         )
 
+        val downloading = downloads.filter { it.status == Status.DOWNLOADING }
+        BiliMiniSlider(
+            value = if (downloading.sumOf { it.totalBytes } == 0L) 1f else downloading.sumOf { it.downloadedBytes } / downloading.sumOf { it.totalBytes }.toFloat(),
+            modifier = Modifier
+                .height(6.dp)
+                .align(Alignment.End)
+                .fillMaxWidth(),
+            onValueChange = {
+
+            }
+        )
+
         HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
 
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         )
         {
-            items(downloads.filter { it.type == "main" }, key = { it.id }) { item ->
-                VideoDownloadCard(
+            items(downloads.filter { it.type == "main" }.sortedBy { it.status == Status.COMPLETED }, key = { it.id }) { item ->
+                VideoDownloadCardMini(
                     navigator = navigator,
                     viewModel = transmissionScreenViewModel,
                     model = item,
@@ -112,240 +124,21 @@ fun TransmissionScreen(
                         for (i in downloadToGroup(
                             item,
                             downloads
-                        )) transmissionScreenViewModel.cancel(i.id)
+                        )) transmissionScreenViewModel.delete(i.id)
                     },
                     onDelete = {
                         for (i in downloadToGroup(
                             item,
                             downloads
                         )) transmissionScreenViewModel.delete(i.id)
+                    },
+                    onRetry = {
+                        for (i in downloadToGroup(
+                            item,
+                            downloads
+                        )) transmissionScreenViewModel.retry(i.id)
                     }
                 )
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun VideoDownloadCard(
-    navigator: NavHostController,
-    viewModel: TransmissionScreenViewModel,
-    model: VideoDownloadItemState,
-    onPause: () -> Unit,
-    onResume: () -> Unit,
-    onCancel: () -> Unit,
-    onDelete: () -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .background(Color.Transparent)
-            .clickable(onClick = {
-                if (model.status == Status.COMPLETED) {
-                    viewModel.viewModelScope.launch(Dispatchers.IO)
-                    {
-                        val downloaded = viewModel.fetchManager.getAllDownloadsAsync().filter {
-                            it.status == Status.COMPLETED && it.extras.getString(
-                                "class",
-                                ""
-                            ) != "comic" && it.extras.getString(
-                                "type",
-                                ""
-                            ) == "main"
-                        }
-
-                        val jsonQuery = downloaded.map {
-                            File(
-                                viewModel.context.getExternalFilesDir(null),
-                                "videos/${
-                                    it.extras.getString(
-                                        "class",
-                                        ""
-                                    )
-                                }/${it.extras.getString("id", "")}/summary.json"
-                            ).readText()
-                        }
-                            .map {
-                                Json.decodeFromString<Video>(it)
-                                    .toLocal(viewModel.context.getExternalFilesDir(null)!!.path)
-                            }
-
-                        updateRelate(
-                            jsonQuery,
-                            jsonQuery.first { it.id == model.vid && it.klass == model.klass }
-                        )
-
-                        val playList = mutableListOf<String>()
-                        val fv = viewModel.videoLibrary.classesMap.map { it.value }.flatten()
-                        val video = fv.firstOrNull { it.klass == model.klass && it.id == model.vid }
-
-                        if (video != null) {
-                            val group = fv.filter { it.klass == video.klass && it.video.group == video.video.group }
-                            for (i in group.sortedWith(compareBy(naturalOrder()) { it.video.name })) {
-                                playList.add("${i.klass}/${i.id}")
-                            }
-                        }
-
-                        val route = "video_player_route/${(playList.joinToString(",") + "|${model.vid}").toHex()}"
-                        withContext(Dispatchers.Main) {
-                            navigator.navigate(route)
-                        }
-                    }
-                }
-            })
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = model.fileName, style = MaterialTheme.typography.titleMedium)
-                    // Text(text = model.filePath, style = MaterialTheme.typography.titleSmall)
-                }
-
-            }
-
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 5.dp)
-            )
-            {
-                Card(
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.align(Alignment.CenterStart)
-                ) {
-                    val video = viewModel.modelToVideo(model)
-
-                    if (video == null)
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(
-                                    File(
-                                        viewModel.context.getExternalFilesDir(null),
-                                        "videos/${model.klass}/${model.vid}/cover.jpg"
-                                    )
-                                )
-                                .memoryCacheKey("${model.klass}/${model.vid}/cover")
-                                .diskCacheKey("${model.klass}/${model.vid}/cover")
-                                .build(),
-                            contentDescription = null,
-                            modifier = Modifier.height(100.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    else {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(video.getCover(viewModel.apiClient))
-                                .memoryCacheKey("${model.klass}/${model.vid}/cover")
-                                .diskCacheKey("${model.klass}/${model.vid}/cover")
-                                .build(),
-                            contentDescription = null,
-                            modifier = Modifier.height(100.dp),
-                            contentScale = ContentScale.Fit,
-                            imageLoader = viewModel.imageLoader!!
-                        )
-                    }
-                }
-
-                Column(Modifier.align(Alignment.BottomEnd)) {
-                    Text(
-                        text = "${model.progress}%",
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .align(Alignment.End)
-                    )
-
-                    Text(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .align(Alignment.End),
-                        text = "%.2f MB/%.2f MB".format(
-                            model.downloadedBytes / (1024.0 * 1024.0),
-                            model.totalBytes / (1024.0 * 1024.0)
-                        ),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                    )
-                }
-            }
-
-
-            // progress bar
-            LinearProgressIndicator(
-                progress = { abs(model.progress).coerceIn(0, 100) / 100f },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 8.dp),
-                color = ProgressIndicatorDefaults.linearColor,
-                trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
-            )
-
-            // action buttons
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                when (model.status) {
-                    Status.DOWNLOADING -> {
-                        Button(onClick = onPause) {
-                            Icon(imageVector = Icons.Default.Pause, contentDescription = "Pause")
-                            Text(text = " Pause", modifier = Modifier.padding(start = 6.dp))
-                        }
-                        Button(onClick = onCancel) {
-                            Icon(imageVector = Icons.Default.Stop, contentDescription = "Cancel")
-                            Text(text = " Cancel", modifier = Modifier.padding(start = 6.dp))
-                        }
-                    }
-
-                    Status.PAUSED, Status.QUEUED -> {
-                        Button(onClick = onResume) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Resume"
-                            )
-                            Text(text = " Resume", modifier = Modifier.padding(start = 6.dp))
-                        }
-                        Button(onClick = onCancel) {
-                            Icon(imageVector = Icons.Default.Stop, contentDescription = "Cancel")
-                            Text(text = " Cancel", modifier = Modifier.padding(start = 6.dp))
-                        }
-                    }
-
-                    Status.COMPLETED -> {
-                        Button(onClick = onDelete) {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
-                            Text(text = " Delete", modifier = Modifier.padding(start = 6.dp))
-                        }
-                    }
-
-                    else -> {
-                        // for FAILED, CANCELLED, REMOVED etc.
-                        Button(onClick = onResume) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Retry"
-                            )
-                            Text(text = " Retry", modifier = Modifier.padding(start = 6.dp))
-                        }
-                        Button(onClick = onDelete) {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
-                            Text(text = " Delete", modifier = Modifier.padding(start = 6.dp))
-                        }
-                    }
-                }
             }
         }
     }

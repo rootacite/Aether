@@ -231,6 +231,7 @@ class ApiClient @Inject constructor(
             }
 
             if (selectedUrl == null) {
+                client = createOkHttp()
                 throw Exception("No reachable URL found")
             }
 
@@ -242,11 +243,6 @@ class ApiClient @Inject constructor(
                 (context as AetherApp).abyssService?.proxy?.config(getBase().toUri().host!!, 4096)
             }
             api = createRetrofit().create(ApiInterface::class.java)
-
-            Log.i("Delay Analyze", "Start Abyss Hello")
-            val h = api!!.hello()
-            Log.i("Delay Analyze", "Abyss Hello: ${h.string()}")
-
             return base
         } catch (_: Exception) {
             api = null

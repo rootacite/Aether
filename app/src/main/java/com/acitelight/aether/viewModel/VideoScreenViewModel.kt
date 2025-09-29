@@ -46,8 +46,9 @@ class VideoScreenViewModel @Inject constructor(
         fetchManager.configured.filter { it }.first()
 
         if (Global.loggedIn) {
-            videoLibrary.classes.addAll(mediaManager.listVideoKlasses())
-            videoLibrary.classes.distinct()
+            videoLibrary.classes.addAll(
+                mediaManager.listVideoKlasses().filter { it !in videoLibrary.classes }
+            )
 
             if(videoLibrary.classes.isEmpty())
                 return

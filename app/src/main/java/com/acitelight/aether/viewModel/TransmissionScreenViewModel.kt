@@ -5,21 +5,28 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.acitelight.aether.Global.updateRelate
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoDownloadItemState
 import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.VideoLibrary
+import com.acitelight.aether.view.toHex
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchListener
+import com.tonyodev.fetch2.Status
 import com.tonyodev.fetch2core.DownloadBlock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -128,7 +135,7 @@ class TransmissionScreenViewModel @Inject constructor(
 
         val state = downloadToState(download)
 
-        if (videoLibrary.classes.contains(state.klass)) videoLibrary.classes.add(state.klass)
+        if (!videoLibrary.classes.contains(state.klass)) videoLibrary.classes.add(state.klass)
 
         if (!videoLibrary.classesMap.containsKey(state.klass)) videoLibrary.classesMap[state.klass] =
             mutableStateListOf()
@@ -204,7 +211,7 @@ class TransmissionScreenViewModel @Inject constructor(
     // UI actions delegated to FetchManager
     fun pause(id: Int) = fetchManager.pause(id)
     fun resume(id: Int) = fetchManager.resume(id)
-    fun cancel(id: Int) = fetchManager.cancel(id)
+    fun retry(id: Int) = fetchManager.retry(id)
     fun delete(id: Int) {
         fetchManager.delete(id) {
             viewModelScope.launch(Dispatchers.Main) { removeOnMain(id) }
@@ -214,6 +221,56 @@ class TransmissionScreenViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         fetchManager.removeListener()
+    }
+
+    suspend fun playStart(model: VideoDownloadItemState, navigator: NavHostController)
+    {
+        val downloaded = fetchManager.getAllDownloadsAsync().filter {
+            it.status == Status.COMPLETED && it.extras.getString(
+                "class",
+                ""
+            ) != "comic" && it.extras.getString(
+                "type",
+                ""
+            ) == "main"
+        }
+
+        val jsonQuery = downloaded.map {
+            File(
+                context.getExternalFilesDir(null),
+                "videos/${
+                    it.extras.getString(
+                        "class",
+                        ""
+                    )
+                }/${it.extras.getString("id", "")}/summary.json"
+            ).readText()
+        }
+            .map {
+                Json.decodeFromString<Video>(it)
+                    .toLocal(context.getExternalFilesDir(null)!!.path)
+            }
+
+        updateRelate(
+            jsonQuery,
+            jsonQuery.first { it.id == model.vid && it.klass == model.klass }
+        )
+
+        val playList = mutableListOf<String>()
+        val fv = videoLibrary.classesMap.map { it.value }.flatten()
+        val video = fv.firstOrNull { it.klass == model.klass && it.id == model.vid }
+
+        if (video != null) {
+            val group = fv.filter { it.klass == video.klass && it.video.group == video.video.group }
+            for (i in group.sortedWith(compareBy(naturalOrder()) { it.video.name })) {
+                playList.add("${i.klass}/${i.id}")
+            }
+        }
+
+        val route = "video_player_route/${(playList.joinToString(",") + "|${model.vid}").toHex()}"
+        withContext(Dispatchers.Main) {
+            navigator.navigate(route)
+        }
     }
 
     init {
