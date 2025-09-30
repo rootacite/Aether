@@ -1,4 +1,4 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,6 +29,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient
+import com.acitelight.aether.view.pages.formatTime
 
 
 @Composable

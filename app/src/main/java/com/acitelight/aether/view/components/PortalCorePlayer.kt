@@ -1,9 +1,11 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.components
 
 import android.app.Activity
 import android.content.Context
 import android.media.AudioManager
 import android.view.View
+import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -51,11 +53,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.acitelight.aether.view.pages.formatTime
+import com.acitelight.aether.view.pages.moveBrit
 import com.acitelight.aether.viewModel.VideoPlayerViewModel
 import kotlin.math.abs
 
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewModel, cover: Float) {
     val exoPlayer: ExoPlayer = videoPlayerViewModel.player!!
@@ -173,7 +177,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                 }
         )
 
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = videoPlayerViewModel.isLongPressing,
             enter = slideInVertically(initialOffsetY = { fullHeight -> -fullHeight }),
             exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
@@ -212,7 +216,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
             }
         }
 
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = videoPlayerViewModel.draggingPurpose == 0,
             enter = fadeIn(
                 initialAlpha = 0f,
@@ -235,7 +239,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
             )
         }
 
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = videoPlayerViewModel.draggingPurpose == 2,
             enter = fadeIn(
                 initialAlpha = 0f,
@@ -270,7 +274,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
             }
         }
 
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = videoPlayerViewModel.draggingPurpose == 1,
             enter = fadeIn(
                 initialAlpha = 0f,
@@ -310,7 +314,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
                 .background(MaterialTheme.colorScheme.primary.copy(cover))
                 .fillMaxSize())
 
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = (!videoPlayerViewModel.planeVisibility) || videoPlayerViewModel.locked,
             enter = fadeIn(
                 initialAlpha = 0f,
@@ -331,7 +335,7 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
             )
         }
 
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = videoPlayerViewModel.planeVisibility && (!videoPlayerViewModel.locked),
             enter = fadeIn(
                 initialAlpha = 0f,

@@ -1,10 +1,11 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.components
 
 import android.app.Activity
 import android.content.Context
 import android.media.AudioManager
 import android.view.View
 import androidx.activity.compose.BackHandler
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -68,12 +69,14 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.acitelight.aether.ToggleFullScreen
+import com.acitelight.aether.view.pages.formatTime
+import com.acitelight.aether.view.pages.moveBrit
 import com.acitelight.aether.viewModel.VideoPlayerViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
     val colorScheme = MaterialTheme.colorScheme
@@ -221,7 +224,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
             }
 
 
-            androidx.compose.animation.AnimatedVisibility(
+            AnimatedVisibility(
                 visible = videoPlayerViewModel.draggingPurpose == 0,
                 enter = fadeIn(
                     initialAlpha = 0f,
@@ -242,7 +245,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                 )
             }
 
-            androidx.compose.animation.AnimatedVisibility(
+            AnimatedVisibility(
                 visible = videoPlayerViewModel.draggingPurpose == 2,
                 enter = fadeIn(
                     initialAlpha = 0f,
@@ -279,7 +282,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                 }
             }
 
-            androidx.compose.animation.AnimatedVisibility(
+            AnimatedVisibility(
                 visible = videoPlayerViewModel.draggingPurpose == 1,
                 enter = fadeIn(
                     initialAlpha = 0f,

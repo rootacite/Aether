@@ -1,4 +1,4 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.pages
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -65,6 +65,7 @@ import androidx.navigation.NavHostController
 import coil3.request.ImageRequest
 import com.acitelight.aether.CardPage
 import com.acitelight.aether.Global.updateRelate
+import com.acitelight.aether.view.components.VideoCard
 import kotlinx.coroutines.launch
 import java.nio.charset.Charset
 import kotlin.collections.sortedWith
@@ -116,15 +117,23 @@ fun VideoScreen(
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    Text(
+                        text = "Videos",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier
+                            .padding(horizontal =  8.dp)
+                            .align(Alignment.Start)
+                    )
+
                     // TopRow(videoScreenViewModel);
-                    Row(Modifier.padding(bottom = 4.dp))
+                    Row(Modifier.padding(bottom = 4.dp).padding(start = 8.dp))
                     {
                         Card(
                             shape = RoundedCornerShape(8.dp),
                             colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
                             modifier = Modifier
                                 .align(Alignment.CenterVertically)
-                                .padding(horizontal = 2.dp)
+                                .padding(horizontal = 1.dp)
                                 .size(36.dp),
                             onClick = {
                                 menuVisibility = !menuVisibility
@@ -147,7 +156,7 @@ fun VideoScreen(
                             colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
                             modifier = Modifier
                                 .align(Alignment.CenterVertically)
-                                .padding(horizontal = 2.dp)
+                                .padding(horizontal = 1.dp)
                                 .height(36.dp),
                             onClick = {
                                 menuVisibility = !menuVisibility
@@ -199,15 +208,15 @@ fun VideoScreen(
                         }
                     }
                     HorizontalDivider(
-                        Modifier.padding(bottom = 8.dp),
-                        1.5.dp,
+                        Modifier.padding(4.dp),
+                        2.dp,
                         DividerDefaults.color
                     )
                     LazyVerticalStaggeredGrid(
                         columns = StaggeredGridCells.Adaptive(160.dp),
                         contentPadding = PaddingValues(8.dp),
                         verticalItemSpacing = 8.dp,
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(
+                        horizontalArrangement = Arrangement.spacedBy(
                             8.dp
                         ),
                         state = state,
@@ -217,7 +226,7 @@ fun VideoScreen(
                             items = vb,
                             key = { "${it.first}/${it.second}" }
                         ) { video ->
-                            androidx.compose.foundation.layout.Box(
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .wrapContentHeight()
@@ -293,142 +302,5 @@ fun CatalogueItemRow(
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         )
-    }
-}
-
-@Composable
-fun VideoCard(
-    videos: List<Video>,
-    navController: NavHostController,
-    videoScreenViewModel: VideoScreenViewModel
-) {
-    val tabIndex by videoScreenViewModel.tabIndex;
-    val video = videos.first()
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .combinedClickable(
-                onClick = {
-                    updateRelate(
-                        videoScreenViewModel.videoLibrary.classesMap[videoScreenViewModel.videoLibrary.classes[tabIndex]]
-                            ?: mutableStateListOf(), video
-                    )
-                    val vg = videos.joinToString(",") { "${it.klass}/${it.id}" }.toHex()
-                    val route = "video_player_route/$vg"
-                    navController.navigate(route)
-                },
-                onLongClick = {
-                    videoScreenViewModel.viewModelScope.launch {
-                        for(i in videos)
-                        {
-                            videoScreenViewModel.download(i)
-                        }
-                        Toast.makeText(
-                            videoScreenViewModel.context,
-                            "Start downloading ${video.video.group}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-
-                }
-            ),
-        shape = RoundedCornerShape(6.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(),
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(video.getCover(videoScreenViewModel.apiClient))
-                        .memoryCacheKey("${video.klass}/${video.id}/cover")
-                        .diskCacheKey("${video.klass}/${video.id}/cover")
-                        .build(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentScale = ContentScale.Fit,
-                    imageLoader = videoScreenViewModel.imageLoader!!
-                )
-
-
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(24.dp)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.6f)
-                                )
-                            )
-                        )
-                        .align(Alignment.BottomCenter)
-                )
-
-                Text(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(horizontal =  2.dp),
-                    text = "${videos.size} Videos",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 13.sp,
-                    color = Color.White
-                )
-
-                Text(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(horizontal =  2.dp),
-                    text = formatTime(video.video.duration),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 13.sp,
-                    color = Color.White
-                )
-
-                if (videos.all{ it.isLocal })
-                    Card(
-                        Modifier
-                            .align(Alignment.TopStart)
-                            .padding(5.dp)
-                            .widthIn(max = 46.dp)
-                    ) {
-                        Box(Modifier.fillMaxWidth())
-                        {
-                            Text(
-                                modifier = Modifier.align(Alignment.Center),
-                                text = "Local",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-            }
-            Text(
-                text = video.video.group ?: video.video.name,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 4,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .background(Color.Transparent)
-                    .heightIn(min = 24.dp),
-                lineHeight = 14.sp
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Row(
-                modifier = Modifier.padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("Class: ", fontSize = 10.sp, maxLines = 1)
-                Text(video.klass, fontSize = 10.sp, maxLines = 1)
-            }
-        }
     }
 }

@@ -1,7 +1,5 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.components
 
-import android.R
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,10 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
@@ -36,6 +32,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient
+import com.acitelight.aether.view.pages.formatTime
 
 
 @Composable

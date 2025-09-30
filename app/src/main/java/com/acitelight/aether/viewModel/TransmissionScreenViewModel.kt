@@ -15,7 +15,7 @@ import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.VideoLibrary
-import com.acitelight.aether.view.toHex
+import com.acitelight.aether.view.pages.toHex
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.FetchListener
 import com.tonyodev.fetch2.Status

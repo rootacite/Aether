@@ -1,4 +1,4 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

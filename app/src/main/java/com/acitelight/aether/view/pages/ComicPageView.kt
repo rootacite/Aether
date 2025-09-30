@@ -1,5 +1,6 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.pages
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -46,6 +47,7 @@ import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.model.BookMark
+import com.acitelight.aether.view.components.BookmarkPop
 import com.acitelight.aether.viewModel.ComicPageViewModel
 import kotlinx.coroutines.launch
 
@@ -102,7 +104,7 @@ fun ComicPageView(
                 )
             }
 
-            androidx.compose.animation.AnimatedVisibility(
+            AnimatedVisibility(
                 visible = showPlane,
                 enter = slideInVertically(initialOffsetY = { fullHeight -> -fullHeight }),
                 exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
@@ -216,7 +218,7 @@ fun ComicPageView(
                 }
             }
 
-            androidx.compose.animation.AnimatedVisibility(
+            AnimatedVisibility(
                 visible = showPlane,
                 enter = slideInVertically(initialOffsetY = { fullHeight -> fullHeight }),
                 exit = slideOutVertically(targetOffsetY = { fullHeight -> fullHeight }),

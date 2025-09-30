@@ -1,4 +1,4 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.pages
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,10 +32,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.acitelight.aether.viewModel.MeScreenViewModel
 
 @Composable
-fun MeScreen(meScreenViewModel: MeScreenViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<MeScreenViewModel>()) {
+fun MeScreen(meScreenViewModel: MeScreenViewModel = hiltViewModel<MeScreenViewModel>()) {
     var username by meScreenViewModel.username
     var privateKey by meScreenViewModel.privateKey
     var url by meScreenViewModel.url

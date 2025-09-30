@@ -1,4 +1,4 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.pages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,28 +20,22 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import com.acitelight.aether.model.Comic
+import com.acitelight.aether.view.components.ComicCard
 import com.acitelight.aether.viewModel.ComicScreenViewModel
 
 @Composable
@@ -127,11 +120,18 @@ fun ComicScreen(
     val colorScheme = MaterialTheme.colorScheme
 
     Column {
-
+        Text(
+            text = "Comic& Images",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier
+                .padding(8.dp)
+                .align(Alignment.Start)
+        )
+        HorizontalDivider(Modifier.padding(1.dp), thickness = 1.5.dp)
         VariableGrid(
             modifier = Modifier
-                .heightIn(max = 120.dp)
-                .padding(8.dp),
+                .heightIn(max = 88.dp)
+                .padding(4.dp),
             rowHeight = 32.dp
         )
         {
@@ -164,13 +164,13 @@ fun ComicScreen(
             }
         }
 
-        HorizontalDivider(thickness = 1.5.dp)
+        HorizontalDivider(Modifier.padding(1.dp), thickness = 1.5.dp)
 
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Adaptive(136.dp),
             contentPadding = PaddingValues(8.dp),
             verticalItemSpacing = 8.dp,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             state = state,
             modifier = Modifier.fillMaxSize()
         ) {
@@ -187,89 +187,6 @@ fun ComicScreen(
                     ComicCard(comic, navController, comicScreenViewModel)
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun ComicCard(
-    comic: Comic,
-    navController: NavHostController,
-    comicScreenViewModel: ComicScreenViewModel
-) {
-    Card(
-        shape = RoundedCornerShape(6.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
-        onClick = {
-            val route = "comic_grid_route/${comic.id.toHex()}"
-            navController.navigate(route)
-        }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(comic.getPage(0, comicScreenViewModel.apiClient))
-                        .memoryCacheKey("${comic.id}/${0}")
-                        .diskCacheKey("${comic.id}/${0}")
-                        .build(),
-                    contentDescription = null,
-                    imageLoader = comicScreenViewModel.imageLoader!!,
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
-
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(24.dp)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.45f)
-                                )
-                            )
-                        )
-                        .align(Alignment.BottomCenter)
-                )
-                {
-                    Text(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(2.dp),
-                        fontSize = 12.sp,
-                        text = "${comic.comic.list.size} Pages",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-            }
-            Text(
-                text = comic.comic.comic_name,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                modifier = Modifier
-                    .padding(4.dp)
-                    .background(Color.Transparent)
-                    .heightIn(max = 48.dp)
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "Id: ${comic.id}",
-                fontSize = 12.sp,
-                maxLines = 2,
-                modifier = Modifier
-                    .padding(bottom = 4.dp).padding(horizontal = 4.dp)
-                    .background(Color.Transparent)
-            )
         }
     }
 }

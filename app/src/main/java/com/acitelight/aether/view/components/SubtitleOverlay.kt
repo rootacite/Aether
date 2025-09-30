@@ -1,5 +1,6 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.components
 
+import android.text.Layout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -42,9 +43,9 @@ fun SubtitleOverlay(
     if (raw.isEmpty()) return
 
     val textAlign = when (cues.firstOrNull()?.textAlignment) {
-        android.text.Layout.Alignment.ALIGN_CENTER -> TextAlign.Center
-        android.text.Layout.Alignment.ALIGN_OPPOSITE -> TextAlign.End
-        android.text.Layout.Alignment.ALIGN_NORMAL -> TextAlign.Start
+        Layout.Alignment.ALIGN_CENTER -> TextAlign.Center
+        Layout.Alignment.ALIGN_OPPOSITE -> TextAlign.End
+        Layout.Alignment.ALIGN_NORMAL -> TextAlign.Start
         else -> TextAlign.Center
     }
 

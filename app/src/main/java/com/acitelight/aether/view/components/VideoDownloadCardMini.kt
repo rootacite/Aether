@@ -1,8 +1,7 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,17 +17,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,15 +38,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import com.acitelight.aether.Global.updateRelate
-import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoDownloadItemState
 import com.acitelight.aether.viewModel.TransmissionScreenViewModel
 import com.tonyodev.fetch2.Status
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.math.abs
 
@@ -90,8 +78,8 @@ fun VideoDownloadCardMini(
                 .build()
 
     Card(
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp)
@@ -108,20 +96,23 @@ fun VideoDownloadCardMini(
                     else -> {}
                 }
             })
-            .height(85.dp)
+            .height(100.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxSize()
         )
         {
             Box(Modifier
-                .fillMaxHeight()
-                .widthIn(max = 152.dp))
+                .fillMaxHeight())
             {
                 AsyncImage(
                     model = imageModel,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .height(100.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .widthIn(max = 150.dp)
+                        .background(Color.Black),
                     contentScale = ContentScale.Crop
                 )
 

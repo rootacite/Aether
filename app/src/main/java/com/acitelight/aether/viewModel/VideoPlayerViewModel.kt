@@ -36,8 +36,8 @@ import com.acitelight.aether.service.ApiClient
 import com.acitelight.aether.service.MediaManager
 import com.acitelight.aether.service.RecentManager
 import com.acitelight.aether.service.VideoLibrary
-import com.acitelight.aether.view.formatTime
-import com.acitelight.aether.view.hexToString
+import com.acitelight.aether.view.pages.formatTime
+import com.acitelight.aether.view.pages.hexToString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope

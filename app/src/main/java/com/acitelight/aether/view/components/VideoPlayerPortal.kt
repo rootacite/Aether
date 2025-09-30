@@ -1,5 +1,6 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
@@ -47,8 +48,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.acitelight.aether.Global
-import com.acitelight.aether.Global.updateRelate
 import com.acitelight.aether.ToggleFullScreen
+import com.acitelight.aether.view.pages.formatTime
+import com.acitelight.aether.view.pages.toHex
 import com.acitelight.aether.viewModel.VideoPlayerViewModel
 
 

@@ -1,4 +1,4 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.pages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,16 +36,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.Global.updateRelate
 import com.acitelight.aether.model.Comic
+import com.acitelight.aether.view.components.MiniVideoCard
 import com.acitelight.aether.viewModel.HomeScreenViewModel
 
 @Composable
 fun HomeScreen(
-    homeScreenViewModel: HomeScreenViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<HomeScreenViewModel>(),
+    homeScreenViewModel: HomeScreenViewModel = hiltViewModel<HomeScreenViewModel>(),
     navController: NavHostController
 ) {
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
@@ -54,7 +56,6 @@ fun HomeScreen(
         state = pagerState,
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
     ) { p ->
         if (p == 0) {
             Column(Modifier.fillMaxHeight()) {

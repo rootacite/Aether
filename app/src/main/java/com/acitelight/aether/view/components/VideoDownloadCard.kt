@@ -1,4 +1,4 @@
-package com.acitelight.aether.view
+package com.acitelight.aether.view.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,6 +39,7 @@ import coil3.request.ImageRequest
 import com.acitelight.aether.Global.updateRelate
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoDownloadItemState
+import com.acitelight.aether.view.pages.toHex
 import com.acitelight.aether.viewModel.TransmissionScreenViewModel
 import com.tonyodev.fetch2.Status
 import kotlinx.coroutines.Dispatchers
