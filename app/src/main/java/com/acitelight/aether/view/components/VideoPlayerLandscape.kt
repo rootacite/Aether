@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -467,6 +468,27 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                             Icon(
                                 imageVector = if (videoPlayerViewModel.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = "Play/Pause",
+                                tint = Color.White,
+                                modifier = Modifier.size(42.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                videoPlayerViewModel.viewModelScope.launch {
+                                    videoPlayerViewModel.startPlay(
+                                        videoPlayerViewModel.videos.getOrNull(videoPlayerViewModel.videos.indexOf(
+                                            videoPlayerViewModel.videos.first {
+                                                it.id == videoPlayerViewModel.currentId.value
+                                            }) + 1) ?: videoPlayerViewModel.videos.first()
+                                    )
+                                }
+                            },
+                            Modifier.size(42.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SkipNext,
+                                contentDescription = "Next",
                                 tint = Color.White,
                                 modifier = Modifier.size(42.dp)
                             )

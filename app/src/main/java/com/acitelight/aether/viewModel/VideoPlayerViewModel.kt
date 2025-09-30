@@ -16,6 +16,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Player.STATE_ENDED
 import androidx.media3.common.Player.STATE_READY
 import androidx.media3.common.Tracks
 import androidx.media3.common.text.Cue
@@ -268,8 +269,18 @@ class VideoPlayerViewModel @Inject constructor(
                     }
 
                     override fun onPlaybackStateChanged(playbackState: Int) {
-                        if (playbackState == STATE_READY) {
-                            startPlaying = true
+                        when(playbackState)
+                        {
+                            STATE_READY -> {
+                                startPlaying = true
+                            }
+                            STATE_ENDED -> {
+                                player?.seekTo(0)
+                                player?.pause()
+                            }
+                            else -> {
+
+                            }
                         }
                     }
 
