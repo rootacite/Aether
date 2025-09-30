@@ -126,9 +126,7 @@ fun VideoDownloadCardMini(
                 )
 
                 IconButton(
-                    onClick = {
-
-                    },
+                    onClick = onDelete,
                     Modifier
                         .padding(2.dp)
                         .size(24.dp)
