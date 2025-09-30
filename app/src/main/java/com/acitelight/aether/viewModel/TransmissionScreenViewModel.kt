@@ -261,7 +261,7 @@ class TransmissionScreenViewModel @Inject constructor(
         val video = fv.firstOrNull { it.klass == model.klass && it.id == model.vid }
 
         if (video != null) {
-            val group = fv.filter { it.klass == video.klass && it.video.group == video.video.group }
+            val group = fv.filter { it.klass == video.klass && it.video.group == video.video.group && it.video.group != "null" }
             for (i in group.sortedWith(compareBy(naturalOrder()) { it.video.name })) {
                 playList.add("${i.klass}/${i.id}")
             }

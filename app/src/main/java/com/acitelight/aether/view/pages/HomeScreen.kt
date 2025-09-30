@@ -88,7 +88,7 @@ fun HomeScreen(
                                 .flatten()
 
                             val group =
-                                fv.filter { it.klass == i.klass && it.video.group == i.video.group }
+                                fv.filter { it.klass == i.klass && it.video.group == i.video.group && it.video.group != "null" }
                             for (i in group) {
                                 playList.add("${i.klass}/${i.id}")
                             }
