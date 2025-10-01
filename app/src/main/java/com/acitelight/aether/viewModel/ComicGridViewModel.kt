@@ -32,7 +32,7 @@ class ComicGridViewModel @Inject constructor(
 )  : ViewModel()
 {
     var coverHeight by mutableStateOf(220.dp)
-    var maxHeight = 220.dp
+    var maxHeight = 0.dp
 
     var imageLoader: ImageLoader? = null
     var comic = mutableStateOf<Comic?>(null)

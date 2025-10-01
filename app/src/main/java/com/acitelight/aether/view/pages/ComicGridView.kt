@@ -95,9 +95,10 @@ fun ComicGridView(
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(comicGridViewModel) {
         comicGridViewModel.coverHeight = screenHeight * 0.4f
-        comicGridViewModel.maxHeight = screenHeight * 0.8f
+        if(comicGridViewModel.maxHeight == 0.dp)
+            comicGridViewModel.maxHeight = screenHeight * 0.8f
     }
 
     val dens = LocalDensity.current

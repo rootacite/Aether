@@ -5,10 +5,12 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -92,13 +96,17 @@ fun ComicPageView(
                     .fillMaxSize()
                     .align(Alignment.Center)
                     .background(Color.Black)
-                    .clickable {
-                        showPlane = !showPlane
-                        if (showPlane) {
-                            comicPageViewModel.viewModelScope.launch {
-                                comicPageViewModel.listState?.scrollToItem(index = pagerState.currentPage)
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                showPlane = !showPlane
+                                if (showPlane) {
+                                    comicPageViewModel.viewModelScope.launch {
+                                        comicPageViewModel.listState?.scrollToItem(index = pagerState.currentPage)
+                                    }
+                                }
                             }
-                        }
+                        )
                     }
             ) { page ->
                 AsyncImage(
@@ -123,110 +131,103 @@ fun ComicPageView(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
             ) {
-                Box()
-                {
-                    Column(Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth())
-                    {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 18.dp)
-                                .padding(horizontal = 12.dp)
-                                .height(42.dp)
+                Column(Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.9f),
+                                Color.Transparent,
+                            )
                         )
-                        {
-                            Row(modifier = Modifier.fillMaxSize())
-                            {
-                                Text(
-                                    text = title,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1,
-                                    modifier = Modifier
-                                        .padding(8.dp)
-                                        .padding(horizontal = 10.dp)
-                                        .weight(1f)
-                                        .align(Alignment.CenterVertically)
-                                )
+                    ))
+                {
+                    Row(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal =  16.dp).padding(top = 16.dp))
+                    {
+                        Text(
+                            text = title,
+                            fontSize = 16.sp,
+                            lineHeight = 19.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            color = Color.White,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .padding(horizontal = 10.dp)
+                                .weight(1f)
+                                .align(Alignment.CenterVertically)
+                        )
 
-                                Text(
-                                    text = "${pagerState.currentPage + 1}/${pagerState.pageCount}",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1,
-                                    modifier = Modifier
-                                        .padding(8.dp)
-                                        .widthIn(min = 60.dp)
-                                        .align(Alignment.CenterVertically)
-                                )
-                            }
+                        Text(
+                            text = "${pagerState.currentPage + 1}/${pagerState.pageCount}",
+                            fontSize = 16.sp,
+                            lineHeight = 19.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            color = Color.White,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .widthIn(min = 60.dp)
+                                .align(Alignment.CenterVertically)
+                        )
+                    }
+                    Box(Modifier.fillMaxWidth()
+                        .padding(horizontal = 16.dp))
+                    {
+                        Row {
+                            val k = it.getPageChapterIndex(pagerState.currentPage)
+                            Text(
+                                text = k.first.name,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                color = Color.White,
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .padding(horizontal = 10.dp)
+                                    .align(Alignment.CenterVertically)
+                            )
+
+                            Text(
+                                text = "${k.second}/${it.getChapterLength(k.first.page)}",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                color = Color.White,
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .widthIn(min = 60.dp)
+                                    .align(Alignment.CenterVertically)
+                            )
                         }
 
-                        Box(Modifier.fillMaxWidth()) {
-                            Card(
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .padding(top = 6.dp)
-                                    .padding(horizontal = 12.dp)
-                                    .height(42.dp),
-                                colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            {
-                                Row {
-                                    val k = it.getPageChapterIndex(pagerState.currentPage)
-                                    Text(
-                                        text = k.first.name,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        modifier = Modifier
-                                            .padding(8.dp)
-                                            .padding(horizontal = 10.dp)
-                                            .align(Alignment.CenterVertically)
-                                    )
 
-                                    Text(
-                                        text = "${k.second}/${it.getChapterLength(k.first.page)}",
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        modifier = Modifier
-                                            .padding(8.dp)
-                                            .widthIn(min = 60.dp)
-                                            .align(Alignment.CenterVertically)
-                                    )
-                                }
-                            }
-
-
-                            Card(
-                                modifier = Modifier
-                                    .align(Alignment.CenterEnd)
-                                    .padding(top = 6.dp)
-                                    .padding(horizontal = 12.dp)
-                                    .height(42.dp),
-                                colors = CardDefaults.cardColors(containerColor = colorScheme.primary),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            {
-                                Box(Modifier.clickable {
-                                    showBookMarkPop = true
-                                }) {
-                                    Icon(
-                                        Icons.Filled.Bookmarks,
-                                        modifier = Modifier
-                                            .padding(8.dp),
-                                        contentDescription = "Bookmark"
-                                    )
-                                }
+                        Card(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(top = 6.dp)
+                                .padding(horizontal = 12.dp)
+                                .height(42.dp),
+                            colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        {
+                            Box(Modifier.clickable {
+                                showBookMarkPop = true
+                            }) {
+                                Icon(
+                                    Icons.Filled.Bookmarks,
+                                    modifier = Modifier
+                                        .padding(8.dp),
+                                    contentDescription = "Bookmark"
+                                )
                             }
                         }
                     }
+                    Spacer(Modifier.height(64.dp))
                 }
             }
 
