@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
@@ -96,6 +97,7 @@ fun ComicGridView(
 
     LaunchedEffect(Unit) {
         comicGridViewModel.coverHeight = screenHeight * 0.4f
+        comicGridViewModel.maxHeight = screenHeight * 0.8f
     }
 
     val dens = LocalDensity.current
@@ -164,7 +166,7 @@ fun ComicGridView(
                             val width = drawable.width
                             val height = drawable.height
                             val aspectRatio = width.toFloat() / height.toFloat()
-                            comicGridViewModel.maxHeight = screenWidth / aspectRatio
+                            comicGridViewModel.maxHeight = min(screenWidth / aspectRatio, screenHeight * 0.8f)
 
                             if(comicGridViewModel.coverHeight > comicGridViewModel.maxHeight)
                                 comicGridViewModel.coverHeight = comicGridViewModel.maxHeight
