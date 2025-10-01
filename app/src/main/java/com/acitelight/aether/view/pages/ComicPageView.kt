@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
@@ -54,6 +55,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.model.BookMark
 import com.acitelight.aether.setFullScreen
+import com.acitelight.aether.view.components.BiliMiniSlider
 import com.acitelight.aether.view.components.BookmarkPop
 import com.acitelight.aether.viewModel.ComicPageViewModel
 import kotlinx.coroutines.launch
@@ -239,15 +241,16 @@ fun ComicPageView(
                     .align(Alignment.BottomCenter)
             )
             {
-                Box {
+                val k = it.getPageChapterIndex(pagerState.currentPage)
+                Column(Modifier
+                    .padding(bottom = 24.dp)) {
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
                         state = comicPageViewModel.listState!!, modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 18.dp)
+                            .padding(bottom = 1.dp)
                             .padding(horizontal = 12.dp)
                             .height(180.dp)
-                            .align(Alignment.BottomCenter)
                     )
                     {
                         items(comicPageViewModel.pageList.size)
@@ -307,6 +310,17 @@ fun ComicPageView(
                             }
                         }
                     }
+
+                    BiliMiniSlider(
+                        value = (k.second.toInt()) / it.getChapterLength(k.first.page).toFloat(),
+                        modifier = Modifier
+                            .height(6.dp)
+                            .fillMaxWidth().padding(horizontal = 24.dp)
+                            .fillMaxWidth(),
+                        onValueChange = {
+
+                        }
+                    )
                 }
             }
         }
