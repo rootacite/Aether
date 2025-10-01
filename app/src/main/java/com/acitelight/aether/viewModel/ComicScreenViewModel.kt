@@ -2,6 +2,7 @@ package com.acitelight.aether.viewModel
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
@@ -23,6 +24,7 @@ class ComicScreenViewModel @Inject constructor(
 
     var imageLoader: ImageLoader? = null;
 
+    val searchFilter = mutableStateOf("")
     val comics = mutableStateListOf<Comic>()
     val excluded = mutableStateListOf<String>()
     val included = mutableStateListOf<String>()

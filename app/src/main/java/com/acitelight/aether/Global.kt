@@ -10,6 +10,7 @@ object Global {
     var sameClassVideos: List<Video>? = null
     private set
 
+    var isFullScreen by mutableStateOf(false)
     fun updateRelate(v: List<Video>, s: Video)
     {
         sameClassVideos = if (v.contains(s)) {

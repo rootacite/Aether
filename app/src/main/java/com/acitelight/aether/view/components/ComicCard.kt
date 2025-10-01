@@ -59,9 +59,9 @@ fun ComicCard(
             Box(modifier = Modifier.fillMaxSize()) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(comic.getPage(0, comicScreenViewModel.apiClient))
-                        .memoryCacheKey("${comic.id}/${0}")
-                        .diskCacheKey("${comic.id}/${0}")
+                        .data(comic.getCover(comicScreenViewModel.apiClient))
+                        .memoryCacheKey("${comic.id}/cover")
+                        .diskCacheKey("${comic.id}/cover")
                         .build(),
                     contentDescription = null,
                     imageLoader = comicScreenViewModel.imageLoader!!,
@@ -114,14 +114,6 @@ fun ComicCard(
                     lineHeight = 14.sp,
                     maxLines = 1,
                     modifier = Modifier.align(Alignment.CenterStart)
-                )
-
-                Text(
-                    text = comic.comic.author,
-                    fontSize = 12.sp,
-                    lineHeight = 14.sp,
-                    maxLines = 1,
-                    modifier = Modifier.align(Alignment.CenterEnd)
                 )
             }
         }

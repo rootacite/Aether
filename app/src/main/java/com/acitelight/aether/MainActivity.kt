@@ -4,11 +4,15 @@ import android.app.Activity
 import android.content.Intent
 import androidx.compose.material.icons.Icons
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -95,22 +99,17 @@ class MainScreenActivity : ComponentActivity() {
 }
 
 
-@Composable
-fun ToggleFullScreen(isFullScreen: Boolean)
-{
-    val view = LocalView.current
+fun setFullScreen(view: View, isFullScreen: Boolean) {
+    Global.isFullScreen = isFullScreen
+    val window = (view.context as Activity).window
+    val insetsController = WindowCompat.getInsetsController(window, view)
 
-    LaunchedEffect(isFullScreen) {
-        val window = (view.context as Activity).window
-        val insetsController = WindowCompat.getInsetsController(window, view)
-
-        if (isFullScreen) {
-            insetsController.hide(WindowInsetsCompat.Type.systemBars())
-            insetsController.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        } else {
-            insetsController.show(WindowInsetsCompat.Type.systemBars())
-        }
+    if (isFullScreen) {
+        insetsController.hide(WindowInsetsCompat.Type.systemBars())
+        insetsController.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    } else {
+        insetsController.show(WindowInsetsCompat.Type.systemBars())
     }
 }
 
@@ -136,40 +135,64 @@ fun AppNavigation() {
             ) {
                 BottomNavigationBar(navController = navController)
             }
-            if(shouldShowBottomBar)
-                ToggleFullScreen(false)
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Me.route,
-            modifier = if(shouldShowBottomBar)Modifier.padding(innerPadding) else Modifier.padding(0.dp)
+            modifier = if(!Global.isFullScreen) Modifier.padding(innerPadding) else Modifier.padding(0.dp)
         ) {
-            composable(Screen.Home.route) {
+            composable(
+                Screen.Home.route,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) }
+            ) {
                 CardPage(title = "Home") {
                     HomeScreen(navController = navController)
                 }
             }
-            composable(Screen.Video.route) {
+            composable(Screen.Video.route,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) }) {
                 VideoScreen(navController = navController)
             }
-            composable(Screen.Comic.route) {
+            composable(Screen.Comic.route,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) }) {
                 CardPage(title = "Comic") {
                     ComicScreen(navController = navController)
                 }
             }
 
-            composable(Screen.Transmission.route) {
+            composable(Screen.Transmission.route,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) }) {
                 CardPage(title = "Tasks") {
                     TransmissionScreen(navigator = navController)
                 }
             }
-            composable(Screen.Me.route) {
+            composable(Screen.Me.route,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) }) {
                 MeScreen();
             }
 
             composable(
                 route = Screen.VideoPlayer.route,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
                 arguments = listOf(navArgument("videoId") { type = NavType.StringType })
             ) {
                 backStackEntry ->
@@ -181,6 +204,10 @@ fun AppNavigation() {
 
             composable(
                 route = Screen.ComicGrid.route,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
                 arguments = listOf(navArgument("comicId") { type = NavType.StringType })
             ) {
                     backStackEntry ->
@@ -192,6 +219,10 @@ fun AppNavigation() {
 
             composable(
                 route = Screen.ComicPage.route,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
                 arguments = listOf(navArgument("comicId") { type = NavType.StringType }, navArgument("page") { type = NavType.StringType })
             ) {
                     backStackEntry ->
@@ -199,7 +230,6 @@ fun AppNavigation() {
                 val page = backStackEntry.arguments?.getString("page")
                 if (comicId != null && page != null) {
                     ComicPageView(comicId = comicId, page = page, navController = navController)
-                    ToggleFullScreen(true)
                 }
             }
         }

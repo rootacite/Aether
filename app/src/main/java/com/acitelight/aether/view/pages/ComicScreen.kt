@@ -6,11 +6,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -19,17 +23,25 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -118,16 +130,50 @@ fun ComicScreen(
     val included = comicScreenViewModel.included
     val state = rememberLazyStaggeredGridState()
     val colorScheme = MaterialTheme.colorScheme
+    var searchFilter by comicScreenViewModel.searchFilter
 
     Column {
-        Text(
-            text = "Comic& Images",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier
-                .padding(8.dp)
-                .align(Alignment.Start)
-        )
-        HorizontalDivider(Modifier.padding(1.dp), thickness = 1.5.dp)
+        Row(Modifier
+            .padding(4.dp)
+            .align(Alignment.CenterHorizontally)) {
+            Text(
+                text = "Comics",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
+
+            Spacer(Modifier.weight(1f))
+
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .height(36.dp)
+                    .widthIn(max = 240.dp)
+                    .background(colorScheme.primary, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 6.dp)
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .align(Alignment.CenterVertically),
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Catalogue"
+                )
+                Spacer(Modifier.width(4.dp))
+                BasicTextField(
+                    value = searchFilter,
+                    onValueChange = { searchFilter = it },
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 18.sp,
+                        color = Color.White,
+                        textAlign = TextAlign.Start
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+        }
+
         VariableGrid(
             modifier = Modifier
                 .heightIn(max = 88.dp)
@@ -140,7 +186,7 @@ fun ComicScreen(
                 Box(
                     Modifier
                         .background(
-                            if (included.contains(i)) Color.Green.copy(alpha = 0.65f) else colorScheme.primary,
+                            if (included.contains(i)) Color.Green.copy(alpha = 0.65f) else colorScheme.surface,
                             shape = RoundedCornerShape(4.dp)
                         )
                         .height(32.dp).widthIn(max = 72.dp)
@@ -167,15 +213,15 @@ fun ComicScreen(
         HorizontalDivider(Modifier.padding(1.dp), thickness = 1.5.dp)
 
         LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Adaptive(136.dp),
-            contentPadding = PaddingValues(8.dp),
-            verticalItemSpacing = 8.dp,
+            columns = StaggeredGridCells.Adaptive(120.dp),
+            contentPadding = PaddingValues(4.dp),
+            verticalItemSpacing = 6.dp,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             state = state,
             modifier = Modifier.fillMaxSize()
         ) {
             items(
-                items = comicScreenViewModel.comics.filter { x ->
+                items = comicScreenViewModel.comics.filter { searchFilter.isEmpty() || searchFilter in it.comic.comic_name }.filter { x ->
                     included.all { y -> y in x.comic.tags } || included.isEmpty()
                 },
                 key = { it.id }

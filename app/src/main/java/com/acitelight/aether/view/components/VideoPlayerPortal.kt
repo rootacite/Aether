@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.acitelight.aether.Global
-import com.acitelight.aether.ToggleFullScreen
 import com.acitelight.aether.view.pages.formatTime
 import com.acitelight.aether.view.pages.toHex
 import com.acitelight.aether.viewModel.VideoPlayerViewModel
@@ -110,7 +109,6 @@ fun VideoPlayerPortal(
     val name by videoPlayerViewModel.currentName
     val duration by videoPlayerViewModel.currentDuration
 
-    ToggleFullScreen(false)
     Column(
         Modifier
             .nestedScroll(nestedScrollConnection)
@@ -120,7 +118,6 @@ fun VideoPlayerPortal(
         Box {
             PortalCorePlayer(
                 Modifier
-                    .padding(top = 32.dp)
                     .heightIn(max = playerHeight)
                     .onGloballyPositioned { layoutCoordinates ->
                         if (!posed && videoPlayerViewModel.renderedFirst) {

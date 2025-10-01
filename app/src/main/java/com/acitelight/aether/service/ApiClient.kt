@@ -219,6 +219,8 @@ class ApiClient @Inject constructor(
 
     suspend fun apply(context: Context, urls: String, crt: String): String? {
         try {
+            client = createOkHttp()
+
             val urlList = urls.split(";").map { it.trim() }
 
             var selectedUrl: String? = null
@@ -231,7 +233,6 @@ class ApiClient @Inject constructor(
             }
 
             if (selectedUrl == null) {
-                client = createOkHttp()
                 throw Exception("No reachable URL found")
             }
 

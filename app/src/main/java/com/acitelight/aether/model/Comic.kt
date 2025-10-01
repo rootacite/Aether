@@ -7,6 +7,19 @@ class Comic(
     val id: String
 )
 {
+    fun getCover(api: ApiClient): String
+    {
+        if(id == "101")
+            print("")
+
+        if(comic.cover != "")
+        {
+            return "${api.getBase()}api/image/$id/${comic.cover}"
+        }
+
+        return "${api.getBase()}api/image/$id/${comic.list[0]}"
+    }
+
     fun getPage(pageNumber: Int, api: ApiClient): String
     {
         return "${api.getBase()}api/image/$id/${comic.list[pageNumber]}"

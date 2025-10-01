@@ -1,8 +1,12 @@
 package com.acitelight.aether.viewModel
 
 import android.content.Context
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
@@ -27,6 +31,9 @@ class ComicGridViewModel @Inject constructor(
     val apiClient: ApiClient
 )  : ViewModel()
 {
+    var coverHeight by mutableStateOf(220.dp)
+    var maxHeight = 220.dp
+
     var imageLoader: ImageLoader? = null
     var comic = mutableStateOf<Comic?>(null)
     val chapterList = mutableStateListOf<BookMark>()

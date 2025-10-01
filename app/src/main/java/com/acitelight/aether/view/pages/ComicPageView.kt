@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,6 +49,7 @@ import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.model.BookMark
+import com.acitelight.aether.setFullScreen
 import com.acitelight.aether.view.components.BookmarkPop
 import com.acitelight.aether.viewModel.ComicPageViewModel
 import kotlinx.coroutines.launch
@@ -71,6 +74,15 @@ fun ComicPageView(
     comicPageViewModel.updateProcess(pagerState.currentPage)
 
     val comic by comicPageViewModel.comic
+
+    val view = LocalView.current
+    DisposableEffect(Unit) {
+        setFullScreen(view, true)
+        onDispose {
+
+        }
+    }
+
     comic?.let {
         Box()
         {
@@ -233,7 +245,7 @@ fun ComicPageView(
                             .fillMaxWidth()
                             .padding(bottom = 18.dp)
                             .padding(horizontal = 12.dp)
-                            .height(240.dp)
+                            .height(180.dp)
                             .align(Alignment.BottomCenter)
                     )
                     {
@@ -241,7 +253,7 @@ fun ComicPageView(
                         { r ->
                             Card(
                                 colors = CardDefaults.cardColors(containerColor = colorScheme.primary.copy(0.8f)),
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier
                                     .fillMaxHeight()
                                     .wrapContentHeight()
@@ -250,7 +262,7 @@ fun ComicPageView(
                                     pagerState.requestScrollToPage(page = r)
                                 }
                             ) {
-                                Box(Modifier.padding(4.dp))
+                                Box(Modifier.padding(1.dp))
                                 {
                                     AsyncImage(
                                         model = ImageRequest.Builder(LocalContext.current)
@@ -262,7 +274,7 @@ fun ComicPageView(
                                         imageLoader = comicPageViewModel.imageLoader!!,
                                         modifier = Modifier
                                             .fillMaxHeight()
-                                            .clip(RoundedCornerShape(12.dp))
+                                            .clip(RoundedCornerShape(8.dp))
                                             .align(Alignment.Center),
                                         contentScale = ContentScale.Fit,
                                     )
@@ -278,18 +290,6 @@ fun ComicPageView(
                                     )
                                     {
                                         Row {
-                                            Text(
-                                                text = k.first.name,
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White,
-                                                maxLines = 1,
-                                                modifier = Modifier
-                                                    .padding(2.dp)
-                                                    .widthIn(max = 200.dp)
-                                                    .align(Alignment.CenterVertically)
-                                            )
-
                                             Text(
                                                 text = "${k.second}/${it.getChapterLength(k.first.page)}",
                                                 fontSize = 16.sp,

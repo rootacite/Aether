@@ -89,9 +89,12 @@ fun HomeScreen(
 
                             val group =
                                 fv.filter { it.klass == i.klass && it.video.group == i.video.group && it.video.group != "null" }
-                            for (i in group) {
-                                playList.add("${i.klass}/${i.id}")
+                            for (ix in group) {
+                                playList.add("${ix.klass}/${ix.id}")
                             }
+
+                            if(!playList.contains("${i.klass}/${i.id}"))
+                                playList.add("${i.klass}/${i.id}")
 
                             val route =
                                 "video_player_route/${(playList.joinToString(",") + "|${i.id}").toHex()}"
