@@ -133,9 +133,11 @@ fun ComicScreen(
     var searchFilter by comicScreenViewModel.searchFilter
 
     Column {
-        Row(Modifier
-            .padding(4.dp)
-            .align(Alignment.CenterHorizontally)) {
+        Row(
+            Modifier
+                .padding(4.dp)
+                .align(Alignment.CenterHorizontally)
+        ) {
             Text(
                 text = "Comics",
                 style = MaterialTheme.typography.headlineMedium,
@@ -189,7 +191,8 @@ fun ComicScreen(
                             if (included.contains(i)) Color.Green.copy(alpha = 0.65f) else colorScheme.surface,
                             shape = RoundedCornerShape(4.dp)
                         )
-                        .height(32.dp).widthIn(max = 72.dp)
+                        .height(32.dp)
+                        .widthIn(max = 72.dp)
                         .clickable {
                             if (included.contains(i))
                                 included.remove(i)
@@ -221,14 +224,17 @@ fun ComicScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             items(
-                items = comicScreenViewModel.comics.filter { searchFilter.isEmpty() || searchFilter in it.comic.comic_name }.filter { x ->
-                    included.all { y -> y in x.comic.tags } || included.isEmpty()
-                },
+                items = comicScreenViewModel.comics
+                    .filter { searchFilter.isEmpty() || searchFilter in it.comic.comic_name }
+                    .filter { x ->
+                        included.all { y -> y in x.comic.tags } || included.isEmpty()
+                    },
                 key = { it.id }
             ) { comic ->
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
                 ) {
                     ComicCard(comic, navController, comicScreenViewModel)
                 }

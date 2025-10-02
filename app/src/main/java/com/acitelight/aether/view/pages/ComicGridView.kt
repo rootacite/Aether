@@ -96,7 +96,7 @@ fun ComicGridView(
     }
 
     LaunchedEffect(comicGridViewModel) {
-        comicGridViewModel.coverHeight = screenHeight * 0.4f
+        comicGridViewModel.coverHeight = screenHeight * 0.3f
         if(comicGridViewModel.maxHeight == 0.dp)
             comicGridViewModel.maxHeight = screenHeight * 0.8f
     }
@@ -252,7 +252,7 @@ fun ComicGridView(
                             fontSize = 11.sp,
                             lineHeight = 15.sp,
                             maxLines = 3,
-                            modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 4.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 4.dp).align(Alignment.CenterStart)
                         )
 
                         Button(onClick = {
@@ -379,10 +379,10 @@ fun ChapterCard(
         {
             Text(
                 text = chapter.name,
-                fontSize = 14.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
-                lineHeight = 16.sp,
+                lineHeight = 18.sp,
                 modifier = Modifier
                     .padding(horizontal = 8.dp).padding(vertical = 4.dp)
                     .background(Color.Transparent)
@@ -391,7 +391,6 @@ fun ChapterCard(
                 text = "${comic.getChapterLength(chapter.page)} Pages",
                 fontSize = 14.sp,
                 lineHeight = 16.sp,
-                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 modifier = Modifier
                     .padding(horizontal = 8.dp)

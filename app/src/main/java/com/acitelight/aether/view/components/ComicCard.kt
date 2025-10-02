@@ -64,11 +64,11 @@ fun ComicCard(
                         .diskCacheKey("${comic.id}/cover")
                         .build(),
                     contentDescription = null,
-                    imageLoader = comicScreenViewModel.imageLoader!!,
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
+                    imageLoader = comicScreenViewModel.imageLoader!!,
                 )
 
                 Box(
@@ -100,22 +100,21 @@ fun ComicCard(
             }
             Text(
                 text = comic.comic.comic_name,
-                fontSize = 14.sp,
-                lineHeight = 17.sp,
+                fontSize = 12.sp,
+                lineHeight = 14.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
+                modifier = Modifier
+                    .padding(4.dp)
+                    .heightIn(min = 14.dp)
+            )
+            Text(
+                text = "Id: ${comic.id}",
+                fontSize = 10.sp,
+                lineHeight = 12.sp,
+                maxLines = 1,
                 modifier = Modifier.padding(4.dp)
             )
-
-            Box(Modifier.padding(4.dp).fillMaxWidth()){
-                Text(
-                    text = "Id: ${comic.id}",
-                    fontSize = 12.sp,
-                    lineHeight = 14.sp,
-                    maxLines = 1,
-                    modifier = Modifier.align(Alignment.CenterStart)
-                )
-            }
         }
     }
 }

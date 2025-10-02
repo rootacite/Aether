@@ -229,7 +229,9 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth()
                 )
             }
 

@@ -243,7 +243,15 @@ fun ComicPageView(
             {
                 val k = it.getPageChapterIndex(pagerState.currentPage)
                 Column(Modifier
-                    .padding(bottom = 24.dp)) {
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.9f),
+                            )
+                        )
+                    )) {
+                    Spacer(Modifier.height(42.dp))
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
                         state = comicPageViewModel.listState!!, modifier = Modifier
@@ -266,7 +274,7 @@ fun ComicPageView(
                                     pagerState.requestScrollToPage(page = r)
                                 }
                             ) {
-                                Box(Modifier.padding(1.dp))
+                                Box(Modifier.padding(0.dp))
                                 {
                                     AsyncImage(
                                         model = ImageRequest.Builder(LocalContext.current)
@@ -321,6 +329,9 @@ fun ComicPageView(
 
                         }
                     )
+
+
+                    Spacer(Modifier.height(24.dp))
                 }
             }
         }
