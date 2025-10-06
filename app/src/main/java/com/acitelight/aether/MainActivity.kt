@@ -56,6 +56,7 @@ import com.acitelight.aether.view.pages.ComicGridView
 import com.acitelight.aether.view.pages.ComicPageView
 import com.acitelight.aether.view.pages.ComicScreen
 import com.acitelight.aether.view.pages.HomeScreen
+import com.acitelight.aether.view.pages.LiveScreen
 import com.acitelight.aether.view.pages.MeScreen
 import com.acitelight.aether.view.pages.TransmissionScreen
 import com.acitelight.aether.view.pages.VideoPlayer
@@ -179,12 +180,21 @@ fun AppNavigation() {
                     TransmissionScreen(navigator = navController)
                 }
             }
+
+            composable(Screen.Live.route,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) }) {
+                LiveScreen()
+            }
+
             composable(Screen.Me.route,
                 enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
                 exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(200)) },
                 popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) },
                 popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(200)) }) {
-                MeScreen();
+                MeScreen()
             }
 
             composable(
@@ -246,6 +256,7 @@ fun BottomNavigationBar(navController: NavController) {
         Screen.Video,
         Screen.Comic,
         Screen.Transmission,
+        Screen.Live,
         Screen.Me
     ) else  listOf(
         Screen.Video,
@@ -310,6 +321,8 @@ sealed class Screen(val route: String, val icon: ImageVector, val title: String)
     data object Comic : Screen("comic_route", Icons.Filled.Image, "Comic")
     data object Transmission : Screen("transmission_route",
         Icons.AutoMirrored.Filled.CompareArrows, "Transmission")
+    data object Live : Screen("live_route",
+        Icons.Filled.LiveTv, "Live")
     data object Me : Screen("me_route", Icons.Filled.AccountCircle, "me")
     data object VideoPlayer : Screen("video_player_route/{videoId}", Icons.Filled.PlayArrow, "VideoPlayer")
     data object ComicGrid : Screen("comic_grid_route/{comicId}", Icons.Filled.PlayArrow, "ComicGrid")
