@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -52,6 +53,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -87,6 +89,18 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
     val activity = (context as? Activity)!!
     val exoPlayer: ExoPlayer = videoPlayerViewModel.player!!
 
+    val name by videoPlayerViewModel.currentName
+    val id by videoPlayerViewModel.currentId
+    val listState = rememberLazyListState()
+    val videos = videoPlayerViewModel.videos
+
+    LaunchedEffect(id, videos) {
+        val targetIndex = videos.indexOfFirst { it.id == id }
+        if (targetIndex >= 0) {
+            listState.scrollToItem(targetIndex)
+        }
+    }
+
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
     var volFactor by remember {
@@ -94,9 +108,6 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
             audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / maxVolume.toFloat()
         )
     }
-
-    val name by videoPlayerViewModel.currentName
-    val id by videoPlayerViewModel.currentId
 
     fun setVolume(value: Int) {
         audioManager.setStreamVolume(
@@ -590,7 +601,7 @@ fun VideoPlayerLandscape(videoPlayerViewModel: VideoPlayerViewModel) {
                     colors = CardDefaults.cardColors(containerColor = colorScheme.surface.copy(0.75f))
                 )
                 {
-                    LazyColumn(contentPadding = PaddingValues(vertical = 4.dp)) {
+                    LazyColumn(state = listState, contentPadding = PaddingValues(vertical = 4.dp)) {
                         items(videoPlayerViewModel.videos) { item ->
                             MiniPlaylistCard(Modifier.padding(4.dp), video = item, imageLoader = videoPlayerViewModel.imageLoader!!,
                                 selected = id == item.id, apiClient = videoPlayerViewModel.apiClient)

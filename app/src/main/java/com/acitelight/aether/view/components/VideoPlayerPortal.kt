@@ -260,7 +260,7 @@ fun VideoPlayerPortal(
                             playList.add("${i.klass}/${i.id}")
                         }
 
-                        val route = "video_player_route/${playList.joinToString(",").toHex()}"
+                        val route = "video_player_route/${(playList.joinToString(",") + "|${i.id}").toHex()}"
                         navController.navigate(route)
                     }
                     HorizontalDivider(
