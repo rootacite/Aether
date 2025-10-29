@@ -178,9 +178,9 @@ fun ComicScreen(
 
         VariableGrid(
             modifier = Modifier
-                .heightIn(max = 88.dp)
+                .heightIn(max = 72.dp)
                 .padding(4.dp),
-            rowHeight = 32.dp
+            rowHeight = 30.dp
         )
         {
             for (i in comicScreenViewModel.tags) {

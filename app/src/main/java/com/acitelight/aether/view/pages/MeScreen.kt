@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Textsms
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -41,6 +42,7 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = hiltViewModel<MeScreenViewMo
     var privateKey by meScreenViewModel.privateKey
     var url by meScreenViewModel.url
     var cert by meScreenViewModel.cert
+    var pak by meScreenViewModel.pak
 
     val uss by meScreenViewModel.uss.collectAsState(initial = false)
 
@@ -50,7 +52,8 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = hiltViewModel<MeScreenViewMo
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
-    ) {
+    )
+    {
         // Card component for a clean, contained UI block
         item{
             Card(
@@ -192,6 +195,54 @@ fun MeScreen(meScreenViewModel: MeScreenViewModel = hiltViewModel<MeScreenViewMo
                             modifier = Modifier.weight(0.5f).padding(8.dp)
                         ) {
                             Text("Save")
+                        }
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            )
+            {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Toolbox",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .align(Alignment.Start)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    OutlinedTextField(
+                        value = pak,
+                        onValueChange = { pak = it },
+                        label = { Text("Packet") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Textsms, contentDescription = "Packet")
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row{
+                        Button(
+                            onClick = {
+                                meScreenViewModel.sendPacket(pak)
+                            },
+                            modifier = Modifier.weight(0.5f).padding(8.dp)
+                        ) {
+                            Text("Send")
                         }
                     }
                 }

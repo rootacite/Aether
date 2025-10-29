@@ -46,6 +46,9 @@ class ApiClient @Inject constructor(
     fun getBase(): String{
         return replaceAbyssProtocol(base)
     }
+
+    fun getDomain(): String = domain
+
     private var base: String = ""
     private var domain: String = ""
     private var cert: String = ""
@@ -236,7 +239,7 @@ class ApiClient @Inject constructor(
                 throw Exception("No reachable URL found")
             }
 
-            domain = selectedUrl.toHttpUrlOrNull()?.host ?: ""
+            domain = replaceAbyssProtocol(selectedUrl).toHttpUrlOrNull()?.host ?: ""
             cert = crt
             base = selectedUrl
             withContext(Dispatchers.IO)

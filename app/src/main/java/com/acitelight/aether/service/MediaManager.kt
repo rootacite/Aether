@@ -156,7 +156,7 @@ class MediaManager @Inject constructor(
     {
         try{
             val j = apiClient.api!!.getComics()
-            return j
+            return j.sorted()
         }catch (_: Exception)
         {
             return listOf()

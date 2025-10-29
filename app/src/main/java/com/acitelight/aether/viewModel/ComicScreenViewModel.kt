@@ -61,7 +61,7 @@ class ComicScreenViewModel @Inject constructor(
             val m = mediaManager.queryComicInfoBulk(l)
 
             if(m != null) {
-                comics.addAll(m.sortedWith(compareBy(naturalOrder()) { it.comic.comic_name }))
+                comics.addAll(m.sortedBy { it.id.toInt() }.reversed())
                 tags.addAll(m.flatMap { it.comic.tags }.groupingBy { it }.eachCount()
                     .entries.sortedByDescending { it.value }
                     .map { it.key })

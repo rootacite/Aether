@@ -18,6 +18,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,6 +36,7 @@ class MeScreenViewModel @Inject constructor(
     val privateKey = mutableStateOf("")
     val url = mutableStateOf("")
     val cert = mutableStateOf("")
+    val pak = mutableStateOf("")
 
     val uss = settingsDataStoreManager.useSelfSignedFlow
 
@@ -108,7 +112,8 @@ class MeScreenViewModel @Inject constructor(
         }
     }
 
-    fun updateAccount(u: String, p: String) {
+    fun updateAccount(u: String, p: String)
+    {
         viewModelScope.launch {
             settingsDataStoreManager.saveUserName(u)
             settingsDataStoreManager.savePrivateKey(p)
@@ -139,6 +144,24 @@ class MeScreenViewModel @Inject constructor(
             } catch (e: Exception) {
                 print(e.message)
                 Toast.makeText(context, "Invalid Account Information", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun sendPacket(p: String)
+    {
+        val b = (p + "\r\n").toByteArray(Charsets.UTF_8)
+
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val addr = InetAddress.getByName(apiClient.getDomain())
+
+                val socket = DatagramSocket()
+                val packet = DatagramPacket(
+                    b, b.size, addr, 4096
+                )
+
+                socket.send(packet)
             }
         }
     }
