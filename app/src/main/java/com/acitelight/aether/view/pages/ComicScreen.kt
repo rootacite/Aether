@@ -1,5 +1,11 @@
 package com.acitelight.aether.view.pages
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,13 +33,21 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,6 +136,7 @@ fun VariableGrid(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComicScreen(
     navController: NavHostController,
@@ -131,13 +146,18 @@ fun ComicScreen(
     val state = rememberLazyStaggeredGridState()
     val colorScheme = MaterialTheme.colorScheme
     var searchFilter by comicScreenViewModel.searchFilter
+    var isTagsVisible by remember { mutableStateOf(false) }
+    var sortType by remember { mutableIntStateOf(0) }
 
-    Column {
+    Column(
+        modifier = Modifier.animateContentSize()
+    ) {
         Row(
             Modifier
                 .padding(4.dp)
                 .align(Alignment.CenterHorizontally)
-        ) {
+        )
+        {
             Text(
                 text = "Comics",
                 style = MaterialTheme.typography.headlineMedium,
@@ -151,7 +171,7 @@ fun ComicScreen(
                     .align(Alignment.CenterVertically)
                     .height(36.dp)
                     .widthIn(max = 240.dp)
-                    .background(colorScheme.primary, RoundedCornerShape(8.dp))
+                    .background(colorScheme.surface, RoundedCornerShape(8.dp))
                     .padding(horizontal = 6.dp)
             ) {
                 Icon(
@@ -176,44 +196,111 @@ fun ComicScreen(
             }
         }
 
-        VariableGrid(
-            modifier = Modifier
-                .heightIn(max = 72.dp)
-                .padding(4.dp),
-            rowHeight = 30.dp
-        )
-        {
-            for (i in comicScreenViewModel.tags) {
+        Row {
+            Text(
+                text = "Sorted by: ",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(horizontal = 6.dp).align(Alignment.CenterVertically)
+            )
 
-                Box(
-                    Modifier
-                        .background(
-                            if (included.contains(i)) Color.Green.copy(alpha = 0.65f) else colorScheme.surface,
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .height(32.dp)
-                        .widthIn(max = 72.dp)
-                        .clickable {
-                            if (included.contains(i))
-                                included.remove(i)
-                            else
-                                included.add(i)
-                        }
-                ) {
-                    Text(
-                        text = i,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .padding(2.dp)
-                            .align(Alignment.Center)
-                    )
+            RadioButton(
+                selected = (sortType == 0),
+                onClick = { sortType = 0 },
+                modifier = Modifier.align(Alignment.CenterVertically).size(24.dp)
+            )
+            Text(
+                text = "Id",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterVertically).padding(3.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+
+            RadioButton(
+                selected = (sortType == 1),
+                onClick = { sortType = 1 },
+                modifier = Modifier.align(Alignment.CenterVertically).size(24.dp)
+            )
+            Text(
+                text = "Name",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterVertically).padding(3.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Spacer(Modifier.weight(1f))
+
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(horizontal = 4.dp)
+                    .padding(vertical = 4.dp)
+                    .height(32.dp)
+                    .width(64.dp),
+                onClick = {
+                    isTagsVisible = !isTagsVisible
+                })
+            {
+                Row(Modifier.fillMaxSize())
+                {
+                    Text(text = "Tags", fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.align(Alignment.CenterVertically).padding(start = 5.dp))
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isTagsVisible, modifier = Modifier.align(Alignment.CenterVertically).padding(end = 5.dp))
                 }
             }
         }
 
         HorizontalDivider(Modifier.padding(1.dp), thickness = 1.5.dp)
+
+        AnimatedVisibility(
+            visible = isTagsVisible,
+            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
+        ) {
+            Column {
+                VariableGrid(
+                    modifier = Modifier
+                        .heightIn(max = 80.dp)
+                        .padding(4.dp),
+                    rowHeight = 30.dp
+                )
+                {
+                    for (i in comicScreenViewModel.tags) {
+
+                        Box(
+                            Modifier
+                                .background(
+                                    if (included.contains(i)) Color.Green.copy(alpha = 0.65f) else colorScheme.surface,
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .height(32.dp)
+                                .widthIn(max = 72.dp)
+                                .clickable {
+                                    if (included.contains(i))
+                                        included.remove(i)
+                                    else
+                                        included.add(i)
+                                }
+                        ) {
+                            Text(
+                                text = i,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .padding(2.dp)
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(Modifier.padding(1.dp), thickness = 1.5.dp)
+            }
+        }
 
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Adaptive(120.dp),
@@ -228,6 +315,14 @@ fun ComicScreen(
                     .filter { searchFilter.isEmpty() || searchFilter in it.comic.comic_name }
                     .filter { x ->
                         included.all { y -> y in x.comic.tags } || included.isEmpty()
+                    }
+                    .sortedByDescending {
+                        when(sortType)
+                        {
+                            0 -> it.id.toInt().toString().padStart(10, '0')
+                            1 -> it.comic.comic_name
+                            else -> it.id
+                        }
                     },
                 key = { it.id }
             ) { comic ->
