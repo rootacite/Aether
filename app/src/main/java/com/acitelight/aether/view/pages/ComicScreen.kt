@@ -152,10 +152,9 @@ fun ComicScreen(
     Column(
         modifier = Modifier.animateContentSize()
     ) {
-        Row(
-            Modifier
-                .padding(4.dp)
-                .align(Alignment.CenterHorizontally)
+        Row(Modifier
+            .padding(horizontal = 8.dp).padding(top = 4.dp)
+            .align(Alignment.CenterHorizontally)
         )
         {
             Text(
@@ -196,7 +195,11 @@ fun ComicScreen(
             }
         }
 
-        Row {
+        Row(Modifier
+            .padding(horizontal = 8.dp)
+            .align(Alignment.CenterHorizontally)
+        )
+        {
             Text(
                 text = "Sorted by: ",
                 fontWeight = FontWeight.Bold,
@@ -264,12 +267,11 @@ fun ComicScreen(
                 VariableGrid(
                     modifier = Modifier
                         .heightIn(max = 80.dp)
-                        .padding(4.dp),
+                        .padding(3.dp),
                     rowHeight = 30.dp
                 )
                 {
                     for (i in comicScreenViewModel.tags) {
-
                         Box(
                             Modifier
                                 .background(

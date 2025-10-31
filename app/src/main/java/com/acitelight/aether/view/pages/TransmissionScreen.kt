@@ -22,6 +22,7 @@ import com.acitelight.aether.view.components.BiliMiniSlider
 import com.acitelight.aether.view.components.VideoDownloadCardMini
 import com.acitelight.aether.viewModel.TransmissionScreenViewModel
 import com.tonyodev.fetch2.Status
+import java.io.File
 import kotlin.collections.sortedWith
 
 @Composable
@@ -82,7 +83,6 @@ fun TransmissionScreen(
             items(
                 downloads
                 .filter { it.type == "main" }
-                .sortedWith(compareBy(naturalOrder()) { it.fileName })
                 .sortedBy { it.status == Status.COMPLETED }, key = { it.id })
             { item ->
                 VideoDownloadCardMini(
@@ -112,6 +112,11 @@ fun TransmissionScreen(
                             item,
                             downloads
                         )) transmissionScreenViewModel.delete(i.id)
+
+                        File(
+                            transmissionScreenViewModel.context.getExternalFilesDir(null),
+                            "videos/${item.klass}/${item.vid}/summary.json"
+                        ).delete()
                     },
                     onRetry = {
                         for (i in downloadToGroup(

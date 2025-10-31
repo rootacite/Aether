@@ -16,7 +16,8 @@ class VideoDownloadItemState(
     totalBytes: Long,
     klass: String,
     vid: String,
-    val type: String
+    val type: String,
+    val group: String
 ) {
     var fileName by mutableStateOf(fileName)
     var filePath by mutableStateOf(filePath)

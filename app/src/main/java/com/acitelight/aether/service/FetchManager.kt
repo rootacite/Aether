@@ -133,6 +133,7 @@ class FetchManager @Inject constructor(
                         "name" to video.video.name,
                         "id" to video.id,
                         "class" to video.klass,
+                        "group" to (video.video.group ?: ""),
                         "type" to "main"
                     )
                 )
@@ -143,6 +144,7 @@ class FetchManager @Inject constructor(
                         "name" to video.video.name,
                         "id" to video.id,
                         "class" to video.klass,
+                        "group" to (video.video.group ?: ""),
                         "type" to "cover"
                     )
                 )
@@ -153,6 +155,7 @@ class FetchManager @Inject constructor(
                         "name" to video.video.name,
                         "id" to video.id,
                         "class" to video.klass,
+                        "group" to (video.video.group ?: ""),
                         "type" to "subtitle"
                     )
                 )
@@ -169,6 +172,7 @@ class FetchManager @Inject constructor(
                             "name" to video.video.name,
                             "id" to video.id,
                             "class" to video.klass,
+                            "group" to (video.video.group ?: ""),
                             "type" to "gallery"
                         )
                     )

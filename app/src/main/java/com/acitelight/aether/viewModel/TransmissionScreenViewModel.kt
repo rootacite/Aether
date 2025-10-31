@@ -203,7 +203,8 @@ class TransmissionScreenViewModel @Inject constructor(
             totalBytes = download.total,
             klass = download.extras.getString("class", ""),
             vid = download.extras.getString("id", ""),
-            type = download.extras.getString("type", "")
+            type = download.extras.getString("type", ""),
+            group = download.extras.getString("group", "")
         )
     }
 
