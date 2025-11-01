@@ -92,7 +92,7 @@ fun TransmissionScreen(
             enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
             exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
         ){
-            Column {
+            Column(Modifier.fillMaxWidth()) {
                 Button(onClick = {
                     mutiSelection = false
                     transmissionScreenViewModel.mutiSelectionList.forEach {
@@ -117,7 +117,7 @@ fun TransmissionScreen(
 
         }
 
-        HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
+        HorizontalDivider(Modifier.padding(horizontal = 8.dp).padding(vertical = 4.dp), 2.dp, DividerDefaults.color)
 
         LazyColumn(
             modifier = Modifier.fillMaxWidth()
