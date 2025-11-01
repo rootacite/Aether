@@ -13,6 +13,12 @@ class Video(
     val id: String,
     val video: VideoResponse
 ) {
+    companion object {
+        fun getCoverStatic(api: ApiClient, klass: String, id: String): String
+        {
+            return "${api.getBase()}api/video/$klass/$id/cover"
+        }
+    }
     fun getCover(api: ApiClient): String {
         return if (isLocal)
             "$localBase/videos/$klass/$id/cover.jpg"

@@ -6,6 +6,7 @@ import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Fetch
 import com.tonyodev.fetch2.FetchConfiguration
 import com.tonyodev.fetch2.FetchListener
+import com.tonyodev.fetch2.Priority
 import com.tonyodev.fetch2.Request
 import com.tonyodev.fetch2core.Extras
 import com.tonyodev.fetch2okhttp.OkHttpDownloader
@@ -128,6 +129,7 @@ class FetchManager @Inject constructor(
 
         val requests = mutableListOf(
             Request(video.getVideo(apiClient), videoPath.path).apply {
+                priority = Priority.LOW
                 extras = Extras(
                     mapOf(
                         "name" to video.video.name,
@@ -139,6 +141,7 @@ class FetchManager @Inject constructor(
                 )
             },
             Request(video.getCover(apiClient), coverPath.path).apply {
+                priority = Priority.HIGH
                 extras = Extras(
                     mapOf(
                         "name" to video.video.name,

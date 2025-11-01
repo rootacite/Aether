@@ -1,7 +1,10 @@
 package com.acitelight.aether.viewModel
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -42,11 +45,9 @@ class TransmissionScreenViewModel @Inject constructor(
 
     // map id -> state object reference (no index bookkeeping)
     private val idToState: MutableMap<Int, VideoDownloadItemState> = mutableMapOf()
-
-    fun modelToVideo(model: VideoDownloadItemState): Video? {
-        val fv = videoLibrary.classesMap.map { it.value }.flatten()
-        return fv.firstOrNull { it.klass == model.klass && it.id == model.vid }
-    }
+    var mutiSelection = mutableStateOf(false)
+    var mutiSelectionList = mutableStateListOf<String>()
+    var groupExpandMap = mutableStateMapOf<String, Boolean>()
 
     private val fetchListener = object : FetchListener {
         override fun onAdded(download: Download) {
@@ -79,18 +80,18 @@ class TransmissionScreenViewModel @Inject constructor(
             handleUpsert(download)
 
             if (download.extras.getString("type", "") == "main") {
-                val ii = videoLibrary.classesMap[download.extras.getString(
-                    "class",
-                    ""
-                )]?.indexOfFirst { it.id == download.extras.getString("id", "") }
+                val klass = download.extras.getString("class", "")
+                val ii = videoLibrary.classesMap[klass]?.indexOfFirst {
+                    it.id == download.extras.getString(
+                        "id",
+                        ""
+                    )
+                }
 
                 if (ii != null) {
                     val newi =
-                        videoLibrary.classesMap[download.extras.getString("class", "")]?.get(ii)
-                    if (newi != null) videoLibrary.classesMap[download.extras.getString(
-                        "class",
-                        ""
-                    )]?.set(
+                        videoLibrary.classesMap[klass]?.get(ii)
+                    if (newi != null) videoLibrary.classesMap[klass]?.set(
                         ii, newi.toLocal(context.getExternalFilesDir(null)!!.path)
                     )
                 }
@@ -107,6 +108,28 @@ class TransmissionScreenViewModel @Inject constructor(
 
         override fun onDeleted(download: Download) {
             handleRemove(download.id)
+
+            if (download.extras.getString("type", "") == "main") {
+                viewModelScope.launch {
+                    val klass = download.extras.getString("class", "")
+                    val ii = videoLibrary.classesMap[klass]?.indexOfFirst {
+                        it.id == download.extras.getString(
+                            "id",
+                            ""
+                        )
+                    }
+
+                    if (ii != null) {
+                        val v = mediaManager.queryVideo(klass, download.extras.getString("id", ""))
+                        if (v != null) {
+                            val newi = videoLibrary.classesMap[klass]?.get(ii)
+                            if (newi != null) videoLibrary.classesMap[klass]?.set(
+                                ii, v
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         override fun onDownloadBlockUpdated(
@@ -224,8 +247,7 @@ class TransmissionScreenViewModel @Inject constructor(
         fetchManager.removeListener()
     }
 
-    suspend fun playStart(model: VideoDownloadItemState, navigator: NavHostController)
-    {
+    suspend fun playStart(model: VideoDownloadItemState, navigator: NavHostController) {
         val downloaded = fetchManager.getAllDownloadsAsync().filter {
             it.status == Status.COMPLETED && it.extras.getString(
                 "class",
@@ -262,7 +284,8 @@ class TransmissionScreenViewModel @Inject constructor(
         val video = fv.firstOrNull { it.klass == model.klass && it.id == model.vid }
 
         if (video != null) {
-            val group = fv.filter { it.klass == video.klass && it.video.group == video.video.group && it.video.group != "null" }
+            val group =
+                fv.filter { it.klass == video.klass && it.video.group == video.video.group && it.video.group != "null" }
             for (i in group.sortedWith(compareBy(naturalOrder()) { it.video.name })) {
                 playList.add("${i.klass}/${i.id}")
             }
