@@ -32,7 +32,6 @@ class ComicPageViewModel @Inject constructor(
     val apiClient: ApiClient
 ) : ViewModel()
 {
-    var imageLoader: ImageLoader? = null
     var comic = mutableStateOf<Comic?>(null)
     var pageList = mutableStateListOf<String>()
     var title = mutableStateOf<String>("")
@@ -42,11 +41,6 @@ class ComicPageViewModel @Inject constructor(
 
 
     init{
-        imageLoader =  ImageLoader.Builder(context)
-            .components {
-                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
-            }
-            .build()
         listState = LazyListState(0, 0)
         db = ComicRecordDatabase.getDatabase(context)
     }

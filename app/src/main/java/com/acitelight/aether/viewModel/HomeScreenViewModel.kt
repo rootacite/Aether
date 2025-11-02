@@ -22,14 +22,7 @@ class HomeScreenViewModel @Inject constructor(
     val apiClient: ApiClient
 ) : ViewModel()
 {
-    var imageLoader: ImageLoader? = null
-
     init{
-        imageLoader =  ImageLoader.Builder(context)
-            .components {
-                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
-            }
-            .build()
         viewModelScope.launch {
             recentManager.queryVideo(context)
             recentManager.queryComic(context)

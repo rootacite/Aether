@@ -4,7 +4,10 @@ package com.acitelight.aether.service
 import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
+import coil3.ImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.AetherApp
+import com.acitelight.aether.helper.ZipUriFetcherFactory
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -169,7 +172,7 @@ class ApiClient @Inject constructor(
         }
     }
     private fun createOkHttp(): OkHttpClient {
-        return if (cert == "")
+        val r = if (cert == "")
             if (base.startsWith("abyss://"))
                 OkHttpClient
                     .Builder()
@@ -203,6 +206,14 @@ class ApiClient @Inject constructor(
         else
             createOkHttpClientWithDynamicCert(loadCertificateFromString(cert))
 
+        imageLoader =  ImageLoader.Builder(context)
+            .components {
+                add(OkHttpNetworkFetcherFactory(r))
+                add(ZipUriFetcherFactory())
+            }
+            .build()
+
+        return r
     }
     private fun createRetrofit(): Retrofit {
         client = createOkHttp()
@@ -215,10 +226,12 @@ class ApiClient @Inject constructor(
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
     }
+    private var imageLoader: ImageLoader? = null;
     private var client: OkHttpClient? = null
     var api: ApiInterface? = null
 
     fun getClient() = client!!
+    fun getImageLoader() = imageLoader!!
 
     suspend fun apply(context: Context, urls: String, crt: String): String? {
         try {

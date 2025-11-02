@@ -34,18 +34,12 @@ class ComicGridViewModel @Inject constructor(
     var coverHeight by mutableStateOf(220.dp)
     var maxHeight = 0.dp
 
-    var imageLoader: ImageLoader? = null
     var comic = mutableStateOf<Comic?>(null)
     val chapterList = mutableStateListOf<BookMark>()
     var db: ComicRecordDatabase? = null
     var record = mutableStateOf<ComicRecord?>(null)
 
     init {
-        imageLoader =  ImageLoader.Builder(context)
-            .components {
-                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
-            }
-            .build()
         db = try{
                 ComicRecordDatabase.getDatabase(context)
             }catch (e: Exception) {

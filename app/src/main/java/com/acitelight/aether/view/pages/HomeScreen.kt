@@ -17,6 +17,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,84 +60,93 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
     ) { p ->
-        if (p == 0) {
-            Column(Modifier.fillMaxHeight()) {
-                Text(
-                    text = "Videos",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .align(Alignment.Start)
-                )
-
-                HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
-
-                LazyColumn(modifier = Modifier.fillMaxWidth())
+        when(p)
+        {
+            0 -> {
+                Column(Modifier.fillMaxHeight())
                 {
-                    items(homeScreenViewModel.recentManager.recentVideo)
-                    { i ->
-                        MiniVideoCard(
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp),
-                            i,
-                            apiClient = homeScreenViewModel.apiClient,
-                            imageLoader = homeScreenViewModel.imageLoader!!
-                        )
-                        {
-                            updateRelate(homeScreenViewModel.recentManager.recentVideo, i)
+                    Text(
+                        text = "Videos",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .align(Alignment.Start)
+                    )
 
-                            val playList = mutableListOf<String>()
-                            val fv = homeScreenViewModel.videoLibrary.classesMap.map { it.value }
-                                .flatten()
+                    HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
 
-                            val group =
-                                fv.filter { it.klass == i.klass && it.video.group == i.video.group && it.video.group != "null" }
-                            for (ix in group) {
-                                playList.add("${ix.klass}/${ix.id}")
+                    LazyColumn(modifier = Modifier.fillMaxWidth())
+                    {
+                        items(homeScreenViewModel.recentManager.recentVideo)
+                        { i ->
+                            MiniVideoCard(
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp),
+                                i,
+                                apiClient = homeScreenViewModel.apiClient,
+                                imageLoader = homeScreenViewModel.apiClient.getImageLoader()
+                            )
+                            {
+                                updateRelate(homeScreenViewModel.recentManager.recentVideo, i)
+
+                                val playList = mutableListOf<String>()
+                                val fv = homeScreenViewModel.videoLibrary.classesMap.map { it.value }
+                                    .flatten()
+
+                                val group =
+                                    fv.filter { it.klass == i.klass && it.video.group == i.video.group && it.video.group != "null" }
+                                for (ix in group) {
+                                    playList.add("${ix.klass}/${ix.id}")
+                                }
+
+                                if(!playList.contains("${i.klass}/${i.id}"))
+                                    playList.add("${i.klass}/${i.id}")
+
+                                val route =
+                                    "video_player_route/${(playList.joinToString(",") + "|${i.id}").toHex()}"
+                                navController.navigate(route)
                             }
-
-                            if(!playList.contains("${i.klass}/${i.id}"))
-                                playList.add("${i.klass}/${i.id}")
-
-                            val route =
-                                "video_player_route/${(playList.joinToString(",") + "|${i.id}").toHex()}"
-                            navController.navigate(route)
+                            HorizontalDivider(
+                                Modifier
+                                    .padding(vertical = 8.dp)
+                                    .alpha(0.4f),
+                                1.dp,
+                                DividerDefaults.color
+                            )
                         }
-                        HorizontalDivider(
-                            Modifier
-                                .padding(vertical = 8.dp)
-                                .alpha(0.4f),
-                            1.dp,
-                            DividerDefaults.color
-                        )
                     }
                 }
             }
-        } else {
-            Column(Modifier.fillMaxHeight()) {
-                Text(
-                    text = "Comics",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .align(Alignment.Start)
-                )
-
-                HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
-
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(128.dp),
-                    contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                )
+            1 -> {
+                Column(Modifier.fillMaxHeight())
                 {
-                    items(homeScreenViewModel.recentManager.recentComic)
-                    { comic ->
-                        ComicCardRecent(comic, navController, homeScreenViewModel)
+                    Text(
+                        text = "Comics",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .align(Alignment.Start)
+                    )
+
+                    HorizontalDivider(Modifier.padding(8.dp), 2.dp, DividerDefaults.color)
+
+
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Adaptive(120.dp),
+                        contentPadding = PaddingValues(4.dp),
+                        verticalItemSpacing = 6.dp,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    {
+                        items(homeScreenViewModel.recentManager.recentComic)
+                        { comic ->
+                            ComicCardRecent(comic, navController, homeScreenViewModel)
+                        }
                     }
                 }
             }
+            else -> {  }
         }
     }
 }
@@ -145,7 +157,8 @@ fun ComicCardRecent(
     comic: Comic,
     navController: NavHostController,
     homeScreenViewModel: HomeScreenViewModel
-) {
+)
+{
     Card(
         shape = RoundedCornerShape(6.dp),
         modifier = Modifier
@@ -168,7 +181,7 @@ fun ComicCardRecent(
                         .diskCacheKey("${comic.id}/${0}")
                         .build(),
                     contentDescription = null,
-                    imageLoader = homeScreenViewModel.imageLoader!!,
+                    imageLoader = homeScreenViewModel.apiClient.getImageLoader(),
                     modifier = Modifier
                         .fillMaxSize(),
                     contentScale = ContentScale.Crop,

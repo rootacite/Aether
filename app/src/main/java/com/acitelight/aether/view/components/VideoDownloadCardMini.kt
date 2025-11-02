@@ -109,10 +109,10 @@ fun VideoDownloadCardMini(
                             else -> {}
                         }
                     else {
-                        if ("${model.klass}/${model.vid}" !in viewModel.mutiSelectionList)
-                            viewModel.mutiSelectionList.add("${model.klass}/${model.vid}")
+                        if ("${model.klass}/${model.vid}" !in viewModel.mutiSelectionListVideo)
+                            viewModel.mutiSelectionListVideo.add("${model.klass}/${model.vid}")
                         else
-                            viewModel.mutiSelectionList.remove("${model.klass}/${model.vid}")
+                            viewModel.mutiSelectionListVideo.remove("${model.klass}/${model.vid}")
                     }
                 },
                 onLongClick = {
@@ -137,12 +137,12 @@ fun VideoDownloadCardMini(
                 )
                 {
                     Checkbox(
-                        checked = "${model.klass}/${model.vid}" in viewModel.mutiSelectionList,
+                        checked = "${model.klass}/${model.vid}" in viewModel.mutiSelectionListVideo,
                         onCheckedChange = { state ->
                             if (state)
-                                viewModel.mutiSelectionList.add("${model.klass}/${model.vid}")
+                                viewModel.mutiSelectionListVideo.add("${model.klass}/${model.vid}")
                             else
-                                viewModel.mutiSelectionList.remove("${model.klass}/${model.vid}")
+                                viewModel.mutiSelectionListVideo.remove("${model.klass}/${model.vid}")
                         }
                     )
                 }
@@ -156,7 +156,7 @@ fun VideoDownloadCardMini(
                         .widthIn(max = imageMaxWidth)
                         .background(Color.Black),
                     contentScale = ContentScale.Crop,
-                    imageLoader = viewModel.imageLoader!!
+                    imageLoader = viewModel.apiClient.getImageLoader()
                 )
             }
 

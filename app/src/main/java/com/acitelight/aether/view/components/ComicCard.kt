@@ -1,6 +1,8 @@
 package com.acitelight.aether.view.components
 
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,12 +29,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.acitelight.aether.model.Comic
 import com.acitelight.aether.view.pages.toHex
 import com.acitelight.aether.viewModel.ComicScreenViewModel
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -42,15 +46,32 @@ fun ComicCard(
     comicScreenViewModel: ComicScreenViewModel
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(0.65f)),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(
+                0.65f
+            )
+        ),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight(),
-        onClick = {
-            val route = "comic_grid_route/${comic.id.toHex()}"
-            navController.navigate(route)
-        }
+            .wrapContentHeight()
+            .combinedClickable(
+                onClick = {
+                    val route = "comic_grid_route/${comic.id.toHex()}"
+                    navController.navigate(route)
+                },
+                onLongClick = {
+                    comicScreenViewModel.viewModelScope.launch()
+                    {
+                        comicScreenViewModel.download(comic = comic)
+                        Toast.makeText(
+                            comicScreenViewModel.context,
+                            "Start downloading ${comic.comic.comic_name}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            ),
     ) {
         Column(
             modifier = Modifier
@@ -68,7 +89,7 @@ fun ComicCard(
                         .fillMaxSize()
                         .clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Fit,
-                    imageLoader = comicScreenViewModel.imageLoader!!,
+                    imageLoader = comicScreenViewModel.apiClient.getImageLoader(),
                 )
 
                 Box(

@@ -61,7 +61,7 @@ private fun VideoDownloadCardMiniPack(
     imageHeight: Dp = 85.dp,
     imageMaxWidth: Dp = 140.dp
 ) {
-    val downloads = viewModel.downloads
+    val downloads = viewModel.downloadVideos
     VideoDownloadCardMini(
         navigator = navigator,
         viewModel = viewModel,
@@ -137,12 +137,12 @@ fun VideoDownloadCard(
                         if (!mutiSelection)
                             viewModel.groupExpandMap[item.group] = !viewModel.groupExpandMap.getOrDefault(item.group, false)
                         else {
-                            if(!models.all { "${it.klass}/${it.vid}" in viewModel.mutiSelectionList })
-                                viewModel.mutiSelectionList.addAll(
-                                    models.map { "${it.klass}/${it.vid}" }.filter { it !in viewModel.mutiSelectionList }
+                            if(!models.all { "${it.klass}/${it.vid}" in viewModel.mutiSelectionListVideo })
+                                viewModel.mutiSelectionListVideo.addAll(
+                                    models.map { "${it.klass}/${it.vid}" }.filter { it !in viewModel.mutiSelectionListVideo }
                                 )
                             else
-                                viewModel.mutiSelectionList.removeAll(models.map { "${it.klass}/${it.vid}" })
+                                viewModel.mutiSelectionListVideo.removeAll(models.map { "${it.klass}/${it.vid}" })
                         }
                     },
                     onLongClick = {

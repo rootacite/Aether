@@ -3,26 +3,43 @@ package com.acitelight.aether.model
 import com.acitelight.aether.service.ApiClient
 
 class Comic(
+    val isLocal: Boolean,
+    val localBase: String,
     val comic: ComicResponse,
     val id: String
 )
 {
+    companion object {
+        fun getCoverStatic(api: ApiClient, id: String, name: String): String
+        {
+            return "${api.getBase()}api/image/$id/$name"
+        }
+    }
+
+    fun getAchieve(api: ApiClient): String
+    {
+        return "${api.getBase()}api/image/$id/achieve"
+    }
+
     fun getCover(api: ApiClient): String
     {
-        if(id == "101")
-            print("")
-
-        if(comic.cover != "")
+        if(isLocal)
         {
-            return "${api.getBase()}api/image/$id/${comic.cover}"
+            comic.cover?.let {
+                return "file://$localBase?entry=$it"
+            }
+            return "file://$localBase?entry=${comic.list[0]}"
+        }else{
+            comic.cover?.let {
+                return "${api.getBase()}api/image/$id/$it"
+            }
+            return "${api.getBase()}api/image/$id/${comic.list[0]}"
         }
-
-        return "${api.getBase()}api/image/$id/${comic.list[0]}"
     }
 
     fun getPage(pageNumber: Int, api: ApiClient): String
     {
-        return "${api.getBase()}api/image/$id/${comic.list[pageNumber]}"
+        return if(isLocal) "file://$localBase?entry=${comic.list[pageNumber]}" else "${api.getBase()}api/image/$id/${comic.list[pageNumber]}"
     }
 
     fun getPage(pageName: String, api: ApiClient): String?

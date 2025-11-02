@@ -158,7 +158,7 @@ fun ComicGridView(
                             .diskCacheKey("${comic.id}/${comic.comic.bookmarks[page].page}")
                             .build(),
                         contentDescription = null,
-                        imageLoader = comicGridViewModel.imageLoader!!,
+                        imageLoader = comicGridViewModel.apiClient.getImageLoader(),
                         modifier = Modifier
                             .fillMaxSize(),
                         contentScale = ContentScale.FillWidth,
@@ -424,7 +424,7 @@ fun ChapterCard(
                                 .diskCacheKey("${comic.id}/${r}")
                                 .build(),
                             contentDescription = null,
-                            imageLoader = comicGridViewModel.imageLoader!!,
+                            imageLoader = comicGridViewModel.apiClient.getImageLoader(),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(12.dp)),

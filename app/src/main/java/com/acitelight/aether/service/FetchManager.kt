@@ -1,6 +1,11 @@
 package com.acitelight.aether.service
 
 import android.content.Context
+import com.acitelight.aether.helper.DownloadType
+import com.acitelight.aether.helper.getId
+import com.acitelight.aether.helper.getType
+import com.acitelight.aether.helper.getVideoClass
+import com.acitelight.aether.model.Comic
 import com.acitelight.aether.model.Video
 import com.tonyodev.fetch2.Download
 import com.tonyodev.fetch2.Fetch
@@ -97,8 +102,14 @@ class FetchManager @Inject constructor(
         onEnqueued: ((Request) -> Unit)? = null,
         onError: ((com.tonyodev.fetch2.Error) -> Unit)? = null
     ) {
-        configured.filter { it }.first()
+        configured.filter { it }.first() // Wait the service to be configured
         fetch?.enqueue(request, { r -> onEnqueued?.invoke(r) }, { e -> onError?.invoke(e) })
+    }
+
+    private fun makeFolder(comic: Comic) {
+        val appFilesDir = context.getExternalFilesDir(null)
+        val comicsDir = File(appFilesDir, "comics")
+        comicsDir.mkdirs()
     }
 
     private fun makeFolder(video: Video) {
@@ -107,10 +118,39 @@ class FetchManager @Inject constructor(
         videosDir.mkdirs()
     }
 
+    suspend fun startComicDownload(comic: Comic) {
+        if (getAllDownloadsAsync().any
+            {
+                it.getId() == comic.id && it.getType() == DownloadType.Comic
+            }
+        ) return
+
+        makeFolder(comic)
+
+        val comicPath = File(context.getExternalFilesDir(null), "comics/${comic.id}.zip")
+        val req = Request(
+            comic.getAchieve(apiClient), comicPath.path
+        ).apply {
+            extras = Extras(
+                mapOf(
+                    "name" to comic.comic.comic_name,
+                    "id" to comic.id,
+                    "type" to "comic",
+                    "cover" to comic.getCover(apiClient)
+                )
+            )
+        }
+
+        enqueue(req)
+    }
+
     suspend fun startVideoDownload(video: Video) {
-        if(getAllDownloadsAsync().any{
-            it.extras.getString("class", "") == video.klass && it.extras.getString("id", "") == video.id })
-            return
+        if (getAllDownloadsAsync().any
+            { it.getVideoClass() == video.klass &&
+                        it.getId() == video.id &&
+                        it.getType() == DownloadType.VideoMainFile
+            }
+        ) return
 
         makeFolder(video)
         File(
@@ -166,10 +206,12 @@ class FetchManager @Inject constructor(
         )
         for (p in video.getGallery(apiClient)) {
             requests.add(
-                Request(p.url, File(
-                    context.getExternalFilesDir(null),
-                    "videos/${video.klass}/${video.id}/gallery/${p.name}"
-                ).path).apply {
+                Request(
+                    p.url, File(
+                        context.getExternalFilesDir(null),
+                        "videos/${video.klass}/${video.id}/gallery/${p.name}"
+                    ).path
+                ).apply {
                     extras = Extras(
                         mapOf(
                             "name" to video.video.name,

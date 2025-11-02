@@ -85,8 +85,6 @@ class VideoPlayerViewModel @Inject constructor(
             httpDataSourceFactory
         )
     }
-
-    var imageLoader: ImageLoader? = null
     var brit by mutableFloatStateOf(0.0f)
     val database: VideoRecordDatabase = VideoRecordDatabase.getDatabase(context)
     var cues by mutableStateOf(listOf<Cue>())
@@ -113,12 +111,6 @@ class VideoPlayerViewModel @Inject constructor(
         }else{
             vs = oId.split(",").map { it.split("/") }.toMutableList()
         }
-
-        imageLoader = ImageLoader.Builder(context)
-            .components {
-                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
-            }
-            .build()
 
         viewModelScope.launch {
             videos = mediaManager.queryVideoBulk(vs.first()[0], vs.map { it[1] })!!

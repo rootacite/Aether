@@ -100,7 +100,7 @@ fun VideoCard(
                         .fillMaxSize()
                         .clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Fit,
-                    imageLoader = videoScreenViewModel.imageLoader!!
+                    imageLoader = videoScreenViewModel.apiClient.getImageLoader()
                 )
 
 

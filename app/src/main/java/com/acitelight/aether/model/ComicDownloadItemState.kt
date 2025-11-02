@@ -8,7 +8,7 @@ import androidx.compose.runtime.setValue
 import com.acitelight.aether.helper.DownloadType
 import com.tonyodev.fetch2.Status
 
-class VideoDownloadItemState(
+class ComicDownloadItemState(
     val id: Int,
     fileName: String,
     filePath: String,
@@ -17,10 +17,9 @@ class VideoDownloadItemState(
     status: Status,
     downloadedBytes: Long,
     totalBytes: Long,
-    klass: String,
-    vid: String,
+    val cid: String,
     val type: DownloadType,
-    val group: String
+    val cover: String
 ) {
     var fileName by mutableStateOf(fileName)
     var filePath by mutableStateOf(filePath)
@@ -29,7 +28,4 @@ class VideoDownloadItemState(
     var status by mutableStateOf(status)
     var downloadedBytes by mutableLongStateOf(downloadedBytes)
     var totalBytes by mutableLongStateOf(totalBytes)
-
-    var klass by mutableStateOf(klass)
-    var vid by mutableStateOf(vid)
 }

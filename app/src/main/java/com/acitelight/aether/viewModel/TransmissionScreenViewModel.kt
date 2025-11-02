@@ -1,7 +1,6 @@
 package com.acitelight.aether.viewModel
 
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -12,6 +11,14 @@ import androidx.navigation.NavHostController
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.acitelight.aether.Global.updateRelate
+import com.acitelight.aether.helper.DownloadType
+import com.acitelight.aether.helper.getComicCover
+import com.acitelight.aether.helper.getGroup
+import com.acitelight.aether.helper.getId
+import com.acitelight.aether.helper.getName
+import com.acitelight.aether.helper.getType
+import com.acitelight.aether.helper.getVideoClass
+import com.acitelight.aether.model.ComicDownloadItemState
 import com.acitelight.aether.model.Video
 import com.acitelight.aether.model.VideoDownloadItemState
 import com.acitelight.aether.service.ApiClient
@@ -40,13 +47,15 @@ class TransmissionScreenViewModel @Inject constructor(
     val mediaManager: MediaManager,
     val apiClient: ApiClient
 ) : ViewModel() {
-    var imageLoader: ImageLoader? = null
-    val downloads: SnapshotStateList<VideoDownloadItemState> = mutableStateListOf()
+    val downloadVideos: SnapshotStateList<VideoDownloadItemState> = mutableStateListOf()
+    val downloadComics: SnapshotStateList<ComicDownloadItemState> = mutableStateListOf()
 
     // map id -> state object reference (no index bookkeeping)
-    private val idToState: MutableMap<Int, VideoDownloadItemState> = mutableMapOf()
+    private val idToStateVideos: MutableMap<Int, VideoDownloadItemState> = mutableMapOf()
+    private val idToStateComics: MutableMap<Int, ComicDownloadItemState> = mutableMapOf()
     var mutiSelection = mutableStateOf(false)
-    var mutiSelectionList = mutableStateListOf<String>()
+    var mutiSelectionListVideo = mutableStateListOf<String>()
+    var mutiSelectionListComic = mutableStateListOf<Int>()
     var groupExpandMap = mutableStateMapOf<String, Boolean>()
 
     private val fetchListener = object : FetchListener {
@@ -79,20 +88,15 @@ class TransmissionScreenViewModel @Inject constructor(
         override fun onCompleted(download: Download) {
             handleUpsert(download)
 
-            if (download.extras.getString("type", "") == "main") {
-                val klass = download.extras.getString("class", "")
-                val ii = videoLibrary.classesMap[klass]?.indexOfFirst {
-                    it.id == download.extras.getString(
-                        "id",
-                        ""
-                    )
-                }
+            if (download.getType() == DownloadType.VideoMainFile) {
+                val klass = download.getVideoClass()
+                val index =
+                    videoLibrary.classesMap[klass]?.indexOfFirst { it.id == download.getId() }
 
-                if (ii != null) {
-                    val newi =
-                        videoLibrary.classesMap[klass]?.get(ii)
-                    if (newi != null) videoLibrary.classesMap[klass]?.set(
-                        ii, newi.toLocal(context.getExternalFilesDir(null)!!.path)
+                if (index != null) {
+                    val item = videoLibrary.classesMap[klass]?.get(index)
+                    if (item != null) videoLibrary.classesMap[klass]?.set(
+                        index, item.toLocal(context.getExternalFilesDir(null)!!.path)
                     )
                 }
             }
@@ -103,28 +107,24 @@ class TransmissionScreenViewModel @Inject constructor(
         }
 
         override fun onRemoved(download: Download) {
-            handleRemove(download.id)
+            handleRemove(download)
         }
 
         override fun onDeleted(download: Download) {
-            handleRemove(download.id)
+            handleRemove(download)
 
-            if (download.extras.getString("type", "") == "main") {
+            if (download.getType() == DownloadType.VideoMainFile) {
                 viewModelScope.launch {
-                    val klass = download.extras.getString("class", "")
-                    val ii = videoLibrary.classesMap[klass]?.indexOfFirst {
-                        it.id == download.extras.getString(
-                            "id",
-                            ""
-                        )
-                    }
+                    val klass = download.getVideoClass()
+                    val index =
+                        videoLibrary.classesMap[klass]?.indexOfFirst { it.id == download.getId() }
 
-                    if (ii != null) {
-                        val v = mediaManager.queryVideo(klass, download.extras.getString("id", ""))
+                    if (index != null) {
+                        val v = mediaManager.queryVideo(klass, download.getId())
                         if (v != null) {
-                            val newi = videoLibrary.classesMap[klass]?.get(ii)
-                            if (newi != null) videoLibrary.classesMap[klass]?.set(
-                                ii, v
+                            val item = videoLibrary.classesMap[klass]?.get(index)
+                            if (item != null) videoLibrary.classesMap[klass]?.set(
+                                index, v
                             )
                         }
                     }
@@ -156,91 +156,148 @@ class TransmissionScreenViewModel @Inject constructor(
             upsertOnMain(download)
         }
 
-        val state = downloadToState(download)
-
-        if (!videoLibrary.classes.contains(state.klass)) videoLibrary.classes.add(state.klass)
-
-        if (!videoLibrary.classesMap.containsKey(state.klass)) videoLibrary.classesMap[state.klass] =
-            mutableStateListOf()
-
-        if (videoLibrary.classesMap[state.klass]?.any { it.id == state.vid } != true) {
-            viewModelScope.launch(Dispatchers.IO) {
-                val v = mediaManager.queryVideo(state.klass, state.vid, state)
-                if (v != null) {
-                    videoLibrary.classesMap[state.klass]?.add(v)
+        if (download.getType() == DownloadType.VideoMainFile) {
+            val state = downloadToStateVideo(download)
+            if (!videoLibrary.classes.contains(state.klass)) videoLibrary.classes.add(state.klass)
+            if (!videoLibrary.classesMap.containsKey(state.klass)) videoLibrary.classesMap[state.klass] =
+                mutableStateListOf()
+            if (videoLibrary.classesMap[state.klass]?.any { it.id == state.vid } != true) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    val v = mediaManager.queryVideo(state.klass, state.vid, state)
+                    if (v != null) {
+                        videoLibrary.classesMap[state.klass]?.add(v)
+                    }
                 }
-            }
 
+            }
         }
     }
 
-    private fun handleRemove(id: Int) {
+    private fun handleRemove(download: Download) {
         viewModelScope.launch(Dispatchers.Main) {
-            removeOnMain(id)
+            removeOnMain(download)
         }
     }
 
     private fun upsertOnMain(download: Download) {
-        val existing = idToState[download.id]
-        if (existing != null) {
-            // update fields in-place -> minimal recomposition
-            existing.filePath = download.file
-            existing.fileName = download.request.extras.getString("name", "")
-            existing.url = download.url
-            existing.progress = download.progress
-            existing.status = download.status
-            existing.downloadedBytes = download.downloaded
-            existing.totalBytes = download.total
-        } else {
-            // new item: add to head (or tail depending on preference)
-            val newState = downloadToState(download)
-            downloads.add(0, newState)
-            idToState[newState.id] = newState
-        }
-    }
-
-    private fun removeOnMain(id: Int) {
-        val state = idToState.remove(id)
-        if (state != null) {
-            downloads.remove(state)
-        } else {
-            val idx = downloads.indexOfFirst { it.id == id }
-            if (idx >= 0) {
-                val removed = downloads.removeAt(idx)
-                idToState.remove(removed.id)
+        when (download.getType()) {
+            DownloadType.VideoMainFile -> {
+                val existing = idToStateVideos[download.id]
+                if (existing != null) {
+                    // update fields in-place -> minimal recomposition
+                    existing.filePath = download.file
+                    existing.fileName = download.getName()
+                    existing.url = download.url
+                    existing.progress = download.progress
+                    existing.status = download.status
+                    existing.downloadedBytes = download.downloaded
+                    existing.totalBytes = download.total
+                } else {
+                    // new item: add to head (or tail depending on preference)
+                    val newState = downloadToStateVideo(download)
+                    downloadVideos.add(0, newState)
+                    idToStateVideos[newState.id] = newState
+                }
             }
+
+            DownloadType.Comic -> {
+                val existing = idToStateComics[download.id]
+                if (existing != null) {
+                    // update fields in-place -> minimal recomposition
+                    existing.filePath = download.file
+                    existing.fileName = download.getName()
+                    existing.url = download.url
+                    existing.progress = download.progress
+                    existing.status = download.status
+                    existing.downloadedBytes = download.downloaded
+                    existing.totalBytes = download.total
+                } else {
+                    // new item: add to head (or tail depending on preference)
+                    val newState = downloadToStateComic(download)
+                    downloadComics.add(0, newState)
+                    idToStateComics[newState.id] = newState
+                }
+            }
+
+            else -> {}
         }
     }
 
-    private fun downloadToState(download: Download): VideoDownloadItemState {
+    private fun removeOnMain(download: Download) {
+        when (download.getType()) {
+            DownloadType.VideoMainFile -> {
+                val state = idToStateVideos.remove(download.id)
+                if (state != null) {
+                    downloadVideos.remove(state)
+                } else {
+                    val idx = downloadVideos.indexOfFirst { it.id == download.id }
+                    if (idx >= 0) {
+                        val removed = downloadVideos.removeAt(idx)
+                        idToStateVideos.remove(removed.id)
+                    }
+                }
+            }
+
+            DownloadType.Comic -> {
+                val state = idToStateComics.remove(download.id)
+                if (state != null) {
+                    downloadComics.remove(state)
+                } else {
+                    val idx = downloadComics.indexOfFirst { it.id == download.id }
+                    if (idx >= 0) {
+                        val removed = downloadComics.removeAt(idx)
+                        idToStateComics.remove(removed.id)
+                    }
+                }
+            }
+
+            else -> {}
+        }
+
+    }
+
+    private fun downloadToStateVideo(download: Download): VideoDownloadItemState {
         val filePath = download.file
 
         return VideoDownloadItemState(
             id = download.id,
-            fileName = download.request.extras.getString("name", ""),
+            fileName = download.getName(),
             filePath = filePath,
             url = download.url,
             progress = download.progress,
             status = download.status,
             downloadedBytes = download.downloaded,
             totalBytes = download.total,
-            klass = download.extras.getString("class", ""),
-            vid = download.extras.getString("id", ""),
-            type = download.extras.getString("type", ""),
-            group = download.extras.getString("group", "")
+            klass = download.getVideoClass(),
+            vid = download.getId(),
+            type = download.getType(),
+            group = download.getGroup()
         )
     }
 
+    private fun downloadToStateComic(download: Download): ComicDownloadItemState {
+        val filePath = download.file
+
+        return ComicDownloadItemState(
+            id = download.id,
+            fileName = download.getName(),
+            filePath = filePath,
+            url = download.url,
+            progress = download.progress,
+            status = download.status,
+            downloadedBytes = download.downloaded,
+            totalBytes = download.total,
+            cid = download.getId(),
+            type = download.getType(),
+            cover = download.getComicCover()
+        )
+    }
 
     // UI actions delegated to FetchManager
     fun pause(id: Int) = fetchManager.pause(id)
     fun resume(id: Int) = fetchManager.resume(id)
     fun retry(id: Int) = fetchManager.retry(id)
-    fun delete(id: Int) {
-        fetchManager.delete(id) {
-            viewModelScope.launch(Dispatchers.Main) { removeOnMain(id) }
-        }
-    }
+    fun delete(id: Int) = fetchManager.delete(id)
 
     override fun onCleared() {
         super.onCleared()
@@ -249,30 +306,15 @@ class TransmissionScreenViewModel @Inject constructor(
 
     suspend fun playStart(model: VideoDownloadItemState, navigator: NavHostController) {
         val downloaded = fetchManager.getAllDownloadsAsync().filter {
-            it.status == Status.COMPLETED && it.extras.getString(
-                "class",
-                ""
-            ) != "comic" && it.extras.getString(
-                "type",
-                ""
-            ) == "main"
+            it.status == Status.COMPLETED && it.getType() == DownloadType.VideoMainFile
         }
 
         val jsonQuery = downloaded.map {
             File(
                 context.getExternalFilesDir(null),
-                "videos/${
-                    it.extras.getString(
-                        "class",
-                        ""
-                    )
-                }/${it.extras.getString("id", "")}/summary.json"
+                "videos/${it.getVideoClass()}/${it.getId()}/summary.json"
             ).readText()
-        }
-            .map {
-                Json.decodeFromString<Video>(it)
-                    .toLocal(context.getExternalFilesDir(null)!!.path)
-            }
+        }.map { Json.decodeFromString<Video>(it).toLocal(context.getExternalFilesDir(null)!!.path) }
 
         updateRelate(
             jsonQuery,
@@ -298,22 +340,19 @@ class TransmissionScreenViewModel @Inject constructor(
     }
 
     init {
-        imageLoader = ImageLoader.Builder(context).components {
-            add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
-        }.build()
-
         viewModelScope.launch {
             fetchManager.setListener(fetchListener)
             val downloaded = fetchManager.getAllDownloadsAsync()
 
-            downloads.clear()
-            idToState.clear()
-            downloaded.forEach { d ->
-                val s = downloadToState(d)
-                downloads.add(s)
-                idToState[s.id] = s
+            downloadVideos.clear()
+            downloadComics.clear()
+            idToStateVideos.clear()
+            downloaded.filter { it.getType() != DownloadType.Comic }.forEach { d ->
+                val s = downloadToStateVideo(d)
+                downloadVideos.add(s)
+                idToStateVideos[s.id] = s
 
-                if (d.extras.getString("type", "") == "main") {
+                if (d.getType() == DownloadType.VideoMainFile) {
                     if (!videoLibrary.classes.contains(s.klass))
                         videoLibrary.classes.add(s.klass)
 
@@ -327,6 +366,12 @@ class TransmissionScreenViewModel @Inject constructor(
                         }
                     }
                 }
+            }
+
+            downloaded.filter { it.getType() == DownloadType.Comic }.forEach { d ->
+                val s = downloadToStateComic(d)
+                downloadComics.add(s)
+                idToStateComics[s.id] = s
             }
         }
     }

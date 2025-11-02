@@ -256,10 +256,11 @@ fun BottomNavigationBar(navController: NavController) {
         Screen.Video,
         Screen.Comic,
         Screen.Transmission,
-        Screen.Live,
+        // Screen.Live,
         Screen.Me
     ) else  listOf(
         Screen.Video,
+        Screen.Comic,
         Screen.Transmission,
         Screen.Me
     )

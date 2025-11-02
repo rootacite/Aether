@@ -32,7 +32,7 @@ fun HorizontalGallery(videoPlayerViewModel: VideoPlayerViewModel) {
         contentPadding = PaddingValues(horizontal = 24.dp)
     ) {
         items(gallery) { it ->
-            SingleImageItem(img = it, videoPlayerViewModel.imageLoader!!)
+            SingleImageItem(img = it, videoPlayerViewModel.apiClient.getImageLoader())
         }
     }
 }

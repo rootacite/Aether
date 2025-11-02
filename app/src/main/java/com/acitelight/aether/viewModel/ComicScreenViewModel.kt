@@ -7,65 +7,75 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.acitelight.aether.Global
 import com.acitelight.aether.model.Comic
+import com.acitelight.aether.model.ComicRecord
+import com.acitelight.aether.model.ComicResponse
+import com.acitelight.aether.model.Video
 import com.acitelight.aether.service.ApiClient
+import com.acitelight.aether.service.FetchManager
 import com.acitelight.aether.service.MediaManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import java.io.File
+import java.util.zip.ZipFile
 import javax.inject.Inject
 
 @HiltViewModel
 class ComicScreenViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    val fetchManager: FetchManager,
+    @ApplicationContext val context: Context,
     val mediaManager: MediaManager,
     val apiClient: ApiClient
 ) : ViewModel() {
-
-    var imageLoader: ImageLoader? = null;
-
     val searchFilter = mutableStateOf("")
     val comics = mutableStateListOf<Comic>()
-    val excluded = mutableStateListOf<String>()
     val included = mutableStateListOf<String>()
     val tags = mutableStateListOf<String>()
-    private val counter = mutableMapOf<String, Int>()
 
-    fun insertItem(newItem: String) {
-        val newCount = (counter[newItem] ?: 0) + 1
-        counter[newItem] = newCount
+    init {
+        viewModelScope.launch {
+            if (Global.loggedIn) {
+                val l = mediaManager.listComics()
+                val m = mediaManager.queryComicInfoBulk(l)
 
-        if (newItem !in tags) {
-            val insertIndex = tags.indexOfFirst { counter[it]!! < newCount }
-                .takeIf { it >= 0 } ?: tags.size
-            tags.add(insertIndex, newItem)
-        } else {
-            var currentIndex = tags.indexOf(newItem)
-            while (currentIndex > 0 && counter[tags[currentIndex - 1]]!! < newCount) {
-                tags[currentIndex] = tags[currentIndex - 1]
-                tags[currentIndex - 1] = newItem
-                currentIndex--
+                if (m != null) {
+                    comics.addAll(m.sortedBy { it.id.toInt() }.reversed())
+                    tags.addAll(m.flatMap { it.comic.tags }.groupingBy { it }.eachCount()
+                        .entries.sortedByDescending { it.value }
+                        .map { it.key })
+                }
+            }else{
+                val d = File(context.getExternalFilesDir(null), "comics")
+                val jn = d.listFiles()?.filter { it.isFile }?.mapNotNull {
+                    val zipFile = ZipFile(it)
+                    zipFile.use {
+                        zf ->
+                        val entry = zf.getEntry("summary.json")
+                        if (entry != null) {
+                            zf.getInputStream(entry).use { inputStream ->
+                                val cr = Json.decodeFromString<ComicResponse>(String(inputStream.readAllBytes(), Charsets.UTF_8))
+                                return@mapNotNull Comic(
+                                    isLocal = true,
+                                    localBase = it.path,
+                                    comic = cr,
+                                    id = it.nameWithoutExtension)
+                            }
+                        }else return@mapNotNull null
+                    }
+                } ?: listOf()
+
+                comics.addAll(jn.sortedBy { it.id.toInt() }.reversed())
+                tags.addAll(jn.flatMap { it.comic.tags }.groupingBy { it }.eachCount()
+                        .entries.sortedByDescending { it.value }
+                        .map { it.key })
             }
         }
     }
 
-    init {
-        imageLoader =  ImageLoader.Builder(context)
-            .components {
-                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
-            }
-            .build()
-
-        viewModelScope.launch {
-            val l = mediaManager.listComics()
-            val m = mediaManager.queryComicInfoBulk(l)
-
-            if(m != null) {
-                comics.addAll(m.sortedBy { it.id.toInt() }.reversed())
-                tags.addAll(m.flatMap { it.comic.tags }.groupingBy { it }.eachCount()
-                    .entries.sortedByDescending { it.value }
-                    .map { it.key })
-            }
-        }
+    suspend fun download(comic: Comic) {
+        fetchManager.startComicDownload(comic)
     }
 }

@@ -245,7 +245,7 @@ fun VideoPlayerPortal(
                             .padding(horizontal = 12.dp),
                         i,
                         apiClient = videoPlayerViewModel.apiClient,
-                        imageLoader = videoPlayerViewModel.imageLoader!!
+                        imageLoader = videoPlayerViewModel.apiClient.getImageLoader()
                     ) {
                         videoPlayerViewModel.isPlaying = false
                         videoPlayerViewModel.player?.pause()

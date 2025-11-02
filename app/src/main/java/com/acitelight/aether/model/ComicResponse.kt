@@ -10,5 +10,5 @@ data class ComicResponse(
     val list: List<String>,
     val tags: List<String>,
     val author: String,
-    val cover: String
+    val cover: String? = null
 )

@@ -6,12 +6,16 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -41,106 +45,22 @@ fun TransmissionScreen(
     navigator: NavHostController,
     transmissionScreenViewModel: TransmissionScreenViewModel = hiltViewModel<TransmissionScreenViewModel>()
 ) {
-    var mutiSelection by transmissionScreenViewModel.mutiSelection
-    val downloads = transmissionScreenViewModel.downloads
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
 
-    Column(modifier = Modifier.animateContentSize())
-    {
-        Text(
-            text = "Video Tasks",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier
-                .padding(8.dp)
-                .align(Alignment.Start)
-        )
-
-        Text(
-            text = "All: ${downloads.count { it.type == "main" }}",
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .align(Alignment.Start),
-            fontSize = 12.sp,
-            lineHeight = 13.sp,
-            maxLines = 1
-        )
-
-        Text(
-            text = "Completed: ${downloads.count { it.type == "main" && it.status == Status.COMPLETED }}",
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .align(Alignment.Start),
-            fontSize = 12.sp,
-            lineHeight = 13.sp,
-            maxLines = 1
-        )
-
-        val downloading = downloads.filter { it.status == Status.DOWNLOADING }
-        BiliMiniSlider(
-            value = if (downloading.sumOf { it.totalBytes } == 0L) 1f else downloading.sumOf { it.downloadedBytes } / downloading.sumOf { it.totalBytes }
-                .toFloat(),
-            modifier = Modifier
-                .height(6.dp)
-                .align(Alignment.End)
-                .fillMaxWidth(),
-            onValueChange = {
-
-            }
-        )
-
-        AnimatedVisibility(
-            visible = mutiSelection,
-            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
-            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
-        ){
-            Column(Modifier.fillMaxWidth()) {
-                Button(onClick = {
-                    mutiSelection = false
-                    transmissionScreenViewModel.mutiSelectionList.forEach {
-                        item ->
-                        val klass = item.split("/").first()
-                        val id = item.split("/").last()
-                        for (i in downloadToGroup(
-                            klass, id,
-                            downloads
-                        )) transmissionScreenViewModel.delete(i.id)
-
-                        File(
-                            transmissionScreenViewModel.context.getExternalFilesDir(null),
-                            "videos/${klass}/${id}/summary.json"
-                        ).delete()
-                    }
-                }, modifier = Modifier.align(Alignment.End).padding(horizontal = 8.dp))
+    HorizontalPager(
+        state = pagerState,
+        modifier = Modifier
+            .fillMaxSize()
+    ) { p ->
+        Box(Modifier.fillMaxSize()) {
+            Box(Modifier.align(Alignment.TopCenter))
+            {
+                when(p)
                 {
-                    Text(text = "Delete", fontWeight = FontWeight.Bold)
+                    0 -> TransmissionVideo(navigator = navigator, transmissionScreenViewModel = transmissionScreenViewModel)
+                    1 -> TransmissionComic(navigator = navigator, transmissionScreenViewModel = transmissionScreenViewModel)
+                    else -> { }
                 }
-            }
-
-        }
-
-        HorizontalDivider(Modifier.padding(horizontal = 8.dp).padding(vertical = 4.dp), 2.dp, DividerDefaults.color)
-
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth()
-        )
-        {
-            items(
-                items = downloads
-                .filter { it.type == "main" }
-                .sortedBy { it.status == Status.COMPLETED }
-                .groupBy { it.group }.map { it.value }
-                , key = { it.first().id }
-            )
-            { item ->
-                VideoDownloadCard(
-                    navigator = navigator,
-                    viewModel = transmissionScreenViewModel,
-                    models = item.sortedWith(compareBy(naturalOrder()) { it.fileName })
-                )
-                HorizontalDivider(
-                    Modifier.padding(horizontal = 16.dp, vertical = 3.dp),
-                    2.dp,
-                    DividerDefaults.color
-                )
             }
         }
     }

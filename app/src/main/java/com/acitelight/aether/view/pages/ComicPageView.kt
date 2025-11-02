@@ -118,7 +118,7 @@ fun ComicPageView(
                         .diskCacheKey("${it.id}/${page}")
                         .build(),
                     contentDescription = null,
-                    imageLoader = comicPageViewModel.imageLoader!!,
+                    imageLoader = comicPageViewModel.apiClient.getImageLoader(),
                     modifier = Modifier
                         .padding(8.dp)
                         .fillMaxSize(),
@@ -283,7 +283,7 @@ fun ComicPageView(
                                             .diskCacheKey("${it.id}/${r}")
                                             .build(),
                                         contentDescription = null,
-                                        imageLoader = comicPageViewModel.imageLoader!!,
+                                        imageLoader = comicPageViewModel.apiClient.getImageLoader(),
                                         modifier = Modifier
                                             .fillMaxHeight()
                                             .clip(RoundedCornerShape(8.dp))

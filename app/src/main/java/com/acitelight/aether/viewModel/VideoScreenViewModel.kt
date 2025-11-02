@@ -37,7 +37,6 @@ class VideoScreenViewModel @Inject constructor(
 ) : ViewModel() {
     private val _tabIndex = mutableIntStateOf(0)
     val tabIndex: State<Int> = _tabIndex
-    var imageLoader: ImageLoader? = null
     var menuVisibility = mutableStateOf(false)
     var searchFilter = mutableStateOf("")
     var doneInit = mutableStateOf(false)
@@ -118,12 +117,6 @@ class VideoScreenViewModel @Inject constructor(
     }
 
     init {
-        imageLoader = ImageLoader.Builder(context)
-            .components {
-                add(OkHttpNetworkFetcherFactory(apiClient.getClient()))
-            }
-            .build()
-
         viewModelScope.launch(Dispatchers.IO) {
             init()
         }
