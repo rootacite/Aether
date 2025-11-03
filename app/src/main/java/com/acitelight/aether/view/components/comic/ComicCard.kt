@@ -3,6 +3,7 @@ package com.acitelight.aether.view.components.comic
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -90,10 +91,10 @@ fun ComicCard(
                     imageLoader = comicScreenViewModel.apiClient.getImageLoader(),
                 )
 
-                Box(
+                Column (
                     Modifier
                         .fillMaxWidth()
-                        .height(24.dp)
+                        .height(42.dp)
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
@@ -102,19 +103,36 @@ fun ComicCard(
                                 )
                             )
                         )
-                        .align(Alignment.BottomCenter)
+                        .align(Alignment.BottomCenter),
+                    verticalArrangement = Arrangement.Bottom
                 )
                 {
                     Text(
                         modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(2.dp),
+                            .align(Alignment.End)
+                            .padding(horizontal = 2.dp),
                         fontSize = 12.sp,
+                        lineHeight = 13.sp,
                         text = "${comic.comic.list.size} Pages",
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         maxLines = 1
                     )
+
+                    if (comic.isLocal)
+                    {
+                        Text(
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(horizontal = 2.dp),
+                            fontSize = 12.sp,
+                            lineHeight = 13.sp,
+                            text = "Downloaded",
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
             Text(

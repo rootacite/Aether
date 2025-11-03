@@ -6,8 +6,10 @@ import android.media.AudioManager
 import android.view.View
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -337,12 +339,8 @@ fun PortalCorePlayer(modifier: Modifier, videoPlayerViewModel: VideoPlayerViewMo
 
         AnimatedVisibility(
             visible = videoPlayerViewModel.planeVisibility && (!videoPlayerViewModel.locked),
-            enter = fadeIn(
-                initialAlpha = 0f,
-            ),
-            exit = fadeOut(
-                targetAlpha = 0f
-            ),
+            enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)

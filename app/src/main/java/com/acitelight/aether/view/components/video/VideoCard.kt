@@ -119,16 +119,27 @@ fun VideoCard(
                         .align(Alignment.BottomCenter)
                 )
 
-                Text(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(horizontal =  2.dp),
-                    text = "${videos.size} Videos",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 13.sp,
-                    color = Color.White
-                )
+                Column(modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal =  2.dp))
+                {
+                    Text(text = "${videos.size} Videos",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 13.sp,
+                        color = Color.White
+                    )
+
+                    if (videos.any { it.isLocal })
+                    {
+                        Text(text = "${videos.count { it.isLocal }} Downloaded",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 13.sp,
+                            color = Color.White
+                        )
+                    }
+                }
 
                 Text(
                     modifier = Modifier
@@ -140,24 +151,6 @@ fun VideoCard(
                     lineHeight = 13.sp,
                     color = Color.White
                 )
-
-                if (videos.all{ it.isLocal })
-                    Card(
-                        Modifier
-                            .align(Alignment.TopStart)
-                            .padding(5.dp)
-                            .widthIn(max = 46.dp)
-                    ) {
-                        Box(Modifier.fillMaxWidth())
-                        {
-                            Text(
-                                modifier = Modifier.align(Alignment.Center),
-                                text = "Local",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
             }
             Text(
                 text = video.video.group ?: video.video.name,
