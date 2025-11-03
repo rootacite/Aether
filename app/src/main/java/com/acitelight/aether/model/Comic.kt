@@ -26,11 +26,17 @@ class Comic(
         if(isLocal)
         {
             comic.cover?.let {
+                if(it.isEmpty())
+                    return@let
+
                 return "file://$localBase?entry=$it"
             }
             return "file://$localBase?entry=${comic.list[0]}"
         }else{
             comic.cover?.let {
+                if(it.isEmpty())
+                    return@let
+
                 return "${api.getBase()}api/image/$id/$it"
             }
             return "${api.getBase()}api/image/$id/${comic.list[0]}"

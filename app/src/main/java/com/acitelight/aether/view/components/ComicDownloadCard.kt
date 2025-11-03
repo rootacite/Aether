@@ -62,7 +62,7 @@ fun ComicDownloadCard(
 )
 {
     var mutiSelection by viewModel.mutiSelection
-    val cov = model.cover.getFileNameFromUrl()!!
+    val cov = model.cover.getFileNameFromUrl() ?: ""
 
     val imageModel = if (model.status == Status.COMPLETED)
     {
