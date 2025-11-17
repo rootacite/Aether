@@ -16,14 +16,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.FormatLineSpacing
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -31,10 +35,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,6 +65,7 @@ import com.acitelight.aether.view.components.video.BiliMiniSlider
 import com.acitelight.aether.view.components.comic.BookmarkPop
 import com.acitelight.aether.view.pages.video.hexToString
 import com.acitelight.aether.viewModel.comic.ComicPageViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 @Composable
@@ -75,11 +83,13 @@ fun ComicPageView(
         initialPage = page.toInt(),
         pageCount = { comicPageViewModel.pageList.size })
     var showPlane by comicPageViewModel.showPlane
-    var showBookMarkPop by remember { mutableStateOf(false) }
+    var verticalMode by comicPageViewModel.verticalMode
 
+    var showBookMarkPop by remember { mutableStateOf(false) }
     comicPageViewModel.updateProcess(pagerState.currentPage)
 
     val comic by comicPageViewModel.comic
+    val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = page.toInt())
 
     val view = LocalView.current
     DisposableEffect(Unit) {
@@ -92,38 +102,104 @@ fun ComicPageView(
     comic?.let {
         Box()
         {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .align(Alignment.Center)
-                    .background(Color.Black)
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = {
-                                showPlane = !showPlane
-                                if (showPlane) {
-                                    comicPageViewModel.viewModelScope.launch {
-                                        comicPageViewModel.listState?.scrollToItem(index = pagerState.currentPage)
+            if (verticalMode)
+            {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                        .pointerInput(Unit) // Re-apply tap gesture from HorizontalPager
+                        {
+                            detectTapGestures(
+                                onTap = {
+                                    showPlane = !showPlane
+                                    if (showPlane) {
+                                        // This syncs the thumbnail scroller, even if hidden
+                                        comicPageViewModel.viewModelScope.launch {
+                                            comicPageViewModel.listState?.scrollToItem(index = pagerState.currentPage)
+                                        }
                                     }
                                 }
-                            }
+                            )
+                        }
+                )
+                {
+                    items(
+                        count = comicPageViewModel.pageList.size,
+                        key = { index -> "${it.id}/$index" } // Stable keys
+                    ) { pageIndex ->
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(it.getPage(pageIndex, comicPageViewModel.apiClient))
+                                .memoryCacheKey("${it.id}/${pageIndex}")
+                                .diskCacheKey("${it.id}/${pageIndex}")
+                                .build(),
+                            contentDescription = "Page ${pageIndex + 1}",
+                            imageLoader = comicPageViewModel.apiClient.getImageLoader(),
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .fillMaxWidth()
+                                .wrapContentHeight(), // Let height be automatic
+                            contentScale = ContentScale.FillWidth, // Fit image to width
                         )
                     }
-            ) { page ->
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(it.getPage(page, comicPageViewModel.apiClient))
-                        .memoryCacheKey("${it.id}/${page}")
-                        .diskCacheKey("${it.id}/${page}")
-                        .build(),
-                    contentDescription = null,
-                    imageLoader = comicPageViewModel.apiClient.getImageLoader(),
+                }
+
+
+                LaunchedEffect(lazyListState) {
+                    snapshotFlow { lazyListState.firstVisibleItemIndex }
+                        .distinctUntilChanged()
+                        .collect { visibleIndex ->
+                            pagerState.requestScrollToPage(visibleIndex)
+                        }
+                }
+            }
+            else
+            {
+                LaunchedEffect(pagerState) {
+                    snapshotFlow { pagerState.currentPage }
+                        .distinctUntilChanged()
+                        .collect { page ->
+                            lazyListState.requestScrollToItem(index = page)
+                        }
+                }
+
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxSize(),
-                    contentScale = ContentScale.Fit,
+                        .fillMaxSize()
+                        .align(Alignment.Center)
+                        .background(Color.Black)
+                        .pointerInput(Unit)
+                        {
+                            detectTapGestures(
+                                onTap = {
+                                    showPlane = !showPlane
+                                    if (showPlane) {
+                                        comicPageViewModel.viewModelScope.launch {
+                                            comicPageViewModel.listState?.scrollToItem(index = pagerState.currentPage)
+                                        }
+                                    }
+                                }
+                            )
+                        }
                 )
+                { page ->
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(it.getPage(page, comicPageViewModel.apiClient))
+                            .memoryCacheKey("${it.id}/${page}")
+                            .diskCacheKey("${it.id}/${page}")
+                            .build(),
+                        contentDescription = null,
+                        imageLoader = comicPageViewModel.apiClient.getImageLoader(),
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxSize(),
+                        contentScale = ContentScale.Fit,
+                    )
+                }
             }
 
             AnimatedVisibility(
@@ -132,7 +208,8 @@ fun ComicPageView(
                 exit = slideOutVertically(targetOffsetY = { fullHeight -> -fullHeight }),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-            ) {
+            )
+            {
                 Column(Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
@@ -206,26 +283,48 @@ fun ComicPageView(
                             )
                         }
 
-
-                        Card(
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .padding(top = 6.dp)
-                                .padding(horizontal = 12.dp)
-                                .height(42.dp),
-                            colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                            shape = RoundedCornerShape(12.dp)
-                        )
+                        Row (modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(top = 6.dp)
+                            .padding(horizontal = 12.dp))
                         {
-                            Box(Modifier.clickable {
-                                showBookMarkPop = true
-                            }) {
-                                Icon(
-                                    Icons.Filled.Bookmarks,
-                                    modifier = Modifier
-                                        .padding(8.dp),
-                                    contentDescription = "Bookmark"
-                                )
+
+                            Card(
+                                modifier = Modifier.height(42.dp),
+                                colors = CardDefaults.cardColors(containerColor = if(verticalMode) colorScheme.primary else colorScheme.surface),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            {
+                                Box(Modifier.clickable {
+                                    verticalMode = !verticalMode
+                                }) {
+                                    Icon(
+                                        Icons.Filled.FormatLineSpacing,
+                                        modifier = Modifier
+                                            .padding(8.dp),
+                                        contentDescription = "Vertical",
+                                    )
+                                }
+                            }
+
+                            Spacer(Modifier.width(8.dp))
+
+                            Card(
+                                modifier = Modifier.height(42.dp),
+                                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            {
+                                Box(Modifier.clickable {
+                                    showBookMarkPop = true
+                                }) {
+                                    Icon(
+                                        Icons.Filled.Bookmarks,
+                                        modifier = Modifier
+                                            .padding(8.dp),
+                                        contentDescription = "Bookmark"
+                                    )
+                                }
                             }
                         }
                     }
@@ -234,7 +333,7 @@ fun ComicPageView(
             }
 
             AnimatedVisibility(
-                visible = showPlane,
+                visible = showPlane && !verticalMode,
                 enter = slideInVertically(initialOffsetY = { fullHeight -> fullHeight }),
                 exit = slideOutVertically(targetOffsetY = { fullHeight -> fullHeight }),
                 modifier = Modifier

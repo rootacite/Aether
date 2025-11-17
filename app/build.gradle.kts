@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.androidx.compose.material.core)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.foundation)
     ksp(libs.hilt.android.compiler)
 
     implementation(libs.androidx.room.runtime)

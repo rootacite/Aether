@@ -30,6 +30,7 @@ class ComicPageViewModel @Inject constructor(
     var title = mutableStateOf<String>("")
     var listState: LazyListState? = null
     var showPlane = mutableStateOf(true)
+    var verticalMode = mutableStateOf(false)
     var db: ComicRecordDatabase
 
 
