@@ -28,16 +28,10 @@ class ComicPageViewModel @Inject constructor(
     var comic = mutableStateOf<Comic?>(null)
     var pageList = mutableStateListOf<String>()
     var title = mutableStateOf<String>("")
-    var listState: LazyListState? = null
+    var listState: LazyListState = LazyListState(0, 0)
     var showPlane = mutableStateOf(true)
     var verticalMode = mutableStateOf(false)
-    var db: ComicRecordDatabase
-
-
-    init{
-        listState = LazyListState(0, 0)
-        db = ComicRecordDatabase.getDatabase(context)
-    }
+    var db: ComicRecordDatabase = ComicRecordDatabase.getDatabase(context)
 
     @Composable
     fun Resolve(id: String, page: Int)
@@ -49,7 +43,7 @@ class ComicPageViewModel @Inject constructor(
                 comic.value?.let {
                     pageList.addAll(it.comic.list)
                     title.value = it.comic.comic_name
-                    listState?.scrollToItem(index = page)
+                    listState.scrollToItem(index = page)
                     updateProcess(page)
                 }
             }

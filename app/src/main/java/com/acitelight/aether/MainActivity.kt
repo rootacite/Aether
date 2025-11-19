@@ -236,7 +236,7 @@ fun AppNavigation() {
                 val comicId = backStackEntry.arguments?.getString("comicId")
                 val page = backStackEntry.arguments?.getString("page")
                 if (comicId != null && page != null) {
-                    ComicPageView(comicId = comicId, page = page, navController = navController)
+                    ComicPageView(comicId = comicId, page = page)
                 }
             }
         }
